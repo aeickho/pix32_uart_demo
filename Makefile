@@ -25,6 +25,9 @@ AR      = xc32-ar
 OPTIMIZE ?= -Os -mips16e
 #OPTIMIZE ?=  -mips16e
 #CFLAGS  = -g $(OPTIMIZE) -mprocessor=$(PROC) "-I$(APPLIB_PATH)/Include" -I.
+#CFLAGS  = -g $(OPTIMIZE) -mprocessor=$(PROC)  -I.
+CFLAGS  = -g $(OPTIMIZE) -std=gnu99 -mprocessor=$(PROC)  -I.
+LDFLAGS = -g $(OPTIMIZE) -std=gnu99 -mprocessor=$(PROC) -Wl,--report-mem
 CFLAGS  = -g $(OPTIMIZE) -mprocessor=$(PROC)  -I.
 LDFLAGS = -g $(OPTIMIZE) -mprocessor=$(PROC) -Wl,--report-mem
 
@@ -32,18 +35,19 @@ APPLIB =
 APPLIB_OBJECTS = 
 
 MAIN    = main
-OBJECTS = main.o spi.o Pinguino.o 
                 
                 
 #LIBS = -l mchp_peripheral_$(PROC)
 
 OBJECTS =	main.o \
-		spi.o \
+		myspi.o \
 		crc.o \
 		byteorder.o \
 		Pinguino.o \
                 nrf24l01p.o \
 		openbeacon.o
+
+#		xxtea.o
 		
 
 #############################################################################

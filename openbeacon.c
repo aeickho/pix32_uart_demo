@@ -10,7 +10,8 @@ const uint8_t mac[5] = {1,2,3,2,1};
 volatile uint32_t oid = 0;
 volatile uint32_t seq = 0;
 volatile uint8_t strength = 0;
-volatile char nickname[17];
+
+char nickname[17];
 
                 
 static struct NRF_CFG oldconfig;

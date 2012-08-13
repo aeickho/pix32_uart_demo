@@ -1,3 +1,7 @@
+#ifndef _PINGUINO_H_
+#define _PINGUINO_H_
+
+
 #define CE  LATCbits.LATC3
 #define CSN LATCbits.LATC2
 
@@ -22,3 +26,9 @@ void sspSendReceive (unsigned char portNum, unsigned char *buf,
 
 void SendDataBuffer (const char *buffer, UINT32 size);
 void UART2Out (const char *buffer);
+
+
+void delay_1ms (void);
+void _delay_ms (unsigned int length);
+            
+#endif

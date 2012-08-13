@@ -2,11 +2,11 @@
 #include <plib.h>
 #include <stdint.h>
 
-#include "spi.h"
+#include "myspi.h"
 #include "Pinguino.h"
 
 void
-spi_init ()
+spi_init (void)
 // Initialize pins for spi communication
 {
   ;

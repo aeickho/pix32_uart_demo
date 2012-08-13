@@ -21,7 +21,9 @@
 #include "Pinguino.h"
 #include "nrf24l01p.h"
 #include "openbeacon.h"
-#include "spi.h"
+#include "myspi.h"
+#include "basic.h"
+#include "byteorder.h"
 
 #define SystemClock()                        (40000000ul)
 #define GetPeripheralClock()            (SystemClock()/(1 << OSCCONbits.PBDIV))

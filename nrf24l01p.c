@@ -3,13 +3,13 @@
 
 #include "basic.h"
 #include "nrf24l01p.h"
-#include "spi.h"
+#include "myspi.h"
 #include "Pinguino.h"
 
 
 
 
-//#include "basic/xxtea.h"
+//#include "xxtea.h"
 
 #define uputs0(x)	uputs0_((uint8_t *)(x))
 void uputs0_( uint8_t *s ); 

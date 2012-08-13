@@ -4,10 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-
-#include "spi.h"
+#include "myspi.h"
 #include "Pinguino.h"
-
 
 void
 wl_module_init ()
