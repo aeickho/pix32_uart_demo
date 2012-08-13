@@ -10,18 +10,19 @@ const uint8_t mac[5] = {1,2,3,2,1};
 volatile uint32_t oid = 0;
 volatile uint32_t seq = 0;
 volatile uint8_t strength = 0;
-
+volatile char nickname[17];
 
                 
 static struct NRF_CFG oldconfig;
 
-
-
+#define NICKNAME "PIC32_001"
+#define OID	0xdeadbeef
 
 void openbeaconSetup(void)
 {
-    oid = 0xdeadbeef;
+    oid = OID;
     strength = 0;
+    strcpy(nickname, NICKNAME);
 }
 
 static void openbeaconSendPacket(uint32_t id, uint32_t seq,
@@ -55,16 +56,16 @@ static void openbeaconSendPacket(uint32_t id, uint32_t seq,
         buf[13]=0xff;
         nrf_snd_pkt_crc_encr(16,buf,NULL);
     }else{
-        if( strlen("hase    ") > 8 )
+        if( strlen(nickname) > 8 )
             buf[1] = 0x24;
         nrf_set_strength(3);
         uint32touint8p(id, buf+2);
-        memcpy(buf+6, "hase :-)", 8);
+        memcpy(buf+6, nickname, 8);
         nrf_snd_pkt_crc_encr(16,buf,NULL);
         if( strlen("hase    ") < 9 )
             return;
         buf[1]=0x25;
-        memcpy(buf+6, "hase    "+8, 8);
+        memcpy(buf+6, nickname+8, 8);
         nrf_snd_pkt_crc_encr(16,buf,NULL);
     }   
 }

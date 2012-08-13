@@ -1,8 +1,10 @@
 #ifndef __BASIC_H_
 #define __BASIC_H_
 
+#include <stdint.h>
+
 // crc.c
-unsigned short int crc16(unsigned char * buf, int len);
+uint16_t crc16(uint8_t * buf, int len);
 
 
 

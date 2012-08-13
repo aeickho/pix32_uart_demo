@@ -1,5 +1,9 @@
 #include <p32xxxx.h>
 #include <plib.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 
 #include "spi.h"
 #include "Pinguino.h"

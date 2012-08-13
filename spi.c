@@ -1,8 +1,10 @@
 #include <p32xxxx.h>
 #include <plib.h>
+#include <stdint.h>
 
 #include "spi.h"
 #include "Pinguino.h"
+
 void
 spi_init ()
 // Initialize pins for spi communication
@@ -11,10 +13,10 @@ spi_init ()
 }
 
 void
-spi_transfer_sync (unsigned char *dataout, unsigned char *datain,
-		   unsigned char len)
+spi_transfer_sync (uint8_t * dataout, uint8_t * datain,
+		   uint8_t len)
 {
-  char outBuf[100];
+  uint8_t outBuf[100];
   int out;
   unsigned char i;
   for (i = 0; i < len; i++)
@@ -33,9 +35,9 @@ spi_transfer_sync (unsigned char *dataout, unsigned char *datain,
 }
 
 void
-spi_transmit_sync (const unsigned char *dataout, unsigned char len)
+spi_transmit_sync (const uint8_t * dataout, uint8_t len)
 {
-  unsigned char i;
+  uint8_t i;
   for (i = 0; i < len; i++)
     {
       SPI2BUF = dataout[i];
@@ -44,8 +46,8 @@ spi_transmit_sync (const unsigned char *dataout, unsigned char len)
     }
 }
 
-unsigned char
-spi_fast_shift (unsigned char data)
+uint8_t
+spi_fast_shift (uint8_t data)
 {
   SPI2BUF = data;
   while (!SPI2STATbits.SPIRBF);

@@ -54,10 +54,10 @@ const char mainMenu[] =
 int
 main (void)
 {
-  struct NRF_CFG config;
-  unsigned char buf[16];
-  char outBuf[16];
-  unsigned char cnt;
+  struct 	NRF_CFG config;
+  uint8_t	buf[16];
+  uint8_t	outBuf[16];
+  uint8_t	cnt;
 
   int c;
 
@@ -126,58 +126,9 @@ main (void)
 
   UARTEnable (UART2, UART_ENABLE_FLAGS (UART_PERIPHERAL | UART_RX | UART_TX));
 
-
-
-
-
-
-
-
-
-  _delay_ms (10);
-
   UART2Out
     (".............................................................................hallo\r\n");
   UART2Out ("Welt\r\n");
-
-
-
-
-/* while (1)
-{
-CS_LOW();
-spi_transmit_sync ("x", 1);
-CS_HIGH();
-_nop();
-_nop();
-_nop();
-_nop();
-_nop();
-
-_nop();
-_nop();
-_nop();
-_nop();
-_nop();
-
-_nop();
-_nop();
-_nop();
-_nop();
-_nop();
-}
-*/
-
-   
-
-
-
-
-
-
-
-
-
 
   UART2Out ("nrf_init(),");
   nrf_init ();
@@ -202,20 +153,14 @@ _nop();
   cnt = 0;
   do
     {
-//     UART2Out ("w:");
-/*
       if (cnt++ > 50)
 	{
 	  cnt = 0;
 	  UART2Out ("openbeaconSend(),");
 	  openbeaconSend ();
 	  UART2Out ("done\n\r");
-//  delay_1ms (20);
-
-//        nrf_config_set(&config);
-
 	}
-*/
+
       if (nrf_rcv_pkt_time (64, sizeof (buf), buf) == 16)
 	{
 	  uint32_t i;
@@ -223,13 +168,12 @@ _nop();
 	  UART2Out (outBuf);
 	  UART2Out (" ");
 
-
 	  buf[14] = 0;
 	  if (buf[1] == 0x23 || buf[1] == 0x24)
 	    {
 	      i = uint8ptouint32 (buf + 2);
-	      //sprintf(outBuf, "%x",i);
-	      ultoa (outBuf, i, 16);
+          //    sprintf(outBuf, "%x",i);
+              ultoa (outBuf, i, 16);
 	      UART2Out (outBuf);
 	      UART2Out (" ");
 

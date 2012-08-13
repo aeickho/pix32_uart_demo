@@ -4,6 +4,6 @@
 #include <stdint.h>
 
 void uint32touint8p(unsigned int v, unsigned char  *p);
-unsigned int uint8ptouint32(unsigned char *p);
+uint32_t int8ptouint32(uint8_t *p);
 
 #endif

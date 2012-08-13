@@ -1,9 +1,9 @@
 #ifndef _SPI_H_
 #define _SPI_H_
 
-extern void spi_init();
-extern void spi_transfer_sync (unsigned char * dataout, unsigned char * datain, unsigned char len);
-extern void spi_transmit_sync (const unsigned char * dataout, unsigned char len);
-extern unsigned char spi_fast_shift (unsigned char data);
+void	spi_init();
+void	spi_transfer_sync (uint8_t * dataout, uint8_t * datain, uint8_t len);
+void	spi_transmit_sync (const uint8_t * dataout, uint8_t len);
+uint8_t spi_fast_shift (uint8_t data);
 
 #endif /* _SPI_H_ */

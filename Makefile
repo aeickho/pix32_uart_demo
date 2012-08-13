@@ -23,6 +23,7 @@ AR      = xc32-ar
 
 # compiler config
 OPTIMIZE ?= -Os -mips16e
+#OPTIMIZE ?=  -mips16e
 #CFLAGS  = -g $(OPTIMIZE) -mprocessor=$(PROC) "-I$(APPLIB_PATH)/Include" -I.
 CFLAGS  = -g $(OPTIMIZE) -mprocessor=$(PROC)  -I.
 LDFLAGS = -g $(OPTIMIZE) -mprocessor=$(PROC) -Wl,--report-mem
@@ -66,5 +67,5 @@ write: $(MAIN).hex
 	$(FLASH) -w $(MAIN).hex
 
 clean:
-	- rm $(OBJECTS) $(APPLIB_OBJECTS) $(APPLIB)
+	- rm -f $(OBJECTS) $(APPLIB_OBJECTS) $(APPLIB)
 	- rm -f *.o *.elf *.hex
