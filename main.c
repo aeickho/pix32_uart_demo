@@ -288,8 +288,8 @@ main (void)
         
         
   UART2PutStr ("6666666666666666\r\n");
-  UART2PutStr ("77777777777777777\r\n");
-  UART2PutStr ("888888888888888\r\n");
+  UART2PutStr ("7777777777777777\r\n");
+  UART2PutStr ("9888888888888888\r\n");
 
 
 
