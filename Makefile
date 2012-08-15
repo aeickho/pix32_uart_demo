@@ -11,23 +11,58 @@
 # around a copy of the original, which can be downloaded from the product
 # web page here: http://www.schmalzhaus.com/UBW32/
 
-HEX     = main.hex
-FLASH   = mphidflash -n -r
+
+# MCU to compile for:
 PROC    = 32MX220F032D
+
+# tool configuration
+FLASH   = mphidflash -n -r
 CC      = xc32-gcc
 BIN2HEX = xc32-bin2hex
-CFLAGS  = -g  -mprocessor=$(PROC) -Wl,--report-mem
+AR      = xc32-ar
 
-all: $(HEX)
+# compiler config
+OPTIMIZE ?=  -mips16e
+#OPTIMIZE ?=  -mips16e
+#CFLAGS  = -g $(OPTIMIZE) -mprocessor=$(PROC) "-I$(APPLIB_PATH)/Include" -I.
+#CFLAGS  = -g $(OPTIMIZE) -mprocessor=$(PROC)  -I.
+#CFLAGS  = -g $(OPTIMIZE) -std=gnu99 -mprocessor=$(PROC)  -I.
+#LDFLAGS = -g $(OPTIMIZE) -std=gnu99 -mprocessor=$(PROC) -Wl,--report-mem
+CFLAGS  = -g $(OPTIMIZE) -mprocessor=$(PROC)  -I.
+LDFLAGS = -g $(OPTIMIZE) -mprocessor=$(PROC) -Wl,--report-mem,--defsym,_min_heap_size=0x1000
 
-$(HEX): main.elf
+APPLIB = 
+APPLIB_OBJECTS = 
+
+MAIN    = main
+                
+                
+#LIBS = -l mchp_peripheral_$(PROC)
+
+OBJECTS =	main.o 
+#		xxtea.o
+		
+
+#############################################################################
+# you can probably leave the following as they are:
+
+all: $(MAIN).hex
+
+$(MAIN).hex: $(MAIN).elf
 	$(BIN2HEX) -a $<
 
-%.elf: %.c
-	$(CC) $(CFLAGS) $< -o $@ -lmchp_peripheral_$(PROC) -lm -lc
+$(MAIN).elf: $(OBJECTS) $(APPLIB) procdefs.ld
+	$(CC) $(LDFLAGS) $(OBJECTS) $(APPLIB) $(LIBS) -o $(MAIN).elf
 
-write:
-	$(FLASH) -w $(HEX)
+$(APPLIB): $(APPLIB_OBJECTS)
+	$(AR) -r "$@" $(APPLIB_OBJECTS)
+
+%.o: %.c
+	$(CC) $(CFLAGS) -c "$<" -o "$@"
+
+write: $(MAIN).hex
+	$(FLASH) -w $(MAIN).hex
 
 clean:
-	rm -f *.o *.elf *.hex
+	- rm -f $(OBJECTS) $(APPLIB_OBJECTS) $(APPLIB)
+	- rm -f *.o *.elf *.hex
