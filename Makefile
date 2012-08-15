@@ -16,7 +16,7 @@ FLASH   = mphidflash -n -r
 PROC    = 32MX220F032D
 CC      = xc32-gcc
 BIN2HEX = xc32-bin2hex
-CFLAGS  = -g  -mprocessor=$(PROC) -Wl,--report-mem
+CFLAGS  = -g  -Os -mips16e -mprocessor=$(PROC) -Wl,--report-mem,--defsym,_min_heap_size=0x1000
 
 all: $(HEX)
 
