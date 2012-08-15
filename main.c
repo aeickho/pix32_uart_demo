@@ -35,7 +35,6 @@
 #define mLED_1_Toggle()     mLED_1 = !mLED_1;
 #define mLED_2_Toggle()     mLED_2 = !mLED_2;
 
-int send = 0;
 
 const char mainMenu[] =
   { "Welcome to PIC32 UART Peripheral Library Demo!\r\n" };
@@ -124,12 +123,7 @@ FromUART2Fifo_out (void)
 void
 UART2SendTrigger (void)
 {
-//  if (send == 0)
-    {
       INTEnable (INT_SOURCE_UART_TX (UART2), INT_ENABLED);
-
-      send = 1;
-    }
 }
 
 void
@@ -185,11 +179,9 @@ IntUart2Handler (void)
 
 	  UARTSendDataByte (UART2, val);
 	  INTClearFlag (INT_SOURCE_UART_TX (UART2));
-	  send = 1;
 	}
       else
 	{
-	  send = 0;
 	  INTEnable (INT_SOURCE_UART_TX (UART2), INT_DISABLED);
 	}
     }
@@ -289,7 +281,7 @@ main (void)
         
   UART2PutStr ("6666666666666666\r\n");
   UART2PutStr ("7777777777777777\r\n");
-  UART2PutStr ("9888888888888888\r\n");
+  UART2PutStr ("8888888888888888\r\n");
 
 
 
