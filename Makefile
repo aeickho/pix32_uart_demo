@@ -12,19 +12,32 @@
 # web page here: http://www.schmalzhaus.com/UBW32/
 
 HEX     = main.hex
-FLASH   = mphidflash -n -r
+FLASH   = sudo /home/tuxx/mips32/mphidflash -n -r
 PROC    = 32MX220F032D
 CC      = xc32-gcc
 BIN2HEX = xc32-bin2hex
-CFLAGS  = -g  -Os -mips16e -mprocessor=$(PROC) -Wall -Wl,--report-mem,--defsym,_min_heap_size=0x1000
+CFLAGS  = -g -Os -mips16e -mprocessor=$(PROC) -Werror -Wall -Wl,--report-mem,--defsym,_min_heap_size=0x1000
 
 all: $(HEX)
 
 $(HEX): main.elf
 	$(BIN2HEX) -a $<
 
-%.elf: %.c
-	$(CC) $(CFLAGS) $< -o $@ -lmchp_peripheral_$(PROC) -lm -lc
+p_queue.o: p_queue.c p_queue.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+uart.o: uart.c uart.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+printf.o: printf.c uart.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+main.o: main.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+%.elf: main.o p_queue.o uart.o printf.o
+	$(CC) $(CFLAGS) printf.o uart.o main.o p_queue.o \
+		-o $@ -lmchp_peripheral_$(PROC) -lm -lc
 
 write:
 	$(FLASH) -w $(HEX)

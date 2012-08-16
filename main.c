@@ -1,24 +1,9 @@
-/*
-	Example "blinkenlights" program for the UBW32 and C32 compiler.
-	Demonstrates software PWM, use of floating-point library, etc.
-
-	IMPORTANT: file 'procdefs.ld' absolutely must Must MUST be present
-	in the working directory when compiling code for the UBW32!  Failure
-	to do so will almost certainly result in your UBW32 getting 'bricked'
-	and requiring re-flashing the bootloader (which, if you don't have a
-	PICkit 2 or similar PIC programmer, you're screwed).
-	YOU HAVE BEEN WARNED.
-
-	2/19/2009 - Phillip Burgess - pburgess@dslextreme.com
-*/
-
 #include <p32xxxx.h>
 #include <plib.h>
 #include <string.h>
 
-#define SystemClock()		(40000000ul)
-#define GetPeripheralClock()	(SystemClock()/(1 << OSCCONbits.PBDIV))
-#define GetInstructionClock()	(SystemClock())
+#include "p_queue.h"
+#include "uart.h"
 
 #define mLED_1			LATBbits.LATB15
 #define mLED_2			LATAbits.LATA10
@@ -31,25 +16,26 @@
 #define mLED_1_Toggle()		mLED_1 = !mLED_1
 #define mLED_2_Toggle()		mLED_2 = !mLED_2
 
-#define MAX_BUF			100
+#pragma config FPLLMUL = MUL_20, FPLLIDIV = DIV_2, FPLLODIV = DIV_1, FWDTEN = OFF
+#pragma config POSCMOD = HS, FNOSC = PRIPLL, FPBDIV = DIV_8
+
+#define SYS_FREQ		(80000000L)
+#define PB_DIV			8
+#define PRESCALE		256
+#define TOGGLES_PER_SEC		1
+#define T1_TICK			(SYS_FREQ/PB_DIV/PRESCALE/TOGGLES_PER_SEC)
+
+#define MAX_BUF			128
+
+int mprintf(const char *format, ...);
 
 int send = 0;
 
-struct UARTFifo {
-	int in_read_pos;
-	int in_write_pos;
-	int out_read_pos;
-	int out_write_pos;
-	volatile int in_nchar;
-	volatile int out_nchar;
-	int bufsize;
-	char *in;
-	char *out;
-	int out_block;
-} UART2Fifo;
+struct process_queue *p_main_queue;
+struct uart_fifo uart2_fifo;
 
 int CmdHelp(void);
-int CmdLs(void);
+int CmdTimer(void);
 int CmdDump(void);
 
 int CmdLed1On(void) {
@@ -72,13 +58,30 @@ int CmdLed2Off(void) {
 	return 0;
 }
 
+int CmdPs(void) {
+	struct process_queue_func *p;
+
+	for (p = p_main_queue->p_queue; p; p = p->next)
+		mprintf("%s", p->func_name);
+
+	mprintf("\r\n");
+	return 0;
+}
+
+int CmdReset(void) {
+	//__asm__()
+	return 0;
+}
+
 struct CmdFunc {
 	char *cmdName;
 	int (*funcPtr)(void);
 } Cmds[] = {
 	{ "help",	CmdHelp		},
 	{ "dump",	CmdDump		},
-	{ "ls",		CmdLs		},
+	{ "reset",	CmdReset	},
+	{ "timer",	CmdTimer	},
+	{ "ps",		CmdPs		},
 	{ "led1 on",	CmdLed1On	},
 	{ "led1 off",	CmdLed1Off	},
 	{ "led2 on",	CmdLed2On	},
@@ -86,109 +89,32 @@ struct CmdFunc {
 	{ NULL,		NULL		}
 };
 
-void UART2FifoInit(int out_block) {
-	UART2Fifo.in_read_pos	= 0;
-	UART2Fifo.in_write_pos	= 0;
-	UART2Fifo.out_read_pos	= 0;
-	UART2Fifo.out_write_pos	= 0;
-	UART2Fifo.in_nchar	= 0;
-	UART2Fifo.out_nchar	= 0;
-	UART2Fifo.out_block	= out_block;
-	UART2Fifo.bufsize	= MAX_BUF;
+void __ISR(_TIMER_1_VECTOR, IPL2SOFT) Timer1Handler(void) {
+	mT1ClearIntFlag();
 
-	UART2Fifo.in = malloc(UART2Fifo.bufsize+1);
-	UART2Fifo.out = malloc(UART2Fifo.bufsize+1);
-}
-
-
-// Add one character to output fifo 
-void ToUART2Fifo_in(const char character) {
-	UART2Fifo.in[UART2Fifo.in_write_pos] = character;
-	UART2Fifo.in_write_pos = (UART2Fifo.in_write_pos + 1) % UART2Fifo.bufsize;
-	UART2Fifo.in_nchar++;
-}
-
-void ToUART2Fifo_out(const char character) {
-	UART2Fifo.out[UART2Fifo.out_write_pos] = character;
-	UART2Fifo.out_write_pos = (UART2Fifo.out_write_pos + 1) % UART2Fifo.bufsize;
-	UART2Fifo.out_nchar++;
-}
-
-int FromUART2Fifo_in(void) {
-	int in = -1;
-
-	if (UART2Fifo.in_nchar > 0) {
-		in = UART2Fifo.in[UART2Fifo.in_read_pos];
-		UART2Fifo.in_read_pos =
-			(UART2Fifo.in_read_pos + 1) % UART2Fifo.bufsize;
-		UART2Fifo.in_nchar--;
-	}
-
-	return in;
-}
-
-inline int FromUART2Fifo_out(void) {
-	int in = -1;
-
-	if (UART2Fifo.out_nchar > 0) {
-		in = UART2Fifo.out[UART2Fifo.out_read_pos];
-		UART2Fifo.out_read_pos =
-			(UART2Fifo.out_read_pos + 1) % UART2Fifo.bufsize;
-		UART2Fifo.out_nchar--;
-	}
-
-	return in;
-}
-
-void UART2SendTrigger(void) {
-	//if (send == 0) {
-	INTEnable(INT_SOURCE_UART_TX (UART2), INT_ENABLED);
-	send = 1;
-	//}
-}
-
-void UART2Send(const char *buffer, UINT32 size) {
-	while (size) {
-		ToUART2Fifo_out(*buffer);
-		buffer++;
-		size--;
-	}
-	UART2SendTrigger();
-
-	if(UART2Fifo.out_block)
-		while(UART2Fifo.out_nchar > 0)
-			;
-}
-
-void UART2PutStr(const char *buffer) {
-	UART2Send(buffer, strlen (buffer));
+	mprintf(".");
 }
 
 void __ISR (_UART2_VECTOR, IPL2SOFT) IntUart2Handler(void) {
-	int val;
+	char ch;
 
-	// Is this an RX interrupt?
+	/* RX interrupt */
 	if (INTGetFlag (INT_SOURCE_UART_RX(UART2))) {
-		//mLED_1_On();
-		val = UARTGetDataByte(UART2);
-		ToUART2Fifo_in((const char)val);
+		ch = (char)UARTGetDataByte(UART2);
+		uart_fifo_push(&uart2_fifo.fifo_in, (char)ch);
 		INTClearFlag(INT_SOURCE_UART_RX(UART2));
 	}
 
-	// We don't care about TX interrupt
+	/* TX interrupt */
 	if (INTGetFlag(INT_SOURCE_UART_TX(UART2))) {
-		val = FromUART2Fifo_out();
-		if (val > 0) {
-			// darf eigendlich nie anliegen
+		if (uart_fifo_pop(&uart2_fifo.fifo_out, &ch) < 0)
+			INTEnable(INT_SOURCE_UART_TX (UART2), INT_DISABLED);
+		else {
 			while (!UARTTransmitterIsReady(UART2))
 				;
 
-			UARTSendDataByte(UART2, val);
+			UARTSendDataByte(UART2, ch);
 			INTClearFlag(INT_SOURCE_UART_TX(UART2));
-			send = 1;
-		} else {
-			send = 0;
-			INTEnable(INT_SOURCE_UART_TX (UART2), INT_DISABLED);
 		}
 	}
 }
@@ -199,9 +125,7 @@ void SendDataBuffer(const char *buffer, UINT32 size) {
 			;
 
 		UARTSendDataByte(UART2, *buffer);
-
 		mPORTAToggleBits(BIT_10);
-
 		buffer++;
 		size--;
 	}
@@ -210,38 +134,54 @@ void SendDataBuffer(const char *buffer, UINT32 size) {
 		;
 }
 
-int UARTInit(UART_MODULE uart) {
-	UARTConfigure(uart, UART_ENABLE_PINS_TX_RX_ONLY | UART_ENABLE_HIGH_SPEED);
+int uart_poll(void) {
+	static char cmd[MAX_BUF], *p = cmd;
+	char ch;
 
- 	UARTSetFifoMode(uart, UART_INTERRUPT_ON_TX_NOT_FULL |
-				UART_INTERRUPT_ON_RX_NOT_EMPTY);
+	*p = 0;
+	if (uart2_fifo.fifo_in.nchar == 0)
+		return 0;
 
-	UARTSetLineControl(uart, UART_DATA_SIZE_8_BITS | UART_PARITY_NONE |
-				UART_STOP_BITS_1);
+	if (uart_fifo_pop(&uart2_fifo.fifo_in, &ch) < 0)
+		return 0;
 
-	UARTSetDataRate(uart, GetPeripheralClock(), 115200);
+	*p++ = ch;
+	uart2_send(&ch, 1);
+	*p = 0;
 
-	UARTEnable(uart, UART_ENABLE_FLAGS (UART_PERIPHERAL | UART_RX | UART_TX));
+	if ((int)(p - cmd) >= 100) {
+		p = cmd;
+		*p = 0;
+		mprintf("\r\nerror: command too long... resetting\r\n> ");
+	}
 
-	/* Configure uart RX Interrupt */
-	INTEnable(INT_SOURCE_UART_RX(uart), INT_ENABLED);
+	if ((unsigned char)ch == '\r') {
+		struct CmdFunc *CmdPtr;
 
-	/* INTEnable (INT_SOURCE_UART_TX (uart), INT_ENABLED); */
-	INTSetVectorPriority(INT_VECTOR_UART(uart), INT_PRIORITY_LEVEL_2);
+		*--p = 0;
+		mprintf("\n");
+		for (CmdPtr = Cmds; CmdPtr->cmdName; CmdPtr++) {
+			if (!strncmp(cmd, CmdPtr->cmdName, MAX_BUF)) {
+				CmdPtr->funcPtr();
+				goto ok;
+			}
+		}
 
-	INTSetVectorSubPriority(INT_VECTOR_UART(uart), INT_SUB_PRIORITY_LEVEL_0);
+		mprintf("%s: command not found\r\n", cmd);
+
+ok:
+		mprintf("> ");
+		p = cmd;
+		*p = 0;
+	}
 
 	return 0;
 }
 
 int main(void) {
-	int val;
-	char cmd[MAX_BUF], *p = cmd;
-	struct CmdFunc *CmdPtr;
 
-	UART2FifoInit(1);
-
-	UARTInit(UART2);
+	uart_fifo_init(&uart2_fifo, MAX_BUF, MAX_BUF, UART_BLOCKING);
+	uart_init(UART2);
 
 	/* Configure PB frequency and wait states */
 	SYSTEMConfigPerformance(40000000L);
@@ -270,73 +210,33 @@ int main(void) {
 	while (TMR1 < DELAY)
 		;
 
-	UART2PutStr("\r\nHallo NOKLAB!\r\n> ");
+	mprintf("\r\nHallo NOKLAB!\r\n> ");
 
-/*#define DELAYA 22156
-	T1CON = 0x8030;
-	PR1 = 0xffff;
-	TMR1 = 0;
-	while (TMR1 < DELAYA)
-		;
-*/
-	*p = 0;
-	while (1) {
-		if (UART2Fifo.in_nchar == 0)
-			continue;
-		
-		val = FromUART2Fifo_in();
-		if (val < 0)
-			continue;
+	if (process_queue_init(&p_main_queue, uart_poll, "uart_poll", 10) < 0)
+		mprintf("error: unable to allocate memory\r\n> ");
 
-		*p++ = (unsigned char)val;
-		UART2Send((char *)&val, 1);
-		*p = 0;
-
-		if ((int)(p - val) >= 100) {
-			p = cmd;
-			*p = 0;
-			UART2PutStr("error: command too long... resetting\r\n");
-		}
-
-		if ((unsigned char)val == '\r') {
-			*--p = 0;
-			UART2PutStr("\n");
-			for (CmdPtr = Cmds; CmdPtr->cmdName; CmdPtr++) {
-				if (!strncmp(cmd, CmdPtr->cmdName, MAX_BUF)) {
-					CmdPtr->funcPtr();
-					goto ok;
-				}
-			}
-
-			UART2PutStr(cmd);
-			UART2PutStr(": command not found\r\n");
-
-ok:
-			UART2PutStr("> ");
-			p = cmd;
-			*p = 0;
-		}
-	}
+	while (1)
+		process_run_queue(p_main_queue);
 }
 
 int CmdDump(void) {
 	char c;
 
-	c = UART2Fifo.in_nchar + '0';
-	UART2PutStr("UART2Fifo.in_nchar = ");
-	UART2Send(&c, 1);
-	UART2PutStr("\r\n");
+	c = uart2_fifo.fifo_in.nchar + '0';
+	mprintf("uart2_fifo.in_nchar = %c\r\n", c);
 
-	c = UART2Fifo.out_nchar + '0';
-	UART2PutStr("UART2Fifo.out_nchar = ");
-	UART2Send(&c, 1);
-	UART2PutStr("\r\n");
+	c = uart2_fifo.fifo_out.nchar + '0';
+	mprintf("uart2_fifo.out_nchar = %c\r\n");
 
 	return 0;
 }
 
-int CmdLs(void) {
-	UART2PutStr(". ..\r\n");
+int CmdTimer(void) {
+	//SYSTEMConfig(SYS_FREQ, SYS_CFG_WAIT_STATES | SYS_CFG_PCACHE);
+
+	ConfigIntTimer1(T1_INT_ON | T1_INT_PRIOR_2);
+
+	INTEnableSystemMultiVectoredInt();
 
 	return 0;
 }
@@ -344,12 +244,13 @@ int CmdLs(void) {
 int CmdHelp(void) {
 	struct CmdFunc *CmdPtr;
 
-	UART2PutStr("available commands:\r\n");
+	mprintf("Available Commands:\r\n-------------------\r\n");
 	for(CmdPtr = Cmds; CmdPtr->cmdName; CmdPtr++) {
-		UART2PutStr("       ");
-		UART2PutStr(CmdPtr->cmdName);
-		UART2PutStr("\r\n");
+		mprintf("       ");
+		mprintf(CmdPtr->cmdName);
+		mprintf("\r\n");
 	}
+	mprintf("-------------------\r\n");
 
 	return 0;
 }
