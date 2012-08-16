@@ -22,14 +22,14 @@ BIN2HEX = xc32-bin2hex
 AR      = xc32-ar
 
 # compiler config
-OPTIMIZE ?= -Os -mips16e
+OPTIMIZE ?=  -mips16e
 #OPTIMIZE ?=  -mips16e
 #CFLAGS  = -g $(OPTIMIZE) -mprocessor=$(PROC) "-I$(APPLIB_PATH)/Include" -I.
 #CFLAGS  = -g $(OPTIMIZE) -mprocessor=$(PROC)  -I.
-CFLAGS  = -g $(OPTIMIZE) -std=gnu99 -mprocessor=$(PROC)  -I.
-LDFLAGS = -g $(OPTIMIZE) -std=gnu99 -mprocessor=$(PROC) -Wl,--report-mem
+#CFLAGS  = -g $(OPTIMIZE) -std=gnu99 -mprocessor=$(PROC)  -I.
+#LDFLAGS = -g $(OPTIMIZE) -std=gnu99 -mprocessor=$(PROC) -Wl,--report-mem
 CFLAGS  = -g $(OPTIMIZE) -mprocessor=$(PROC)  -I.
-LDFLAGS = -g $(OPTIMIZE) -mprocessor=$(PROC) -Wl,--report-mem
+LDFLAGS = -g $(OPTIMIZE) -mprocessor=$(PROC) -Wl,--report-mem,--defsym,_min_heap_size=0x1000
 
 APPLIB = 
 APPLIB_OBJECTS = 

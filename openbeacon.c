@@ -16,7 +16,7 @@ char nickname[17];
                 
 static struct NRF_CFG oldconfig;
 
-#define NICKNAME "PIC32_001"
+#define NICKNAME "PIC32_001000"
 #define OID	0xdeadbeef
 
 void openbeaconSetup(void)
@@ -62,12 +62,13 @@ static void openbeaconSendPacket(uint32_t id, uint32_t seq,
         nrf_set_strength(3);
         uint32touint8p(id, buf+2);
         memcpy(buf+6, nickname, 8);
-        nrf_snd_pkt_crc_encr(16,buf,NULL);
-        if( strlen("hase    ") < 9 )
+        nrf_snd_pkt_crc_encr(16, buf,NULL);
+        if( strlen(nickname) < 9 )
             return;
         buf[1]=0x25;
         memcpy(buf+6, nickname+8, 8);
-        nrf_snd_pkt_crc_encr(16,buf,NULL);
+        _delay_ms(100);
+        nrf_snd_pkt_crc_encr(16, buf,NULL);
     }   
 }
 

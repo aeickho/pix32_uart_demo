@@ -52,14 +52,89 @@ const char mainMenu[] =
   { "Welcome to PIC32 UART Peripheral Library Demo +  nRF24L01+ !\r\n" };
 
 
+#define MAXPACKET   32
+void
+rftransfer_send (uint16_t size, uint8_t * data)
+{
+  uint8_t mac[5] = { 1, 2, 3, 2, 1 };
+  struct NRF_CFG config = {
+    .channel = 81,
+    .txmac = "\x1\x2\x3\x2\x1",
+    .nrmacs = 1,
+    .mac0 = "\x1\x2\x3\x2\x1",
+    .maclen = "\x20",
+  };
+
+  UART2Out ("rftransfer_send\n\r");
+
+
+  static struct NRF_CFG oldconfig;
+  nrf_config_get (&oldconfig);
+
+  nrf_set_channel (81);
+  nrf_set_strength (3);
+  const uint8_t macx[5] = { 1, 2, 3, 2, 1 };
+  nrf_set_tx_mac (sizeof (macx), macx);
+
+
+
+  uint8_t buf[MAXPACKET];
+  buf[0] = 'L';
+  buf[1] = size >> 8;
+  buf[2] = size & 0xFF;
+
+//  uint16_t rand = getRandom () & 0xFFFF;
+  uint16_t rand = 0x5555;
+
+  buf[3] = rand >> 8;
+  buf[4] = rand & 0xFF;
+
+//  nrf_config_set (&config);
+  nrf_snd_pkt_crc (32, buf);	//setup packet
+  _delay_ms (20);
+  uint16_t index = 0;
+  uint8_t i;
+  uint16_t crc = crc16 (data, size);
+
+  while (size)
+    {
+      buf[0] = 'D';
+      buf[1] = index >> 8;
+      buf[2] = index & 0xFF;
+      buf[3] = rand >> 8;
+      buf[4] = rand & 0xFF;
+      for (i = 5; i < MAXPACKET - 2 && size > 0; i++, size--)
+	{
+	  buf[i] = *data++;
+	}
+      index++;
+//      nrf_config_set (&config);
+      nrf_snd_pkt_crc (32, buf);	//data packet
+      _delay_ms (20);
+    }
+
+  buf[0] = 'C';
+  buf[1] = crc >> 8;
+  buf[2] = crc & 0xFF;
+  buf[3] = rand >> 8;
+  buf[4] = rand & 0xFF;
+//  nrf_config_set (&config);
+  nrf_snd_pkt_crc (32, buf);	//setup packet
+  _delay_ms (20);
+
+  nrf_config_set (&oldconfig);
+
+}
+
+
 
 int
 main (void)
 {
-  struct 	NRF_CFG config;
-  uint8_t	buf[16];
-  uint8_t	outBuf[16];
-  uint8_t	cnt;
+  struct NRF_CFG config;
+  uint8_t buf[32];
+  uint8_t outBuf[32];
+  uint16_t cnt;
 
   int c;
 
@@ -142,7 +217,7 @@ main (void)
 
   UART2Out ("nrf_config_set(),");
   config.nrmacs = 1;
-  config.maclen[0] = 16;
+  config.maclen[0] = 32;
   config.channel = 81;
   ultoa (buf, config.channel, 10);
   UART2Out ("cannel: ,");
@@ -151,59 +226,43 @@ main (void)
   nrf_config_set (&config);
   UART2Out ("done\n\r");
 
+  struct NRF_CFG oldconfig;
+
+  struct NRF_CFG config1 = {
+    .channel = 81,
+    .txmac = "\x1\x2\x3\x2\x1",
+    .nrmacs = 1,
+    .mac0 = "\x1\x2\x3\x2\x1",
+    .maclen = "\x20",
+  };
+
+  nrf_config_get (&oldconfig);
+  nrf_config_set (&config1);
+
+
+  buf[0] = 32;
+ 
+  for (c=1;c<32;c++)
+  buf[c] = c;
+
   UART2Out ("read:\n\r");
   cnt = 0;
   do
     {
-      if (cnt++ > 50)
-	{
-	  cnt = 0;
-	  UART2Out ("openbeaconSend(),");
-	  openbeaconSend ();
-	  UART2Out ("done\n\r");
-	}
 
-      if (nrf_rcv_pkt_time (64, sizeof (buf), buf) == 16)
-	{
-	  uint32_t i;
-	  ultoa (outBuf, buf[1], 16);
-	  UART2Out (outBuf);
-	  UART2Out (" ");
+      cnt++;
 
-	  buf[14] = 0;
-	  if (buf[1] == 0x23 || buf[1] == 0x24)
-	    {
-	      i = uint8ptouint32 (buf + 2);
-          //    sprintf(outBuf, "%x",i);
-              ultoa (outBuf, i, 16);
-	      UART2Out (outBuf);
-	      UART2Out (" ");
 
-	      UART2Out ((char *) (buf + 6));
-	      UART2Out ("\n\r");
-	    }
-	  if (buf[1] == 0x17)
-	    {
-	      char b[10];
-	      i = uint8ptouint32 (buf + 8);
-	      //sprintf(outBuf, "%x",i);
-	      ultoa (outBuf, i, 16);
-	      UART2Out (outBuf);
-	      UART2Out (" ");
+      buf[2] = cnt >> 8;
+      buf[3] = cnt & 0xff;
+      mLED_2_On ();
 
-	      i = uint8ptouint32 (buf + 4);
-	      ultoa (outBuf, i, 10);
-	      UART2Out (outBuf);
-	      UART2Out (" ");
-	      i = buf[3] / 85;
-	      ultoa (outBuf, i, 10);
-	      UART2Out (outBuf);
+      nrf_snd_pkt_crc (32, buf);
+      mLED_2_Off ();
 
-	      UART2Out ("\n\r");
-
-	    }
-
-	}
+//      nrf_config_set (&oldconfig);
+//      nrf_set_strength (3);
+_delay_ms(10); 
     }
   while (1);
 

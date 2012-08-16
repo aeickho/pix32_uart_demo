@@ -82,8 +82,7 @@ SendDataBuffer (const char *buffer, UINT32 size)
       size--;
     }
 
-  while (!UARTTransmissionHasCompleted (UART2))
-    ;
+//  while (!UARTTransmissionHasCompleted (UART2));
 }
 
 void
