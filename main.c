@@ -32,13 +32,13 @@ struct UARTFifo
   int in_write_pos;
   int out_read_pos;
   int out_write_pos;
-  volatile unsigned int in_nchar;
-  volatile unsigned int out_nchar;
+  unsigned int in_nchar;
+  unsigned int out_nchar;
   int bufsize;
   unsigned char *in;
   unsigned char *out;
 
-} UART2Fifo;
+} volatile UART2Fifo;
 
 
 
