@@ -1,17 +1,3 @@
-/*
-	Example "blinkenlights" program for the UBW32 and C32 compiler.
-	Demonstrates software PWM, use of floating-point library, etc.
-
-	IMPORTANT: file 'procdefs.ld' absolutely must Must MUST be present
-	in the working directory when compiling code for the UBW32!  Failure
-	to do so will almost certainly result in your UBW32 getting 'bricked'
-	and requiring re-flashing the bootloader (which, if you don't have a
-	PICkit 2 or similar PIC programmer, you're screwed).
-	YOU HAVE BEEN WARNED.
-
-	2/19/2009 - Phillip Burgess - pburgess@dslextreme.com
-*/
-
 #include <p32xxxx.h>
 #include <plib.h>
 #include <string.h>
@@ -40,7 +26,7 @@ const char mainMenu[] =
   { "Welcome to PIC32 UART Peripheral Library Demo!\r\n" };
 
 
-
+int send = 0;
 struct UARTFifo
 {
   int in_read_pos;
@@ -48,10 +34,10 @@ struct UARTFifo
   int out_read_pos;
   int out_write_pos;
   int in_nchar;
-  int out_nchar;
+  volatile int out_nchar;
   int bufsize;
-  char *in;
-  char *out;
+  unsigned char *in;
+  unsigned char *out;
 
 } UART2Fifo;
 
@@ -86,6 +72,22 @@ ToUART2Fifo_in (const char character)
 void
 ToUART2Fifo_out (const char character)
 {
+
+/*  while (UART2Fifo.out_nchar != 0)
+    {
+      if (UART2Fifo.out_nchar > 0)
+	mLED_1_On ();
+
+      if (UART2Fifo.out_nchar == 1)
+	mLED_2_On ();
+
+
+      mLED_1_Off ();
+
+      mLED_2_Off ();
+    }
+  ;
+*/
   UART2Fifo.out[UART2Fifo.out_write_pos] = character;
   UART2Fifo.out_write_pos = (UART2Fifo.out_write_pos + 1) % UART2Fifo.bufsize;
   UART2Fifo.out_nchar++;
@@ -106,16 +108,18 @@ FromUART2Fifo_in (void)
 
 
 
-__inline__ int
-FromUART2Fifo_out (void)
+int
+FromUART2Fifo_out (unsigned char *character)
 {
   int in = -1;
   if (UART2Fifo.out_nchar > 0)
     {
-      in = UART2Fifo.out[UART2Fifo.out_read_pos];
+      *character = UART2Fifo.out[UART2Fifo.out_read_pos];
       UART2Fifo.out_read_pos =
 	(UART2Fifo.out_read_pos + 1) % UART2Fifo.bufsize;
       UART2Fifo.out_nchar--;
+
+      in = 0;
     }
   return (in);
 }
@@ -123,7 +127,22 @@ FromUART2Fifo_out (void)
 void
 UART2SendTrigger (void)
 {
+//  if (send == 0)
+    {
+/*
+      unsigned char c;
+      int val;
+      val = FromUART2Fifo_out (&c);
+
+      if (val == 0)
+	{
+	  while (U2STAbits.UTXBF);	// darf eigendlich nie anliegen
+	  U2TXREG = (unsigned char) c;
+	}
+*/
       INTEnable (INT_SOURCE_UART_TX (UART2), INT_ENABLED);
+      send = 1;
+    }
 }
 
 void
@@ -141,6 +160,7 @@ UART2Send (const char *buffer, UINT32 size)
 void
 UART2SendChar (const char character)
 {
+
   ToUART2Fifo_out (character);
   UART2SendTrigger ();
 }
@@ -152,12 +172,11 @@ UART2PutStr (const char *buffer)
 }
 
 
-// UART 2 interrupt handler
-// it is set at priority level 2 with software context saving
 void
 __ISR (_UART2_VECTOR, IPL2SOFT)
 IntUart2Handler (void)
 {
+//  mLED_2_On ();
   // Is this an RX interrupt?
   if (INTGetFlag (INT_SOURCE_UART_RX (UART2)))
     {
@@ -168,45 +187,35 @@ IntUart2Handler (void)
   if (INTGetFlag (INT_SOURCE_UART_TX (UART2)))
     {
       int val = -1;
+      unsigned char c;
+
+      val = FromUART2Fifo_out (&c);
 
 
-      val = FromUART2Fifo_out ();
-
-
-      if (val > 0)
+      if (val == 0)
 	{
-	  while (!UARTTransmitterIsReady (UART2));	// darf eigendlich nie anliegen
+//mLED_2_On ();
+	  while (U2STAbits.UTXBF);	// darf eigendlich nie anliegen
+//mLED_2_Off ();
 
-	  UARTSendDataByte (UART2, val);
+	  U2TXREG = (unsigned char) c;
+	  send = 1;
+	  if (UART2Fifo.out_nchar == 0)
+	    {
+	      INTEnable (INT_SOURCE_UART_TX (UART2), INT_DISABLED);
+	      send = 0;
+	    }
 	  INTClearFlag (INT_SOURCE_UART_TX (UART2));
 	}
       else
 	{
 	  INTEnable (INT_SOURCE_UART_TX (UART2), INT_DISABLED);
+	  send = 0;
 	}
     }
+
+//  mLED_2_Off ();
 }
-
-void
-SendDataBuffer (const char *buffer, UINT32 size)
-{
-  while (size)
-    {
-      while (!UARTTransmitterIsReady (UART2))
-	;
-
-      UARTSendDataByte (UART2, *buffer);
-
-      mPORTAToggleBits (BIT_10);
-
-      buffer++;
-      size--;
-    }
-
-  while (!UARTTransmissionHasCompleted (UART2))
-    ;
-}
-
 
 
 int
@@ -214,7 +223,7 @@ main (void)
 {
 
   UART2FifoInit ();
-
+  int ii = 0;
 
   /* Configure PB frequency and wait states */
   SYSTEMConfigPerformance (40000000L);
@@ -224,12 +233,12 @@ main (void)
 //  TRISCbits.TRISC9 = 0;
   UARTConfigure (UART2, UART_ENABLE_PINS_TX_RX_ONLY | UART_ENABLE_HIGH_SPEED);
   UARTSetFifoMode (UART2,
-		   UART_INTERRUPT_ON_TX_NOT_FULL |
+		   UART_INTERRUPT_ON_TX_DONE |
 		   UART_INTERRUPT_ON_RX_NOT_EMPTY);
   UARTSetLineControl (UART2,
 		      UART_DATA_SIZE_8_BITS | UART_PARITY_NONE |
 		      UART_STOP_BITS_1);
-  UARTSetDataRate (UART2, GetPeripheralClock (), 500000);
+  UARTSetDataRate (UART2, GetPeripheralClock (), 9600);
   UARTEnable (UART2, UART_ENABLE_FLAGS (UART_PERIPHERAL | UART_RX | UART_TX));
 
   // Configure UART2 RX Interrupt
@@ -249,18 +258,17 @@ main (void)
 
 
 
-#define DELAY 2156
+#define DELAY 400 //10156
   T1CON = 0x8030;
   PR1 = 0xffff;
   TMR1 = 0;
   while (TMR1 < DELAY);
 
 
-  mLED_2_On ();
 
-  UART2PutStr ("Hallo NOKLAB\r\n");
+  UART2PutStr ("\r\r\n\n\n\rHallo NOKLAB\r\n");
 
-#define DELAYA 22156
+#define DELAYA 1210
   T1CON = 0x8030;
   PR1 = 0xffff;
   TMR1 = 0;
@@ -269,24 +277,43 @@ main (void)
 
   UART2PutStr ("1111111111111111\r\n");
   UART2PutStr ("2222222222222222\r\n");
-  UART2PutStr ("3333333333333333\r\n");
-  UART2PutStr ("4444444444444444\r\n");
-  UART2PutStr ("5555555555555555\r\n");
 
   T1CON = 0x8030;
-    PR1 = 0xffff;
-      TMR1 = 0;
-        while (TMR1 < DELAYA);
-        
-        
-  UART2PutStr ("6666666666666666\r\n");
-  UART2PutStr ("7777777777777777\r\n");
-  UART2PutStr ("8888888888888888\r\n");
+  PR1 = 0xffff;
+  TMR1 = 0;
+  while (TMR1 < DELAY);
+
 
 
 
   while (1)
     {
-      ;
+      char buf[10];
+      UART2SendChar (UART2Fifo.out_nchar+'0');
+      while (UART2Fifo.out_nchar != 0  );
+
+      ultoa (buf, ii++, 10);
+      UART2PutStr (buf);
+      UART2PutStr ("\n\r");
+
+      T1CON = 0x8030;
+      PR1 = 0xffff;
+      TMR1 = 0;
+
+if (send)
+mLED_1_On ()
+else
+mLED_1_Off ()
+
+mLED_2_On ();
+//      while (TMR1 < DELAYA);
+mLED_2_Off ();
+
+
+      T1CON = 0x8030;
+      PR1 = 0xffff;
+      TMR1 = 0;
+//while (TMR1 < DELAYA);
+
     }
 }
