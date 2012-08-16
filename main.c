@@ -26,15 +26,14 @@ const char mainMenu[] =
   { "Welcome to PIC32 UART Peripheral Library Demo!\r\n" };
 
 
-int send = 0;
 struct UARTFifo
 {
   int in_read_pos;
   int in_write_pos;
   int out_read_pos;
   int out_write_pos;
-  int in_nchar;
-  volatile int out_nchar;
+  volatile unsigned int in_nchar;
+  volatile unsigned int out_nchar;
   int bufsize;
   unsigned char *in;
   unsigned char *out;
@@ -72,22 +71,6 @@ ToUART2Fifo_in (const char character)
 void
 ToUART2Fifo_out (const char character)
 {
-
-/*  while (UART2Fifo.out_nchar != 0)
-    {
-      if (UART2Fifo.out_nchar > 0)
-	mLED_1_On ();
-
-      if (UART2Fifo.out_nchar == 1)
-	mLED_2_On ();
-
-
-      mLED_1_Off ();
-
-      mLED_2_Off ();
-    }
-  ;
-*/
   UART2Fifo.out[UART2Fifo.out_write_pos] = character;
   UART2Fifo.out_write_pos = (UART2Fifo.out_write_pos + 1) % UART2Fifo.bufsize;
   UART2Fifo.out_nchar++;
@@ -109,40 +92,35 @@ FromUART2Fifo_in (void)
 
 
 int
-FromUART2Fifo_out (unsigned char *character)
+FromUART2Fifo_out ()
 {
   int in = -1;
   if (UART2Fifo.out_nchar > 0)
     {
-      *character = UART2Fifo.out[UART2Fifo.out_read_pos];
+      in =  UART2Fifo.out[UART2Fifo.out_read_pos];
       UART2Fifo.out_read_pos =
 	(UART2Fifo.out_read_pos + 1) % UART2Fifo.bufsize;
       UART2Fifo.out_nchar--;
-
-      in = 0;
     }
   return (in);
 }
 
-void
+inline int UART2Fifo_out_get_nchar(void)
+{
+return (UART2Fifo.out_nchar);
+}
+
+inline int UART2Fifo_in_get_nchar(void)
+{
+return (UART2Fifo.in_nchar);
+}
+
+
+
+inline void
 UART2SendTrigger (void)
 {
-//  if (send == 0)
-    {
-/*
-      unsigned char c;
-      int val;
-      val = FromUART2Fifo_out (&c);
-
-      if (val == 0)
-	{
-	  while (U2STAbits.UTXBF);	// darf eigendlich nie anliegen
-	  U2TXREG = (unsigned char) c;
-	}
-*/
       INTEnable (INT_SOURCE_UART_TX (UART2), INT_ENABLED);
-      send = 1;
-    }
 }
 
 void
@@ -187,34 +165,26 @@ IntUart2Handler (void)
   if (INTGetFlag (INT_SOURCE_UART_TX (UART2)))
     {
       int val = -1;
-      unsigned char c;
 
-      val = FromUART2Fifo_out (&c);
+      val = FromUART2Fifo_out();
 
 
-      if (val == 0)
+      if (val > -1)
 	{
-//mLED_2_On ();
 	  while (U2STAbits.UTXBF);	// darf eigendlich nie anliegen
-//mLED_2_Off ();
 
-	  U2TXREG = (unsigned char) c;
-	  send = 1;
+	  U2TXREG = (unsigned char) val;
 	  if (UART2Fifo.out_nchar == 0)
 	    {
 	      INTEnable (INT_SOURCE_UART_TX (UART2), INT_DISABLED);
-	      send = 0;
 	    }
 	  INTClearFlag (INT_SOURCE_UART_TX (UART2));
 	}
       else
 	{
 	  INTEnable (INT_SOURCE_UART_TX (UART2), INT_DISABLED);
-	  send = 0;
 	}
     }
-
-//  mLED_2_Off ();
 }
 
 
@@ -238,7 +208,7 @@ main (void)
   UARTSetLineControl (UART2,
 		      UART_DATA_SIZE_8_BITS | UART_PARITY_NONE |
 		      UART_STOP_BITS_1);
-  UARTSetDataRate (UART2, GetPeripheralClock (), 9600);
+  UARTSetDataRate (UART2, GetPeripheralClock (), 500000);
   UARTEnable (UART2, UART_ENABLE_FLAGS (UART_PERIPHERAL | UART_RX | UART_TX));
 
   // Configure UART2 RX Interrupt
@@ -289,8 +259,10 @@ main (void)
   while (1)
     {
       char buf[10];
+
       UART2SendChar (UART2Fifo.out_nchar+'0');
-      while (UART2Fifo.out_nchar != 0  );
+
+      while (UART2Fifo_out_get_nchar() != 0  );
 
       ultoa (buf, ii++, 10);
       UART2PutStr (buf);
@@ -299,15 +271,6 @@ main (void)
       T1CON = 0x8030;
       PR1 = 0xffff;
       TMR1 = 0;
-
-if (send)
-mLED_1_On ()
-else
-mLED_1_Off ()
-
-mLED_2_On ();
-//      while (TMR1 < DELAYA);
-mLED_2_Off ();
 
 
       T1CON = 0x8030;
