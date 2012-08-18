@@ -1,6 +1,8 @@
 #include <p32xxxx.h>
 #include <plib.h>
 #include <string.h>
+#include <stdint.h>
+
 
 #define SystemClock()                        (40000000ul)
 #define GetPeripheralClock()            (SystemClock()/(1 << OSCCONbits.PBDIV))
@@ -97,7 +99,7 @@ FromUART2Fifo_out ()
   int in = -1;
   if (UART2Fifo.out_nchar > 0)
     {
-      in =  UART2Fifo.out[UART2Fifo.out_read_pos];
+      in = UART2Fifo.out[UART2Fifo.out_read_pos];
       UART2Fifo.out_read_pos =
 	(UART2Fifo.out_read_pos + 1) % UART2Fifo.bufsize;
       UART2Fifo.out_nchar--;
@@ -105,14 +107,16 @@ FromUART2Fifo_out ()
   return (in);
 }
 
-inline int UART2Fifo_out_get_nchar(void)
+inline int
+UART2Fifo_out_get_nchar (void)
 {
-return (UART2Fifo.out_nchar);
+  return (UART2Fifo.out_nchar);
 }
 
-inline int UART2Fifo_in_get_nchar(void)
+inline int
+UART2Fifo_in_get_nchar (void)
 {
-return (UART2Fifo.in_nchar);
+  return (UART2Fifo.in_nchar);
 }
 
 
@@ -120,7 +124,7 @@ return (UART2Fifo.in_nchar);
 inline void
 UART2SendTrigger (void)
 {
-      INTEnable (INT_SOURCE_UART_TX (UART2), INT_ENABLED);
+  INTEnable (INT_SOURCE_UART_TX (UART2), INT_ENABLED);
 }
 
 void
@@ -158,6 +162,10 @@ IntUart2Handler (void)
   // Is this an RX interrupt?
   if (INTGetFlag (INT_SOURCE_UART_RX (UART2)))
     {
+      if (U2STAbits.URXDA)
+	{
+	  ToUART2Fifo_in (U2RXREG);
+	}
       INTClearFlag (INT_SOURCE_UART_RX (UART2));
     }
 
@@ -166,7 +174,7 @@ IntUart2Handler (void)
     {
       int val = -1;
 
-      val = FromUART2Fifo_out();
+      val = FromUART2Fifo_out ();
 
 
       if (val > -1)
@@ -195,6 +203,8 @@ main (void)
   UART2FifoInit ();
   int ii = 0;
 
+  char 	  inBuf[100];
+  uint8_t inBufCnt=0;
   /* Configure PB frequency and wait states */
   SYSTEMConfigPerformance (40000000L);
   RPC9R = 2;
@@ -228,7 +238,7 @@ main (void)
 
 
 
-#define DELAY 400 //10156
+#define DELAY 400		//10156
   T1CON = 0x8030;
   PR1 = 0xffff;
   TMR1 = 0;
@@ -259,14 +269,34 @@ main (void)
   while (1)
     {
       char buf[10];
+      int  tmp;
+      
+      //UART2SendChar (UART2Fifo.out_nchar + '0');
 
-      UART2SendChar (UART2Fifo.out_nchar+'0');
+      while (UART2Fifo_out_get_nchar () != 0);
 
-      while (UART2Fifo_out_get_nchar() != 0  );
+/////////////
+      while ( 1 )
+        {
+        tmp = FromUART2Fifo_in();
+        if ( tmp < 0 )
+          break;
+        inBuf[inBufCnt] = (unsigned char) tmp;
 
+        if (inBuf[inBufCnt] == '\r')
+          {
+          inBuf[++inBufCnt] = 0;
+          UART2PutStr(inBuf);
+          inBufCnt = 0;
+          }
+        else
+          inBufCnt++;  
+        }
+
+//////////////
       ultoa (buf, ii++, 10);
-      UART2PutStr (buf);
-      UART2PutStr ("\n\r");
+//      UART2PutStr (buf);
+//      UART2PutStr ("\n\r");
 
       T1CON = 0x8030;
       PR1 = 0xffff;
