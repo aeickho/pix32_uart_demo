@@ -42,10 +42,6 @@ struct UARTFifo
 
 } volatile UART2Fifo;
 
-int volatile irqcntA;
-int volatile irqcntB;
-int volatile irqcntC;
-int volatile outcnt;
 
 // Init output fifo
 void
@@ -79,7 +75,6 @@ ToUART2Fifo_out (const char character)
   UART2Fifo.out[UART2Fifo.out_write_pos] = character;
   UART2Fifo.out_write_pos = (UART2Fifo.out_write_pos + 1) % UART2Fifo.bufsize;
   UART2Fifo.out_nchar++;
-  outcnt++;
 }
 
 int
@@ -162,7 +157,6 @@ void
 __ISR (_UART2_VECTOR, IPL2SOFT)
 IntUart2Handler (void)
 {
-  irqcntA++;
   if (INTGetFlag (INT_SOURCE_UART_RX (UART2)))
     {
 
@@ -175,10 +169,8 @@ IntUart2Handler (void)
 
   if (INTGetFlag (INT_SOURCE_UART_TX (UART2)))
     {
-   irqcntB++; 
       if (UART2Fifo.out_nchar == 0)
 	{
-
 	  INTEnable (INT_SOURCE_UART_TX (UART2), INT_DISABLED);
 	}
       else
@@ -186,9 +178,9 @@ IntUart2Handler (void)
 	  while (UART2Fifo.out_nchar > 0)
 	    {
 	      if (U2STAbits.UTXBF)
-	      {	  irqcntC++;
-
-		break;}
+		{
+		  break;
+		}
 	      U2TXREG = (char) FromUART2Fifo_out ();
 	    }
 	}
@@ -202,9 +194,6 @@ main (void)
 
   UART2FifoInit ();
   int ii = 0;
-
-  char inBuf[100];
-  uint8_t inBufCnt = 0;
   /* Configure PB frequency and wait states */
   SYSTEMConfigPerformance (40000000L);
   RPC9R = 2;
@@ -216,11 +205,10 @@ main (void)
 		   UART_INTERRUPT_ON_TX_BUFFER_EMPTY |
 		   UART_INTERRUPT_ON_RX_NOT_EMPTY);
   UARTSetLineControl (UART2,
-		      UART_DATA_SIZE_8_BITS | UART_PARITY_NONE |
-		      UART_STOP_BITS_1);
+		      UART_DATA_SIZE_8_BITS | UART_PARITY_NONE
+		      | UART_STOP_BITS_1);
   UARTSetDataRate (UART2, GetPeripheralClock (), 500000);
   UARTEnable (UART2, UART_ENABLE_FLAGS (UART_PERIPHERAL | UART_RX | UART_TX));
-
   // Configure UART2 RX Interrupt
   INTEnable (INT_SOURCE_UART_RX (UART2), INT_ENABLED);
 //  INTEnable (INT_SOURCE_UART_TX (UART2), INT_ENABLED);
@@ -235,48 +223,29 @@ main (void)
   LATBbits.LATB15 = 0;
   TRISBbits.TRISB15 = 0;
 //  mPORTASetPinsDigitalOut (BIT_10);
-
-irqcntA=0;
-irqcntB=0;
-irqcntC=0;
-outcnt=0;
 #define DELAY 400		//10156
   T1CON = 0x8030;
   PR1 = 0xffff;
   TMR1 = 0;
   while (TMR1 < DELAY);
-
-
-
   UART2PutStr ("\r\r\n\n\n\rHallo NOKLAB\r\n");
-
 #define DELAYA 1210
   T1CON = 0x8030;
   PR1 = 0xffff;
   TMR1 = 0;
   while (TMR1 < DELAYA);
-
-
   UART2PutStr ("1111111111111111\r\n");
   UART2PutStr ("2222222222222222\r\n");
-
   T1CON = 0x8030;
   PR1 = 0xffff;
   TMR1 = 0;
   while (TMR1 < DELAY);
-
-
-
-
   while (1)
     {
       char buf[10];
 //      int  tmp;
-
       //UART2SendChar (UART2Fifo.out_nchar + '0');
-
       while (UART2Fifo_out_get_nchar () != 0);
-
 /////////////
 /*
       while ( 1 )
@@ -302,36 +271,13 @@ outcnt=0;
       ultoa (buf, ii++, 10);
       UART2PutStr (buf);
       UART2PutStr (" ");
-      
-      
-      ultoa (buf, outcnt, 10);
-      UART2PutStr (buf);
-      
-      UART2PutStr (" ");
-      
-      
-      ultoa (buf, irqcntA, 10);
-      UART2PutStr (buf);
-      UART2PutStr (" ");
-      
-      ultoa (buf, irqcntB, 10);
-      UART2PutStr (buf);
-      UART2PutStr (" ");
-      
-      ultoa (buf, irqcntC, 10);
-      UART2PutStr (buf);
-      
       UART2PutStr ("\n\r");
-
       T1CON = 0x8030;
       PR1 = 0xffff;
       TMR1 = 0;
-
-
       T1CON = 0x8030;
       PR1 = 0xffff;
       TMR1 = 0;
 //while (TMR1 < DELAYA);
-
     }
 }

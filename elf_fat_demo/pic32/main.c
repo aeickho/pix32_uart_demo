@@ -2,18 +2,18 @@
 /* FAT file system module test program            (C)ChaN, 2008  */
 /*---------------------------------------------------------------*/
 
-
+#include <p32xxxx.h>
+#include <plib.h>
 #include <string.h>
-#include <p24FJ64GA002.h>
-#include "pic24f.h"
+#include <stdint.h>
+
+
 #include "uart.h"
 #include "xprintf.h"
 #include "diskio.h"
 #include "ff.h"
 
-_CONFIG1(JTAGEN_OFF & GCP_OFF & GWRP_OFF & BKBUG_OFF & COE_OFF & ICS_PGx1 & FWDTEN_OFF & WINDIS_OFF & FWPSA_PR32 & WDTPS_PS32768)
-_CONFIG2(IESO_OFF & FNOSC_PRIPLL & FCKSM_CSDCMD & OSCIOFNC_OFF & IOL1WAY_OFF & I2C1SEL_PRI & POSCMOD_HS)
-
+#define FCY 40000000L
 
 DWORD AccSize;			/* Work register for fs command */
 WORD AccFiles, AccDirs;
@@ -47,7 +47,7 @@ void __attribute__((interrupt, auto_psv)) _T1Interrupt (void)
 	BYTE n;
 
 
-	_T1IF = 0;			/* Clear irq flag */
+*****	_T1IF = 0;			/* Clear irq flag */
 	Timer++;			/* Performance counter for this module */
 	disk_timerproc();	/* Drive timer procedure of low level disk I/O module */
 
@@ -173,6 +173,12 @@ static
 void IoInit ()
 {
 	/* Initialize GPIO ports */
+	ANSELA = 0;
+	ANSELB = 0;
+	ANSELC = 0;
+	     
+
+
 	AD1PCFG = 0x1FFF;
 	LATB =  0xD00C;
 	TRISB = 0x1C08;
@@ -221,6 +227,8 @@ int main (void)
 	DIR dir;				/* Directory object */
 	FIL file1, file2;		/* File objects */
 
+	SYSTEMConfigPerformance (FCY);
+	
 
 	IoInit();
 
