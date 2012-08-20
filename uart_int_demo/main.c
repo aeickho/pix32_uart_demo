@@ -42,7 +42,10 @@ struct UARTFifo
 
 } volatile UART2Fifo;
 
-
+int volatile irqcntA;
+int volatile irqcntB;
+int volatile irqcntC;
+int volatile outcnt;
 
 // Init output fifo
 void
@@ -76,6 +79,7 @@ ToUART2Fifo_out (const char character)
   UART2Fifo.out[UART2Fifo.out_write_pos] = character;
   UART2Fifo.out_write_pos = (UART2Fifo.out_write_pos + 1) % UART2Fifo.bufsize;
   UART2Fifo.out_nchar++;
+  outcnt++;
 }
 
 int
@@ -158,10 +162,10 @@ void
 __ISR (_UART2_VECTOR, IPL2SOFT)
 IntUart2Handler (void)
 {
-//  mLED_2_On ();
-  // Is this an RX interrupt?
+  irqcntA++;
   if (INTGetFlag (INT_SOURCE_UART_RX (UART2)))
     {
+
       if (U2STAbits.URXDA)
 	{
 	  ToUART2Fifo_in (U2RXREG);
@@ -169,32 +173,28 @@ IntUart2Handler (void)
       INTClearFlag (INT_SOURCE_UART_RX (UART2));
     }
 
-  // We don't care about TX interrupt
   if (INTGetFlag (INT_SOURCE_UART_TX (UART2)))
     {
-      int val = -1;
-
-      val = FromUART2Fifo_out ();
-
-
-      if (val > -1)
+   irqcntB++; 
+      if (UART2Fifo.out_nchar == 0)
 	{
-	  while (U2STAbits.UTXBF);	// darf eigendlich nie anliegen
 
-	  U2TXREG = (unsigned char) val;
-	  if (UART2Fifo.out_nchar == 0)
-	    {
-	      INTEnable (INT_SOURCE_UART_TX (UART2), INT_DISABLED);
-	    }
-	  INTClearFlag (INT_SOURCE_UART_TX (UART2));
+	  INTEnable (INT_SOURCE_UART_TX (UART2), INT_DISABLED);
 	}
       else
 	{
-	  INTEnable (INT_SOURCE_UART_TX (UART2), INT_DISABLED);
+	  while (UART2Fifo.out_nchar > 0)
+	    {
+	      if (U2STAbits.UTXBF)
+	      {	  irqcntC++;
+
+		break;}
+	      U2TXREG = (char) FromUART2Fifo_out ();
+	    }
 	}
+      INTClearFlag (INT_SOURCE_UART_TX (UART2));
     }
 }
-
 
 int
 main (void)
@@ -203,8 +203,8 @@ main (void)
   UART2FifoInit ();
   int ii = 0;
 
-  char 	  inBuf[100];
-  uint8_t inBufCnt=0;
+  char inBuf[100];
+  uint8_t inBufCnt = 0;
   /* Configure PB frequency and wait states */
   SYSTEMConfigPerformance (40000000L);
   RPC9R = 2;
@@ -213,7 +213,7 @@ main (void)
 //  TRISCbits.TRISC9 = 0;
   UARTConfigure (UART2, UART_ENABLE_PINS_TX_RX_ONLY | UART_ENABLE_HIGH_SPEED);
   UARTSetFifoMode (UART2,
-		   UART_INTERRUPT_ON_TX_DONE |
+		   UART_INTERRUPT_ON_TX_BUFFER_EMPTY |
 		   UART_INTERRUPT_ON_RX_NOT_EMPTY);
   UARTSetLineControl (UART2,
 		      UART_DATA_SIZE_8_BITS | UART_PARITY_NONE |
@@ -236,8 +236,10 @@ main (void)
   TRISBbits.TRISB15 = 0;
 //  mPORTASetPinsDigitalOut (BIT_10);
 
-
-
+irqcntA=0;
+irqcntB=0;
+irqcntC=0;
+outcnt=0;
 #define DELAY 400		//10156
   T1CON = 0x8030;
   PR1 = 0xffff;
@@ -269,13 +271,14 @@ main (void)
   while (1)
     {
       char buf[10];
-      int  tmp;
-      
+//      int  tmp;
+
       //UART2SendChar (UART2Fifo.out_nchar + '0');
 
       while (UART2Fifo_out_get_nchar () != 0);
 
 /////////////
+/*
       while ( 1 )
         {
         tmp = FromUART2Fifo_in();
@@ -291,12 +294,34 @@ main (void)
           }
         else
           inBufCnt++;  
+        
+        break;  
         }
-
+*/
 //////////////
       ultoa (buf, ii++, 10);
-//      UART2PutStr (buf);
-//      UART2PutStr ("\n\r");
+      UART2PutStr (buf);
+      UART2PutStr (" ");
+      
+      
+      ultoa (buf, outcnt, 10);
+      UART2PutStr (buf);
+      
+      UART2PutStr (" ");
+      
+      
+      ultoa (buf, irqcntA, 10);
+      UART2PutStr (buf);
+      UART2PutStr (" ");
+      
+      ultoa (buf, irqcntB, 10);
+      UART2PutStr (buf);
+      UART2PutStr (" ");
+      
+      ultoa (buf, irqcntC, 10);
+      UART2PutStr (buf);
+      
+      UART2PutStr ("\n\r");
 
       T1CON = 0x8030;
       PR1 = 0xffff;
