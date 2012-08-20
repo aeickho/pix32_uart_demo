@@ -66,27 +66,3 @@ _delay_ms (unsigned int length)
 }
 
 
-void
-SendDataBuffer (const char *buffer, UINT32 size)
-{
-  while (size)
-    {
-      while (!UARTTransmitterIsReady (UART2))
-	;
-
-      UARTSendDataByte (UART2, *buffer);
-
-      mPORTAToggleBits (BIT_10);
-
-      buffer++;
-      size--;
-    }
-
-//  while (!UARTTransmissionHasCompleted (UART2));
-}
-
-void
-UART2Out (const char *buffer)
-{
-  SendDataBuffer (buffer, strlen (buffer));
-}

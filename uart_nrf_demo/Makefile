@@ -22,7 +22,7 @@ BIN2HEX = xc32-bin2hex
 AR      = xc32-ar
 
 # compiler config
-OPTIMIZE ?=  -mips16e
+OPTIMIZE ?=  -Os -mips16e
 #OPTIMIZE ?=  -mips16e
 #CFLAGS  = -g $(OPTIMIZE) -mprocessor=$(PROC) "-I$(APPLIB_PATH)/Include" -I.
 #CFLAGS  = -g $(OPTIMIZE) -mprocessor=$(PROC)  -I.
@@ -40,6 +40,7 @@ MAIN    = main
 #LIBS = -l mchp_peripheral_$(PROC)
 
 OBJECTS =	main.o \
+		uart2.o \
 		myspi.o \
 		crc.o \
 		byteorder.o \

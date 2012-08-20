@@ -24,6 +24,7 @@
 #include "myspi.h"
 #include "basic.h"
 #include "byteorder.h"
+#include "uart2.h"
 
 #define SystemClock()                        (40000000ul)
 #define GetPeripheralClock()            (SystemClock()/(1 << OSCCONbits.PBDIV))
@@ -65,7 +66,7 @@ rftransfer_send (uint16_t size, uint8_t * data)
     .maclen = "\x20",
   };
 
-  UART2Out ("rftransfer_send\n\r");
+  UART2PutStr ("rftransfer_send\n\r");
 
 
   static struct NRF_CFG oldconfig;
@@ -139,15 +140,10 @@ main (void)
   int c;
 
   /* Configure PB frequency and wait states */
-  SYSTEMConfigPerformance (40000000L);
+  SYSTEMConfigPerformance (SystemClock());
+  UART2Init(SystemClock());
+  
 
-
-// UART
-  U2RXR = 6;			// UART2
-  RPC9R = 2;			// UART2 
-
-//  TRISCbits.TRISC8 = 1;               // UART2 RX as Input
-//  TRISCbits.TRISC9 = 0;               // UART2 TX as Output
 
 // LED2
   LATAbits.LATA10 = 0;		// LED2
@@ -189,42 +185,29 @@ main (void)
   SPI2CON = 0x8120;
 
 
-// config UART2    
-  UARTConfigure (UART2, UART_ENABLE_PINS_TX_RX_ONLY | UART_ENABLE_HIGH_SPEED);
-  UARTSetFifoMode (UART2,
-		   UART_INTERRUPT_ON_TX_NOT_FULL |
-		   UART_INTERRUPT_ON_RX_NOT_EMPTY);
-  UARTSetLineControl (UART2,
-		      UART_DATA_SIZE_8_BITS | UART_PARITY_NONE |
-		      UART_STOP_BITS_1);
 
-  UARTSetDataRate (UART2, GetPeripheralClock (), 500000);
-
-
-  UARTEnable (UART2, UART_ENABLE_FLAGS (UART_PERIPHERAL | UART_RX | UART_TX));
-
-  UART2Out
+  UART2PutStr
     (".............................................................................hallo\r\n");
-  UART2Out ("Welt\r\n");
+  UART2PutStr ("Welt\r\n");
 
-  UART2Out ("nrf_init(),");
+  UART2PutStr ("nrf_init(),");
   nrf_init ();
-  UART2Out ("done\n\r");
+  UART2PutStr ("done\n\r");
 
-  UART2Out ("openbeaconSend(),");
+  UART2PutStr ("openbeaconSend(),");
   openbeaconSend ();
-  UART2Out ("done\n\r");
+  UART2PutStr ("done\n\r");
 
-  UART2Out ("nrf_config_set(),");
+  UART2PutStr ("nrf_config_set(),");
   config.nrmacs = 1;
   config.maclen[0] = 32;
   config.channel = 81;
   ultoa (buf, config.channel, 10);
-  UART2Out ("cannel: ,");
-  UART2Out (buf);
+  UART2PutStr ("cannel: ,");
+  UART2PutStr (buf);
   memcpy (config.mac0, "\x01\x02\x03\x02\x01", 5);
   nrf_config_set (&config);
-  UART2Out ("done\n\r");
+  UART2PutStr ("done\n\r");
 
   struct NRF_CFG oldconfig;
 
@@ -245,7 +228,7 @@ main (void)
   for (c=1;c<32;c++)
   buf[c] = c;
 
-  UART2Out ("read:\n\r");
+  UART2PutStr ("send:\n\r");
   cnt = 0;
   do
     {
@@ -259,7 +242,13 @@ main (void)
 
       nrf_snd_pkt_crc (32, buf);
       mLED_2_Off ();
-
+      
+         ultoa (buf, cnt, 10);
+  UART2PutStr ("cnt: ");
+  UART2PutStr (buf);
+  UART2PutStr ("\n\r");
+     
+      
 //      nrf_config_set (&oldconfig);
 //      nrf_set_strength (3);
 _delay_ms(10); 

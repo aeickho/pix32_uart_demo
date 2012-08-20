@@ -1,5 +1,22 @@
 #include "uart2.h"
 
+
+#define mLED_1              LATBbits.LATB15
+#define mLED_2              LATAbits.LATA10
+
+#define mGetLED_1()         mLED_1
+#define mGetLED_2()         mLED_2
+
+#define mLED_1_On()         mLED_1 = 1;
+#define mLED_2_On()         mLED_2 = 1;
+
+#define mLED_1_Off()        mLED_1 = 0;   
+#define mLED_2_Off()        mLED_2 = 0;
+
+#define mLED_1_Toggle()     mLED_1 = !mLED_1;
+#define mLED_2_Toggle()     mLED_2 = !mLED_2;
+
+
 struct UARTFifo
 {
   int in_read_pos;
@@ -141,9 +158,12 @@ IntUart2Handler (void)
 
   if (INTGetFlag (INT_SOURCE_UART_TX (UART2)))
     {
+    mLED_1_On();
       if (UART2Fifo.out_nchar == 0)
 	{
+	  mLED_2_On();
 	  INTEnable (INT_SOURCE_UART_TX (UART2), INT_DISABLED);
+	  mLED_2_Off();
 	}
       else
 	{
@@ -157,6 +177,7 @@ IntUart2Handler (void)
 	    }
 	}
       INTClearFlag (INT_SOURCE_UART_TX (UART2));
+      mLED_1_Off();
     }
 }
 

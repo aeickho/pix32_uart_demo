@@ -50,7 +50,7 @@ main (void)
   TMR1 = 0;
   while (TMR1 < DELAY);
   UART2PutStr ("\r\r\n\n\n\rHallo NOKLAB\r\n");
-#define DELAYA 1210
+#define DELAYA 300
   T1CON = 0x8030;
   PR1 = 0xffff;
   TMR1 = 0;
@@ -93,12 +93,10 @@ main (void)
       UART2PutStr (buf);
       UART2PutStr (" ");
       UART2PutStr ("\n\r");
+
       T1CON = 0x8030;
       PR1 = 0xffff;
       TMR1 = 0;
-      T1CON = 0x8030;
-      PR1 = 0xffff;
-      TMR1 = 0;
-//while (TMR1 < DELAYA);
+while (TMR1 < DELAYA);
     }
 }
