@@ -10,7 +10,7 @@
 void
 wl_module_init ()
 {
-  spi_init ();
+  SPI2_init ();
 }
 
 void
@@ -24,14 +24,14 @@ void
 sspSend (unsigned char portNum, const unsigned char *buf, unsigned int length)
 {
   portNum--;
-  spi_transmit_sync (buf, length);
+  SPI2_transmit_sync (buf, length);
 }
 
 void
 sspReceive (unsigned char portNum, unsigned char *buf, unsigned int length)
 {
   portNum--;
-  spi_transfer_sync (buf, buf, length);
+  SPI2_transfer_sync (buf, buf, length);
 }
 
 void
@@ -39,7 +39,7 @@ sspSendReceive (unsigned char portNum, unsigned char *buf,
 		unsigned int length)
 {
   portNum--;
-  spi_transfer_sync (buf, buf, length);
+  SPI2_transfer_sync (buf, buf, length);
 }
 
 

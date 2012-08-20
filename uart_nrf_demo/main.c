@@ -143,46 +143,14 @@ main (void)
   SYSTEMConfigPerformance (SystemClock());
   UART2Init(SystemClock());
   
+  ANSELA = 0;
+  ANSELB = 0;
+  ANSELC = 0;
 
 
 // LED2
   LATAbits.LATA10 = 0;		// LED2
   TRISAbits.TRISA10 = 0;
-
-// SPI2
-  TRISBbits.TRISB5 = 0;		// SD02 as output
-  RPB5R = 4;			// SDO2
-
-  TRISBbits.TRISB13 = 1;	// SDI2 as input
-  SDI2R = 3;			// RPB13;
-
-  TRISBbits.TRISB15 = 0;	// SCK2 as output  (fixed pin)
-  ANSELA = 0;
-  ANSELB = 0;
-  ANSELC = 0;
-
-// CS// CE
-  TRISCbits.TRISC2 = 0;		// CSN as output
-  TRISCbits.TRISC3 = 0;		// CE as output
-
-  CS_HIGH ();			// NO SPI Chip Select
-  CE_LOW ();			// NO Chip Enable Activates RX or TX mode
-
-/*  SPI2CON = 0;
-  SPI2CONbits.MSTEN = 1;
-  SPI2CONbits.CKE = 1;
-//  SPI2CONbits.SMP = 1; 
-  SPI2BRG = 1;
-  SPI2CON2 = 0;
-  SPI2CONbits.ON = 1;
-*/
-/*
- OpenSPI2( SPI_MODE8_ON | MASTER_ENABLE_ON | SEC_PRESCAL_1_1 | PRI_PRESCAL_1_1 | FRAME_ENABLE_OFF | CLK_POL_ACTIVE_HIGH | ENABLE_SDO_PIN , SPI_ENABLE );
- SPI2BRG = 1;
-*/
-  SPI2BRG = 4;
-  SPI2STATCLR = 1 << 6;		// clear SPIROV  
-  SPI2CON = 0x8120;
 
 
 
