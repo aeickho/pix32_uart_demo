@@ -22,6 +22,6 @@ void
 UART2PutStr (const char *buffer);
 
 void
-UART2Init (void);
+UART2Init (uint32_t SystemClock);
 
 #endif

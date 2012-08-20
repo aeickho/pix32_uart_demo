@@ -1,9 +1,5 @@
 #include "uart2.h"
 
-#define GetPeripheralClock()            (SystemClock()/(1 << OSCCONbits.PBDIV))
-#define SystemClock()                   (40000000ul)
-
-
 struct UARTFifo
 {
   int in_read_pos;
@@ -165,8 +161,9 @@ IntUart2Handler (void)
 }
 
 void
-UART2Init (void)
+UART2Init (uint32_t SystemClock)
 {
+  #define GetPeripheralClock()            (SystemClock/(1 << OSCCONbits.PBDIV))
 
   UART2FifoInit ();
 
