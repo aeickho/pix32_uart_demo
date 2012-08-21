@@ -158,6 +158,10 @@ main (void)
     (".............................................................................hallo\r\n");
   UART2PutStr ("Welt\r\n");
 
+
+
+
+
   UART2PutStr ("nrf_init(),");
   nrf_init ();
   UART2PutStr ("done\n\r");
