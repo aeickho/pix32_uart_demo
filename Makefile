@@ -29,14 +29,17 @@ p_queue.o: p_queue.c p_queue.h
 uart.o: uart.c uart.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
+console.o: console.c uart.h console.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
 printf.o: printf.c uart.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-main.o: main.c
+main.o: main.c uart.h console.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-%.elf: main.o p_queue.o uart.o printf.o
-	$(CC) $(CFLAGS) printf.o uart.o main.o p_queue.o \
+%.elf: main.o console.o p_queue.o uart.o printf.o
+	$(CC) $(CFLAGS) printf.o uart.o main.o p_queue.o console.o \
 		-o $@ -lmchp_peripheral_$(PROC) -lm -lc
 
 write:

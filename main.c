@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "p_queue.h"
+#include "console.h"
 #include "uart.h"
 
 #define mLED_1			LATBbits.LATB15
@@ -34,60 +35,7 @@ int send = 0;
 struct process_queue *p_main_queue;
 struct uart_fifo uart2_fifo;
 
-int CmdHelp(void);
-int CmdTimer(void);
-int CmdDump(void);
-
-int CmdLed1On(void) {
-	mLED_1_On();
-	return 0;
-}
-
-int CmdLed1Off(void) {
-	mLED_1_Off();
-	return 0;
-}
-
-int CmdLed2On(void) {
-	mLED_2_On();
-	return 0;
-}
-
-int CmdLed2Off(void) {
-	mLED_2_Off();
-	return 0;
-}
-
-int CmdPs(void) {
-	struct process_queue_func *p;
-
-	for (p = p_main_queue->p_queue; p; p = p->next)
-		mprintf("%s", p->func_name);
-
-	mprintf("\r\n");
-	return 0;
-}
-
-int CmdReset(void) {
-	//__asm__()
-	return 0;
-}
-
-struct CmdFunc {
-	char *cmdName;
-	int (*funcPtr)(void);
-} Cmds[] = {
-	{ "help",	CmdHelp		},
-	{ "dump",	CmdDump		},
-	{ "reset",	CmdReset	},
-	{ "timer",	CmdTimer	},
-	{ "ps",		CmdPs		},
-	{ "led1 on",	CmdLed1On	},
-	{ "led1 off",	CmdLed1Off	},
-	{ "led2 on",	CmdLed2On	},
-	{ "led2 off",	CmdLed2Off	},
-	{ NULL,		NULL		}
-};
+extern struct cmd_funcs cmd_head[];
 
 void __ISR(_TIMER_1_VECTOR, IPL2SOFT) Timer1Handler(void) {
 	mT1ClearIntFlag();
@@ -119,21 +67,6 @@ void __ISR (_UART2_VECTOR, IPL2SOFT) IntUart2Handler(void) {
 	}
 }
 
-void SendDataBuffer(const char *buffer, UINT32 size) {
-	while (size) {
-		while (!UARTTransmitterIsReady(UART2))
-			;
-
-		UARTSendDataByte(UART2, *buffer);
-		mPORTAToggleBits(BIT_10);
-		buffer++;
-		size--;
-	}
-	
-	while (!UARTTransmissionHasCompleted(UART2))
-		;
-}
-
 int uart_poll(void) {
 	static char cmd[MAX_BUF], *p = cmd;
 	char ch;
@@ -156,13 +89,13 @@ int uart_poll(void) {
 	}
 
 	if ((unsigned char)ch == '\r') {
-		struct CmdFunc *CmdPtr;
+		struct cmd_funcs *cmd_ptr;
 
 		*--p = 0;
 		mprintf("\n");
-		for (CmdPtr = Cmds; CmdPtr->cmdName; CmdPtr++) {
-			if (!strncmp(cmd, CmdPtr->cmdName, MAX_BUF)) {
-				CmdPtr->funcPtr();
+		for (cmd_ptr = cmd_head; cmd_ptr->cmd_name; cmd_ptr++) {
+			if (!strncmp(cmd, cmd_ptr->cmd_name, MAX_BUF)) {
+				cmd_ptr->func_ptr();
 				goto ok;
 			}
 		}
@@ -217,40 +150,4 @@ int main(void) {
 
 	while (1)
 		process_run_queue(p_main_queue);
-}
-
-int CmdDump(void) {
-	char c;
-
-	c = uart2_fifo.fifo_in.nchar + '0';
-	mprintf("uart2_fifo.in_nchar = %c\r\n", c);
-
-	c = uart2_fifo.fifo_out.nchar + '0';
-	mprintf("uart2_fifo.out_nchar = %c\r\n");
-
-	return 0;
-}
-
-int CmdTimer(void) {
-	//SYSTEMConfig(SYS_FREQ, SYS_CFG_WAIT_STATES | SYS_CFG_PCACHE);
-
-	ConfigIntTimer1(T1_INT_ON | T1_INT_PRIOR_2);
-
-	INTEnableSystemMultiVectoredInt();
-
-	return 0;
-}
-
-int CmdHelp(void) {
-	struct CmdFunc *CmdPtr;
-
-	mprintf("Available Commands:\r\n-------------------\r\n");
-	for(CmdPtr = Cmds; CmdPtr->cmdName; CmdPtr++) {
-		mprintf("       ");
-		mprintf(CmdPtr->cmdName);
-		mprintf("\r\n");
-	}
-	mprintf("-------------------\r\n");
-
-	return 0;
 }
