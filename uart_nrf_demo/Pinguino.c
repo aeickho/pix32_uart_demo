@@ -56,6 +56,19 @@ delay_1ms (void)
   return;
 }
 
+void
+delay_7us (void)
+{
+#define DELAYU 1
+  T1CON = 0x8030;
+  PR1 = 0xffff;
+  TMR1 = 0;
+  while (TMR1 < DELAYU);
+
+
+  return;
+}
+
 
 void
 _delay_ms (unsigned int length)

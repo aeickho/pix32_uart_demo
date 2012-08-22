@@ -27,7 +27,7 @@ void sspSendReceive (unsigned char portNum, unsigned char *buf,
 void SendDataBuffer (const char *buffer, UINT32 size);
 void UART2Out (const char *buffer);
 
-
+void delay_7us(void);
 void delay_1ms (void);
 void _delay_ms (unsigned int length);
             

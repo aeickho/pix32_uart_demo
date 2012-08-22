@@ -140,9 +140,9 @@ main (void)
   int c;
 
   /* Configure PB frequency and wait states */
-  SYSTEMConfigPerformance (SystemClock());
-  UART2Init(SystemClock());
-  
+  SYSTEMConfigPerformance (SystemClock ());
+  UART2Init (SystemClock ());
+
   ANSELA = 0;
   ANSELB = 0;
   ANSELC = 0;
@@ -196,34 +196,31 @@ main (void)
 
 
   buf[0] = 32;
- 
-  for (c=1;c<32;c++)
-  buf[c] = c;
+
+  for (c = 1; c < 32; c++)
+    buf[c] = c;
 
   UART2PutStr ("send:\n\r");
   cnt = 0;
   do
     {
-
       cnt++;
-
 
       buf[2] = cnt >> 8;
       buf[3] = cnt & 0xff;
       mLED_2_On ();
-
       nrf_snd_pkt_crc (32, buf);
       mLED_2_Off ();
-      
-         ultoa (buf, cnt, 10);
-  UART2PutStr ("cnt: ");
-  UART2PutStr (buf);
-  UART2PutStr ("\n\r");
-     
-      
+
+      ultoa (buf, cnt, 10);
+      UART2PutStr ("cnt: ");
+      UART2PutStr (buf);
+      UART2PutStr ("\n\r");
+
+
 //      nrf_config_set (&oldconfig);
 //      nrf_set_strength (3);
-_delay_ms(10); 
+//  _delay_ms(10); 
     }
   while (1);
 

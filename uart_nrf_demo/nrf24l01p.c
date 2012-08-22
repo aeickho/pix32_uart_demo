@@ -249,9 +249,25 @@ int nrf_rcv_pkt_time_encr(int maxtime, int maxsize, uint8_t * pkt, uint32_t cons
 
 
 char nrf_snd_pkt_crc_encr(int size, uint8_t * pkt, uint32_t const key[4]){
+    uint8_t ret;
+    
+    while(1)
+    {
+    ret=nrf_cmd_status(C_NOP);
+    if ((ret & R_STATUS_TX_FULL) == 0)
+        {
+        break;
+        }
+    CE_HIGH();
+    delay_7us();
+    delay_7us();
+    CE_LOW();
+    } 
 
     if(size > MAX_PKT)
         size=MAX_PKT;
+
+    
 
     nrf_write_reg(R_CONFIG,
             R_CONFIG_PWR_UP|  // Power on
@@ -271,7 +287,9 @@ char nrf_snd_pkt_crc_encr(int size, uint8_t * pkt, uint32_t const key[4]){
     CS_HIGH();
 
     CE_HIGH();
-    _delay_ms(1); // Send it.  (only needs >10ys, i think)
+//    _delay_ms(1); // Send it.  (only needs >10ys, i think)
+    delay_7us();
+    delay_7us();
     CE_LOW();
 
     return nrf_cmd_status(C_NOP);
