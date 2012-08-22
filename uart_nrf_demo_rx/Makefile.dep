@@ -1,0 +1,28 @@
+nrf24l01p.o: nrf24l01p.c ../basic/basic.h ../core/gpio/gpio.h \
+ ../core/projectconfig.h ../core/lpc134x.h ../core/sysdefs.h \
+ ../core/../sysdefs.h ../core/projectconfig.h ../core/adc/adc.h \
+ ../basic/uuid.h ../basic/idle.h ../basic/simpletime.h nrf24l01p.h \
+ ../core/ssp/ssp.h ../basic/xxtea.h
+rftransfer.o: rftransfer.c rftransfer.h nrf24l01p.h ../basic/basic.h \
+ ../core/gpio/gpio.h ../core/projectconfig.h ../core/lpc134x.h \
+ ../core/sysdefs.h ../core/../sysdefs.h ../core/projectconfig.h \
+ ../core/adc/adc.h ../basic/uuid.h ../basic/idle.h ../basic/simpletime.h \
+ ../basic/random.h ../core/systick/systick.h ../lcd/print.h
+filetransfer.o: filetransfer.c nrf24l01p.h filetransfer.h rftransfer.h \
+ ../basic/basic.h ../core/gpio/gpio.h ../core/projectconfig.h \
+ ../core/lpc134x.h ../core/sysdefs.h ../core/../sysdefs.h \
+ ../core/projectconfig.h ../core/adc/adc.h ../basic/uuid.h \
+ ../basic/idle.h ../basic/simpletime.h ../basic/xxtea.h \
+ ../filesystem/ff.h ../filesystem/integer.h ../filesystem/ffconf.h \
+ ../lcd/print.h
+openbeacon.o: openbeacon.c ../funk/openbeacon.h ../funk/nrf24l01p.h \
+ ../basic/byteorder.h ../sysdefs.h ../filesystem/ff.h \
+ ../filesystem/integer.h ../filesystem/ffconf.h ../basic/uuid.h \
+ ../basic/config.h ../basic/random.h ../SECRETS
+mesh.o: mesh.c ../sysdefs.h ../core/sysinit.h ../core/projectconfig.h \
+ ../core/lpc134x.h ../core/sysdefs.h ../core/../sysdefs.h \
+ ../core/gpio/gpio.h ../core/projectconfig.h ../core/systick/systick.h \
+ ../basic/basic.h ../core/adc/adc.h ../basic/uuid.h ../basic/idle.h \
+ ../basic/simpletime.h ../funk/mesh.h ../funk/nrf24l01p.h \
+ ../basic/byteorder.h ../basic/random.h ../basic/config.h ../lcd/print.h \
+ ../SECRETS
