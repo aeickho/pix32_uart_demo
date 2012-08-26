@@ -20,12 +20,6 @@
 #pragma config FPLLMUL = MUL_20, FPLLIDIV = DIV_2, FPLLODIV = DIV_1, FWDTEN = OFF
 #pragma config POSCMOD = HS, FNOSC = PRIPLL, FPBDIV = DIV_8
 
-#define SYS_FREQ		(80000000L)
-#define PB_DIV			8
-#define PRESCALE		256
-#define TOGGLES_PER_SEC		1
-#define T1_TICK			(SYS_FREQ/PB_DIV/PRESCALE/TOGGLES_PER_SEC)
-
 #define MAX_BUF			128
 
 int mprintf(const char *format, ...);
@@ -40,7 +34,7 @@ extern struct cmd_funcs cmd_head[];
 void __ISR(_TIMER_1_VECTOR, IPL2SOFT) Timer1Handler(void) {
 	mT1ClearIntFlag();
 
-	mprintf(".");
+	mLED_1 = !mLED_1;
 }
 
 void __ISR (_UART2_VECTOR, IPL2SOFT) IntUart2Handler(void) {
@@ -68,6 +62,7 @@ void __ISR (_UART2_VECTOR, IPL2SOFT) IntUart2Handler(void) {
 }
 
 int uart_poll(void) {
+	struct cmd_funcs *cmd_ptr;
 	static char cmd[MAX_BUF], *p = cmd;
 	char ch;
 
@@ -78,34 +73,48 @@ int uart_poll(void) {
 	if (uart_fifo_pop(&uart2_fifo.fifo_in, &ch) < 0)
 		return 0;
 
-	*p++ = ch;
-	uart2_send(&ch, 1);
-	*p = 0;
-
-	if ((int)(p - cmd) >= 100) {
+/*	if (ch >= 32 && ch < 127) {
+		*p++ = ch;
+		uart2_send(&ch, 1);
+		*p = 0;
+	}
+       
+	if ((int)(p - cmd) >= MAX_BUF-1) {
 		p = cmd;
 		*p = 0;
 		mprintf("\r\nerror: command too long... resetting\r\n> ");
 	}
+*/
 
-	if ((unsigned char)ch == '\r') {
-		struct cmd_funcs *cmd_ptr;
-
-		*--p = 0;
-		mprintf("\n");
-		for (cmd_ptr = cmd_head; cmd_ptr->cmd_name; cmd_ptr++) {
-			if (!strncmp(cmd, cmd_ptr->cmd_name, MAX_BUF)) {
-				cmd_ptr->func_ptr();
-				goto ok;
+	switch(ch) {
+		case 127:
+			if (p - cmd >= 1) {
+				*--p = 0;
+				mprintf("\b \b");
 			}
-		}
+			break;
+		case '\r':
+			*p = 0;
+			mprintf("\r\n");
+			for (cmd_ptr = cmd_head; cmd_ptr->cmd_name; cmd_ptr++) {
+				if (!strncmp(cmd, cmd_ptr->cmd_name, MAX_BUF)) {
+					cmd_ptr->func_ptr();
+					goto ok;
+				}
+			}
 
-		mprintf("%s: command not found\r\n", cmd);
-
+			mprintf("%s: command not found\r\n", cmd);
 ok:
-		mprintf("> ");
-		p = cmd;
-		*p = 0;
+			mprintf("> ");
+			p = cmd;
+			*p = 0;
+
+			break;
+		default:
+			*p++ = ch;
+			uart2_send(&ch, 1);
+			*p = 0;
+			break;
 	}
 
 	return 0;
@@ -134,7 +143,6 @@ int main(void) {
 	TRISAbits.TRISA10 = 0;
 	LATBbits.LATB15   = 0;
 	TRISBbits.TRISB15 = 0;
-	/* mPORTASetPinsDigitalOut (BIT_10); */
 
 #define DELAY 2156
 	T1CON = 0x8030;
