@@ -17,6 +17,13 @@
 #define mLED_1_Toggle()		mLED_1 = !mLED_1
 #define mLED_2_Toggle()		mLED_2 = !mLED_2
 
+#define SYS_FREQ		(80000000L)
+#define PB_DIV			8
+#define PRESCALE		256
+#define TOGGLES_PER_SEC		1
+#define T1_TICK			(SYS_FREQ/PB_DIV/PRESCALE/TOGGLES_PER_SEC)
+
+
 #define MAX_BUF			128
 
 int mprintf(const char *format, ...);
@@ -28,14 +35,22 @@ int cmd_Led2Off(void);
 int cmd_Ps(void);
 int cmd_Reset(void);
 int cmd_Dump(void);
-int cmd_Timer(void);
+int cmd_timer_start(void);
+int cmd_timer_stop(void);
+int cmd_timer_inc(void);
+int cmd_timer_dec(void);
 int cmd_Help(void);
+
+int timer1_tick = T1_TICK;
 
 struct cmd_funcs cmd_head[] =		{
 	{ "help",	cmd_Help	},
 	{ "dump",	cmd_Dump	},
 	{ "reset",	cmd_Reset	},
-	{ "timer",	cmd_Timer	},
+	{ "start timer", cmd_timer_start},
+	{ "stop timer",	cmd_timer_stop	},
+	{ "inc timer",	cmd_timer_inc	},
+	{ "dec timer",	cmd_timer_dec	},
 	{ "ps",		cmd_Ps		},
 	{ "led1 on",	cmd_Led1On	},
 	{ "led1 off",	cmd_Led1Off	},
@@ -95,12 +110,45 @@ int cmd_Dump(void) {
 	return 0;
 }
 
-int cmd_Timer(void) {
-	//SYSTEMConfig(SYS_FREQ, SYS_CFG_WAIT_STATES | SYS_CFG_PCACHE);
+int cmd_timer_start(void) {
+	OpenTimer1(T1_ON | T1_SOURCE_INT | T1_PS_1_256, T1_TICK);
 
 	ConfigIntTimer1(T1_INT_ON | T1_INT_PRIOR_2);
 
 	INTEnableSystemMultiVectoredInt();
+	mprintf("timer started with T1_TICK = %d\r\n", T1_TICK);
+
+	return 0;
+}
+
+int cmd_timer_dec(void) {
+	CloseTimer1();
+
+	timer1_tick = (int)(timer1_tick * 0.9);
+	OpenTimer1(T1_ON | T1_SOURCE_INT | T1_PS_1_256, timer1_tick);
+	ConfigIntTimer1(T1_INT_ON | T1_INT_PRIOR_2);
+	INTEnableSystemMultiVectoredInt();
+
+	mprintf("timer started with T1_TICK = %d\r\n", timer1_tick);
+
+	return 0;
+}
+
+int cmd_timer_inc(void) {
+	CloseTimer1();
+
+	timer1_tick = (int)(timer1_tick * 1.1);
+	OpenTimer1(T1_ON | T1_SOURCE_INT | T1_PS_1_256, timer1_tick);
+	ConfigIntTimer1(T1_INT_ON | T1_INT_PRIOR_2);
+	INTEnableSystemMultiVectoredInt();
+
+	mprintf("timer started with T1_TICK = %d\r\n", timer1_tick);
+
+	return 0;
+}
+
+int cmd_timer_stop(void) {
+	CloseTimer1();
 
 	return 0;
 }
