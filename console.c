@@ -158,7 +158,7 @@ int cmd_Help(void) {
 
 	mprintf("Available Commands:\r\n-------------------\r\n");
 	for(cmd_ptr = cmd_head; cmd_ptr->cmd_name; cmd_ptr++)
-		mprintf("       %s\r\n", cmd_ptr->cmd_name);
+		mprintf(" %s\r\n", cmd_ptr->cmd_name);
 
 	mprintf("-------------------\r\n");
 
