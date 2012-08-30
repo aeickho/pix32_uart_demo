@@ -1,6 +1,7 @@
 #include <p32xxxx.h>
 #include <plib.h>
 #include <string.h>
+#include <systick.h>
 
 #include "p_queue.h"
 #include "console.h"
@@ -10,13 +11,13 @@
 #define mLED_2			LATAbits.LATA10
 #define mGetLED_1()		mLED_1
 #define mGetLED_2()		mLED_2
-#define mLED_1_On()		mLED_1 = 1
+/*#define mLED_1_On()		mLED_1 = 1
 #define mLED_2_On()		mLED_2 = 1
 #define mLED_1_Off()		mLED_1 = 0
 #define mLED_2_Off()		mLED_2 = 0
 #define mLED_1_Toggle()		mLED_1 = !mLED_1
 #define mLED_2_Toggle()		mLED_2 = !mLED_2
-
+*/
 #pragma config FPLLMUL = MUL_20, FPLLIDIV = DIV_2, FPLLODIV = DIV_1, FWDTEN = OFF
 #pragma config POSCMOD = HS, FNOSC = PRIPLL, FPBDIV = DIV_8
 
@@ -84,7 +85,7 @@ char *strstrip(char *s) {
 
 int uart_poll(void) {
 	struct cmd_funcs *cmd_ptr;
-	static char cmd[MAX_BUF], *p = cmd;
+	static char cmd[MAX_BUF], *p = cmd, *arg;
 	static int escape_code = 0;
 	char ch;
 
@@ -151,9 +152,13 @@ int uart_poll(void) {
 			*p = 0;
 			p = strstrip(cmd);
 			mprintf("\r\n");
+			if((arg = strchr(cmd, ' '))) {
+				*arg='\0';
+				arg++;
+			}
 			for (cmd_ptr = cmd_head; cmd_ptr->cmd_name; cmd_ptr++) {
 				if (!strncmp(p, cmd_ptr->cmd_name, MAX_BUF)) {
-					cmd_ptr->func_ptr();
+					cmd_ptr->func_ptr(arg);
 					goto ok;
 				}
 			}
@@ -251,6 +256,9 @@ int main(void) {
 
 	/* configure for multi-vectored mode */
 	INTConfigureSystem(INT_SYSTEM_CONFIG_MULT_VECTOR);
+	INTEnableSystemMultiVectoredInt();
+
+	systick_init();
 
 	/* enable interrupts */
 	INTEnableInterrupts();
@@ -266,7 +274,8 @@ int main(void) {
 	while (TMR1 < DELAY)
 		;
 
-	mprintf("\r\nHallo NOKLAB!\r\n> ");
+	mprintf("\r\nHallo NOKLAB!\r\n");
+	mprintf("Initializing SD card\r\n> ");
 
 	if (process_queue_init(&p_main_queue, uart_poll, "uart_poll", 10) < 0)
 		mprintf("error: unable to allocate memory\r\n> ");

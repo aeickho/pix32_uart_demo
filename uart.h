@@ -2,8 +2,10 @@
 #define HAVE_UART_H
 
 #define SystemClock()		(40000000ul)
+#ifndef GetPeripheralClock
 #define GetPeripheralClock()	(SystemClock()/(1 << OSCCONbits.PBDIV))
-#define GetInstructionClock()	(SystemClock())
+#endif
+//#define GetInstructionClock()	(SystemClock())
 
 #define UART_BLOCKING 1
 

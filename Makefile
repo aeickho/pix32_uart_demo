@@ -16,7 +16,7 @@ FLASH   = sudo /home/tuxx/mips32/mphidflash -n -r
 PROC    = 32MX220F032D
 CC      = xc32-gcc
 BIN2HEX = xc32-bin2hex
-CFLAGS  = -g -Os -mips16e -mprocessor=$(PROC) -Werror -Wall -Wl,--report-mem,--defsym,_min_heap_size=0x1000
+CFLAGS  = -g -Os -mips16e -mprocessor=$(PROC) -Werror -Wall -Wl,--report-mem,--defsym,_min_heap_size=0x1000 -I../flausch-projects/flauschlib
 
 all: $(HEX)
 
@@ -40,7 +40,7 @@ main.o: main.c uart.h console.h
 
 %.elf: main.o console.o p_queue.o uart.o printf.o
 	$(CC) $(CFLAGS) printf.o uart.o main.o p_queue.o console.o \
-		-o $@ -lmchp_peripheral_$(PROC) -lm -lc
+		-o $@ -lmchp_peripheral_$(PROC) -lm -lc ../flausch-projects/flauschlib/libflausch.a
 
 write:
 	$(FLASH) -w $(HEX)
