@@ -248,8 +248,26 @@ int nrf_rcv_pkt_time_encr(int maxtime, int maxsize, uint8_t * pkt, uint32_t cons
 };
 
 
+//#define mLED_1              LATBbits.LATB15
+#define mLED_2              LATAbits.LATA10
+
+//#define mGetLED_1()         mLED_1
+#define mGetLED_2()         mLED_2
+
+//#define mLED_1_On()         mLED_1 = 1;
+#define mLED_2_On()         mLED_2 = 1;
+
+//#define mLED_1_Off()        mLED_1 = 0;
+#define mLED_2_Off()        mLED_2 = 0;
+
+//#define mLED_1_Toggle()     mLED_1 = !mLED_1;
+#define mLED_2_Toggle()     mLED_2 = !mLED_2;
+
+
 char nrf_snd_pkt_crc_encr(int size, uint8_t * pkt, uint32_t const key[4]){
     uint8_t ret;
+  
+  mLED_2_On();
     
     while(1)
     {
@@ -263,6 +281,7 @@ char nrf_snd_pkt_crc_encr(int size, uint8_t * pkt, uint32_t const key[4]){
     delay_7us();
     CE_LOW();
     } 
+mLED_2_Off();
 
     if(size > MAX_PKT)
         size=MAX_PKT;
@@ -282,15 +301,19 @@ char nrf_snd_pkt_crc_encr(int size, uint8_t * pkt, uint32_t const key[4]){
 //        xxtea_encode_words((uint32_t*)pkt,size/4,key);
 
     CS_LOW();
+//mLED_2_On();
     xmit_spi(C_W_TX_PAYLOAD);
-    sspSend(0,pkt,size);
+    sspSend(0, pkt,size);
+//mLED_2_Off();
     CS_HIGH();
 
     CE_HIGH();
-//    _delay_ms(1); // Send it.  (only needs >10ys, i think)
     delay_7us();
     delay_7us();
     CE_LOW();
+
+    nrf_write_reg(R_STATUS,
+        R_CONFIG_MASK_RX_DR|R_CONFIG_MASK_TX_DS|R_CONFIG_MASK_MAX_RT);
 
     return nrf_cmd_status(C_NOP);
 };

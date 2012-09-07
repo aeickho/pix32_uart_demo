@@ -138,7 +138,9 @@ main (void)
   uint16_t cnt;
   uint16_t bigbuf[32];
   uint16_t bigbufcnt = 0;
-    
+
+  uint16_t old_cnt = 0;
+
   int c;
 
   /* Configure PB frequency and wait states */
@@ -178,8 +180,8 @@ main (void)
   memcpy (config.mac0, "\x01\x02\x03\x02\x01", 5);
   nrf_config_set (&config);
 
- 
-nrf_rcv_pkt_start ();
+
+  nrf_rcv_pkt_start ();
 
   do
     {
@@ -190,20 +192,16 @@ nrf_rcv_pkt_start ();
 	  uint16_t cnt;
 
 	  cnt = buf[2] << 8 | buf[3];
-	  bigbuf[bigbufcnt++] = cnt;
 
-	  if (bigbufcnt == 31)
+	  if (old_cnt != (cnt - 1))
 	    {
-	      for (bigbufcnt = 0; bigbufcnt < 6; bigbufcnt++)
-		{
-		  ultoa (outBuf, bigbuf[bigbufcnt], 10);
-		  UART2PutStr (outBuf);
-		  UART2PutStr (" :");
+	      ultoa (outBuf, cnt, 10);
+	      UART2PutStr (outBuf);
 
-		}
 	      UART2PutStr ("\n\r");
 	      bigbufcnt = 0;
 	    }
+	  old_cnt = cnt;
 	}
     }
   while (1);

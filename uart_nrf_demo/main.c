@@ -32,21 +32,6 @@
 
 
 
-//#define mLED_1              LATBbits.LATB15
-#define mLED_2              LATAbits.LATA10
-
-//#define mGetLED_1()         mLED_1
-#define mGetLED_2()         mLED_2
-
-//#define mLED_1_On()         mLED_1 = 1;
-#define mLED_2_On()         mLED_2 = 1;
-
-//#define mLED_1_Off()        mLED_1 = 0;
-#define mLED_2_Off()        mLED_2 = 0;
-
-//#define mLED_1_Toggle()     mLED_1 = !mLED_1;
-#define mLED_2_Toggle()     mLED_2 = !mLED_2;
-
 
 
 const char mainMenu[] =
@@ -208,9 +193,9 @@ main (void)
 
       buf[2] = cnt >> 8;
       buf[3] = cnt & 0xff;
-      mLED_2_On ();
+//      mLED_2_On ();
       nrf_snd_pkt_crc (32, buf);
-      mLED_2_Off ();
+//      mLED_2_Off ();le
 
       ultoa (buf, cnt, 10);
       UART2PutStr ("cnt: ");

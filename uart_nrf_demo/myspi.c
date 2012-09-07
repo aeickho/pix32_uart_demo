@@ -21,6 +21,10 @@ SPI2_init (void)
 // CS// CE
   TRISCbits.TRISC2 = 0;		// CSN as output
   TRISCbits.TRISC3 = 0;		// CE as output
+// (D10) PGEC3/VREF-/CVREF-/AN1/RPA1/CTED2/PMD6/RA1
+
+  TRISAbits.TRISA1 = 1;	
+  
 
   CS_HIGH ();			// NO SPI Chip Select
   CE_LOW ();			// NO Chip Enable Activates RX or TX mode
