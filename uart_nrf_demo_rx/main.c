@@ -158,8 +158,7 @@ main (void)
 
 
 
-  UART2PutStr
-    (".............................................................................hallo\r\n");
+  UART2PutStr ("...........................hallo\r\n");
   UART2PutStr ("Welt\r\n");
 
 
@@ -180,6 +179,7 @@ main (void)
   memcpy (config.mac0, "\x01\x02\x03\x02\x01", 5);
   nrf_config_set (&config);
 
+  UART2PutStr ("\n\r");
 
   nrf_rcv_pkt_start ();
 
@@ -192,6 +192,13 @@ main (void)
 	  uint16_t cnt;
 
 	  cnt = buf[2] << 8 | buf[3];
+
+	  ultoa (outBuf, cnt, 10);
+      UART2PutStr ("\r");
+      UART2PutStr ("             \r");
+
+	  UART2PutStr (outBuf);
+//	  UART2PutStr ("\n\r");
 
 	  if (old_cnt != (cnt - 1))
 	    {

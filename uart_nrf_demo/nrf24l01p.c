@@ -266,6 +266,8 @@ int nrf_rcv_pkt_time_encr(int maxtime, int maxsize, uint8_t * pkt, uint32_t cons
 
 char nrf_snd_pkt_crc_encr(int size, uint8_t * pkt, uint32_t const key[4]){
     uint8_t ret;
+
+//   UART2PutStr ("NS 1\r\n");
   
   mLED_2_On();
     
@@ -281,7 +283,8 @@ char nrf_snd_pkt_crc_encr(int size, uint8_t * pkt, uint32_t const key[4]){
     delay_7us();
     CE_LOW();
     } 
-mLED_2_Off();
+
+    //UART2PutStr ("NS 1.2\r\n");
 
     if(size > MAX_PKT)
         size=MAX_PKT;
@@ -311,11 +314,20 @@ mLED_2_Off();
     delay_7us();
     delay_7us();
     CE_LOW();
-
+//   UART2PutStr ("NS 1.2\r\n");
+   
     nrf_write_reg(R_STATUS,
         R_CONFIG_MASK_RX_DR|R_CONFIG_MASK_TX_DS|R_CONFIG_MASK_MAX_RT);
 
-    return nrf_cmd_status(C_NOP);
+mLED_2_Off();
+//     UART2PutStr ("NS 2\r\n");
+//for (ret=0;ret<20;ret++)
+//delay_1ms();
+ret=nrf_cmd_status(C_NOP);
+//   UART2PutStr ("NS 2\r\n");
+//     UART2PutStr ("NS 3\r\n");
+
+    return ret;
 };
 
 void nrf_set_rx_mac(int pipe, int rxlen, int maclen, const uint8_t * mac){
@@ -385,9 +397,14 @@ void nrf_config_get(nrfconfig config){
     int i;
 //    nrf_write_reg(R_SETUP_AW,R_SETUP_AW_5);
 
+     //UART2PutStr ("NG 1\r\n");
+     
     config->channel=nrf_read_reg(R_RF_CH);
-
+ //UART2PutStr ("NG 1.1\r\n");
+ 
     config->nrmacs=nrf_read_reg(R_EN_RXADDR);
+     //UART2PutStr ("NG 1.2\r\n");
+     
     if(config->nrmacs & R_EN_RXADDR_ERX_P5 )
         config->nrmacs=6;
     else if(config->nrmacs & R_EN_RXADDR_ERX_P4 )
@@ -415,6 +432,7 @@ void nrf_config_get(nrfconfig config){
     };
 
     nrf_read_long(R_TX_ADDR,5,config->txmac);
+     //UART2PutStr ("NG 2\r\n");
 
 };
 

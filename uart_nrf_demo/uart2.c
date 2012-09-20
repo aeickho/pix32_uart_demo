@@ -25,7 +25,7 @@ UART2FifoInit (void)
   UART2Fifo.out_write_pos = 0;
   UART2Fifo.in_nchar = 0;
   UART2Fifo.out_nchar = 0;
-  UART2Fifo.bufsize = 100;
+  UART2Fifo.bufsize = 300;
 
   UART2Fifo.in = malloc (UART2Fifo.bufsize);
   UART2Fifo.out = malloc (UART2Fifo.bufsize);
@@ -98,94 +98,107 @@ UART2SendTrigger (void)
   INTEnable (INT_SOURCE_UART_TX (UART2), INT_ENABLED);
 }
 
+#define U_STAbits       U2STAbits
+#define U_TXREG         U2TXREG
+
+
 void
 UART2Send (const char *buffer, UINT32 size)
 {
-  while (size)
+/*  while (size)
     {
-      ToUART2Fifo_out (*buffer);
-      buffer++;
-      size--;
-    }
-  UART2SendTrigger ();
+    while(U_STAbits.UTXBF); // wait when buffer is full
+         U_TXREG = *buffer;
+         buffer++;
+         
+ size--;
 }
-
-void
-UART2SendChar (const char character)
-{
-
-  ToUART2Fifo_out (character);
-  UART2SendTrigger ();
 }
-
-void
-UART2PutStr (const char *buffer)
-{
-  UART2Send (buffer, strlen (buffer));
-}
-
-
-void
-__ISR (_UART2_VECTOR, IPL2SOFT)
-IntUart2Handler (void)
-{
-  if (INTGetFlag (INT_SOURCE_UART_RX (UART2)))
-    {
-
-      if (U2STAbits.URXDA)
+*/
+while (UART2Fifo.out_nchar!=0);
+      while (size)
 	{
-	  ToUART2Fifo_in (U2RXREG);
+	  ToUART2Fifo_out (*buffer);
+	  buffer++;
+	  size--;
 	}
-      INTClearFlag (INT_SOURCE_UART_RX (UART2));
+      UART2SendTrigger ();
     }
 
-  if (INTGetFlag (INT_SOURCE_UART_TX (UART2)))
-    {
-      if (UART2Fifo.out_nchar == 0)
-	{
-	  INTEnable (INT_SOURCE_UART_TX (UART2), INT_DISABLED);
-	}
-      else
-	{
-	  while (UART2Fifo.out_nchar > 0)
-	    {
-	      if (U2STAbits.UTXBF)
-		{
-		  break;
-		}
-	      U2TXREG = (char) FromUART2Fifo_out ();
-	    }
-	}
-      INTClearFlag (INT_SOURCE_UART_TX (UART2));
-    }
-}
+  void UART2SendChar (const char character)
+  {
 
-void
-UART2Init (uint32_t SystemClock)
-{
-  #define GetPeripheralClock()            (SystemClock/(1 << OSCCONbits.PBDIV))
+    ToUART2Fifo_out (character);
+    UART2SendTrigger ();
+  }
 
-  UART2FifoInit ();
+  void UART2PutStr (const char *buffer)
+  {
+    UART2Send (buffer, strlen (buffer));
+  }
 
-  RPC9R = 2;
-  U2RXR = 6;
 
-  UARTConfigure (UART2, UART_ENABLE_PINS_TX_RX_ONLY | UART_ENABLE_HIGH_SPEED);
-  UARTSetFifoMode (UART2,
-		   UART_INTERRUPT_ON_TX_BUFFER_EMPTY |
-		   UART_INTERRUPT_ON_RX_NOT_EMPTY);
-  UARTSetLineControl (UART2,
-		      UART_DATA_SIZE_8_BITS | UART_PARITY_NONE
-		      | UART_STOP_BITS_1);
-  UARTSetDataRate (UART2, GetPeripheralClock (), 500000);
-  UARTEnable (UART2, UART_ENABLE_FLAGS (UART_PERIPHERAL | UART_RX | UART_TX));
-  // Configure UART2 RX Interrupt
-  INTEnable (INT_SOURCE_UART_RX (UART2), INT_ENABLED);
+  void __ISR (_UART2_VECTOR, IPL2SOFT) IntUart2Handler (void)
+  {
+    if (INTGetFlag (INT_SOURCE_UART_RX (UART2)))
+      {
+
+	if (U2STAbits.URXDA)
+	  {
+	    ToUART2Fifo_in (U2RXREG);
+	  }
+	INTClearFlag (INT_SOURCE_UART_RX (UART2));
+      }
+
+    if (INTGetFlag (INT_SOURCE_UART_TX (UART2)))
+      {
+	if (UART2Fifo.out_nchar == 0)
+	  {
+	    INTEnable (INT_SOURCE_UART_TX (UART2), INT_DISABLED);
+	  }
+	else
+	  {
+	    while (UART2Fifo.out_nchar > 0)
+	      {
+		if (U2STAbits.UTXBF)
+		  {
+		    break;
+		  }
+		U2TXREG = (char) FromUART2Fifo_out ();
+	      }
+	  }
+	INTClearFlag (INT_SOURCE_UART_TX (UART2));
+      }
+  }
+
+  void UART2Init (uint32_t SystemClock)
+  {
+#define GetPeripheralClock()            (SystemClock/(1 << OSCCONbits.PBDIV))
+
+    UART2FifoInit ();
+
+    RPC9R = 2;
+    U2RXR = 6;
+
+    UARTConfigure (UART2,
+		   UART_ENABLE_PINS_TX_RX_ONLY | UART_ENABLE_HIGH_SPEED);
+    UARTSetFifoMode (UART2,
+		     UART_INTERRUPT_ON_TX_BUFFER_EMPTY |
+		     UART_INTERRUPT_ON_RX_NOT_EMPTY);
+    UARTSetLineControl (UART2,
+			UART_DATA_SIZE_8_BITS | UART_PARITY_NONE |
+			UART_STOP_BITS_1);
+    UARTSetDataRate (UART2, GetPeripheralClock (), 500000);
+    UARTEnable (UART2,
+		UART_ENABLE_FLAGS (UART_PERIPHERAL | UART_RX | UART_TX));
+    // Configure UART2 RX Interrupt
+    INTEnable (INT_SOURCE_UART_RX (UART2), INT_ENABLED);
 //  INTEnable (INT_SOURCE_UART_TX (UART2), INT_ENABLED);
-  INTSetVectorPriority (INT_VECTOR_UART (UART2), INT_PRIORITY_LEVEL_2);
-  INTSetVectorSubPriority (INT_VECTOR_UART (UART2), INT_SUB_PRIORITY_LEVEL_0);
-  // configure for multi-vectored mode
-  INTConfigureSystem (INT_SYSTEM_CONFIG_MULT_VECTOR);
-  // enable interrupts
-  INTEnableInterrupts ();
-}
+    INTSetVectorPriority (INT_VECTOR_UART (UART2), INT_PRIORITY_LEVEL_2);
+    INTSetVectorSubPriority (INT_VECTOR_UART (UART2),
+			     INT_SUB_PRIORITY_LEVEL_0);
+    // configure for multi-vectored mode
+    INTConfigureSystem (INT_SYSTEM_CONFIG_MULT_VECTOR);
+    // enable interrupts
+    INTEnableInterrupts ();
+  }
