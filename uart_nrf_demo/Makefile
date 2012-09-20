@@ -22,8 +22,9 @@ BIN2HEX = xc32-bin2hex
 AR      = xc32-ar
 
 # compiler config
-OPTIMIZE ?=  -Os -mips16e
-#OPTIMIZE ?=  -mips16e
+#OPTIMIZE ?=  -Os -mips16e
+OPTIMIZE ?=  -Os -mips16e 
+##OPTIMIZE ?=  -mips16e
 #CFLAGS  = -g $(OPTIMIZE) -mprocessor=$(PROC) "-I$(APPLIB_PATH)/Include" -I.
 #CFLAGS  = -g $(OPTIMIZE) -mprocessor=$(PROC)  -I.
 #CFLAGS  = -g $(OPTIMIZE) -std=gnu99 -mprocessor=$(PROC)  -I.

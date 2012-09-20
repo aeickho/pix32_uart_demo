@@ -56,8 +56,7 @@ static enum
 static unsigned int _excep_addr;
 
   // this function overrides the normal _weak_ generic handler
-void
- __attribute__((nomips16)) _general_exception_handler (void)
+void __attribute__ ((nomips16)) _general_exception_handler (void)
 {
   register unsigned int i;
 
@@ -216,8 +215,6 @@ main (void)
 
 
 
-
-
   UART2PutStr ("nrf_init(),");
   nrf_init ();
   UART2PutStr ("done\n\r");
@@ -284,7 +281,7 @@ main (void)
 
 //      nrf_config_set (&oldconfig);
 //      nrf_set_strength (3);
-  _delay_ms(1000); 
+      _delay_ms (10);
     }
   while (1);
 

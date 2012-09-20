@@ -298,18 +298,11 @@ char nrf_snd_pkt_crc_encr(int size, uint8_t * pkt, uint32_t const key[4]){
     delay_7us();
     delay_7us();
     CE_LOW();
-//   UART2PutStr ("NS 1.2\r\n");
    
     nrf_write_reg(R_STATUS,
         R_CONFIG_MASK_RX_DR|R_CONFIG_MASK_TX_DS|R_CONFIG_MASK_MAX_RT);
 
-//mLED_2_Off();
-//     UART2PutStr ("NS 2\r\n");
-//for (ret=0;ret<20;ret++)
-//delay_1ms();
-ret=nrf_cmd_status(C_NOP);
-//   UART2PutStr ("NS 2\r\n");
-//     UART2PutStr ("NS 3\r\n");
+   ret=nrf_cmd_status(C_NOP);
 
     return ret;
 };
