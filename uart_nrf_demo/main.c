@@ -264,23 +264,14 @@ main (void)
 
       buf[2] = cnt >> 8;
       buf[3] = cnt & 0xff;
-//      mLED_2_On ();
 
       ultoa (outBuf, cnt, 10);
       UART2PutStr ("\n\r");
-      UART2PutStr ("12345678901234567890");
-      UART2PutStr ("\n\r");
-
       UART2PutStr ("cnt: ");
       UART2PutStr (outBuf);
       UART2PutStr ("\n\r");
 
       nrf_snd_pkt_crc (32, buf);
-//      mLED_2_Off ();le
-
-
-//      nrf_config_set (&oldconfig);
-//      nrf_set_strength (3);
       _delay_ms (10);
     }
   while (1);

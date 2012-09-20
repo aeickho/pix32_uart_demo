@@ -5,6 +5,9 @@
 #include "myspi.h"
 #include "Pinguino.h"
 
+DmaChannel dmaTxChn = DMA_CHANNEL1;	// DMA channel to use for our example
+
+
 void
 SPI2_init (void)
 // Initialize pins for spi communication
@@ -32,6 +35,15 @@ SPI2_init (void)
   SPI2BRG = 4;
   SPI2STATCLR = 1 << 6;		// clear SPIROV  
   SPI2CON = 0x8120;
+
+  DmaChnOpen (dmaTxChn, DMA_CHN_PRI2, DMA_OPEN_DEFAULT);
+  DmaChnSetEventControl (dmaTxChn,
+			 DMA_EV_START_IRQ_EN |
+			 DMA_EV_START_IRQ (_SPI2_TX_IRQ));
+  INTSetVectorPriority (INT_VECTOR_DMA (dmaTxChn), INT_PRIORITY_LEVEL_5);
+
+  INTSetVectorSubPriority (INT_VECTOR_DMA (dmaTxChn),
+			   INT_SUB_PRIORITY_LEVEL_3);
 
 
   ;
@@ -85,7 +97,7 @@ SPI2_transfer_sync (uint8_t * dataout, uint8_t * datain, uint8_t len)
 
   for (i = 0; i < len; i++)
     {
-      
+
       out = dataout[i];
       SPI2BUF = out;
 //      mLED_2_On ();
@@ -123,53 +135,33 @@ void
       DmaTxIntFlag = 1;
       DmaChnClrEvFlags (DMA_CHANNEL1, DMA_EV_BLOCK_DONE);
       INTEnable (INT_SOURCE_DMA (DMA_CHANNEL1), INT_DISABLED);	///   verschoben
-      DmaChnDisable (DMA_CHANNEL1);
+//      DmaChnDisable (DMA_CHANNEL1);
     }
 }
 
 void
 SPI2_transmit_sync (const uint8_t * dataout, uint8_t len)
 {
-  uint8_t i;
-  char buf[10];
-
+  volatile uint8_t i;
 
   if (len > 10)
     {
-      ultoa (buf, len, 10);
-      DmaChannel dmaTxChn = DMA_CHANNEL1;	// DMA channel to use for our example
-      DmaChnOpen (dmaTxChn, DMA_CHN_PRI2, DMA_OPEN_DEFAULT);
-      DmaChnSetEventControl (dmaTxChn,
-			     DMA_EV_START_IRQ_EN |
-			     DMA_EV_START_IRQ (_SPI2_TX_IRQ));
-
       DmaChnSetTxfer (dmaTxChn, dataout, (void *) &SPI2BUF, len, 1, 1);
       DmaChnSetEvEnableFlags (dmaTxChn, DMA_EV_BLOCK_DONE);	// enable the transfer done interrupt, when all buffer transferred
-
-
-      INTSetVectorPriority (INT_VECTOR_DMA (dmaTxChn), INT_PRIORITY_LEVEL_5);
-
-      INTSetVectorSubPriority (INT_VECTOR_DMA (dmaTxChn),
-			       INT_SUB_PRIORITY_LEVEL_3);
 
       DmaTxIntFlag = 0;
 
       INTEnable (INT_SOURCE_DMA (dmaTxChn), INT_ENABLED);
 
- //     INTEnableInterrupts ();
       DmaChnStartTxfer (dmaTxChn, DMA_WAIT_NOT, 0);
       while (!DmaTxIntFlag);
 
-      volatile unsigned char discard=SPI2BUF;
-      SPI2BRG = 4;
+      i = SPI2BUF;		// sonst geht nichts ;-)
       SPI2STATCLR = 1 << 6;	// clear SPIROV  
-      SPI2CON = 0x8120;
-//      SPI2CON = 0x8020;
-
-
     }
   else
     {
+
       for (i = 0; i < len; i++)
 	{
 	  volatile char dummy;
