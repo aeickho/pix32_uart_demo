@@ -52,7 +52,7 @@ static enum
   EXCEP_C2E			// coprocessor 2
 } _excep_code;
 
-static unsigned int _epc_code;
+// static unsigned int _epc_code;
 static unsigned int _excep_addr;
 
   // this function overrides the normal _weak_ generic handler
@@ -121,14 +121,6 @@ const char mainMenu[] =
 void
 rftransfer_send (uint16_t size, uint8_t * data)
 {
-  uint8_t mac[5] = { 1, 2, 3, 2, 1 };
-  struct NRF_CFG config = {
-    .channel = 81,
-    .txmac = "\x1\x2\x3\x2\x1",
-    .nrmacs = 1,
-    .mac0 = "\x1\x2\x3\x2\x1",
-    .maclen = "\x20",
-  };
 
   UART2PutStr ("rftransfer_send\n\r");
 
@@ -198,7 +190,7 @@ main (void)
 {
   struct NRF_CFG config;
   uint8_t buf[32];
-  uint8_t outBuf[32];
+  char outBuf[32];
   uint16_t cnt;
 
   int c;
@@ -238,9 +230,9 @@ main (void)
   config.nrmacs = 1;
   config.maclen[0] = 32;
   config.channel = 81;
-  ultoa (buf, config.channel, 10);
+  ultoa (outBuf, config.channel, 10);
   UART2PutStr ("cannel: ,");
-  UART2PutStr (buf);
+  UART2PutStr (outBuf);
   memcpy (config.mac0, "\x01\x02\x03\x02\x01", 5);
   nrf_config_set (&config);
   UART2PutStr ("done\n\r");
@@ -277,9 +269,13 @@ main (void)
       buf[3] = cnt & 0xff;
 //      mLED_2_On ();
 
-      ultoa (buf, cnt, 10);
+      ultoa (outBuf, cnt, 10);
+      UART2PutStr ("\n\r");
+      UART2PutStr ("12345678901234567890");
+      UART2PutStr ("\n\r");
+
       UART2PutStr ("cnt: ");
-      UART2PutStr (buf);
+      UART2PutStr (outBuf);
       UART2PutStr ("\n\r");
 
       nrf_snd_pkt_crc (32, buf);

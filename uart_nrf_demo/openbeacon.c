@@ -3,6 +3,7 @@
 #include "openbeacon.h"
 #include "nrf24l01p.h"
 #include "byteorder.h"
+#include "Pinguino.h"
 
 #define SAVE_OPENBEACON 1
 const uint8_t mac[5] = {1,2,3,2,1};

@@ -248,28 +248,12 @@ int nrf_rcv_pkt_time_encr(int maxtime, int maxsize, uint8_t * pkt, uint32_t cons
 };
 
 
-//#define mLED_1              LATBbits.LATB15
-#define mLED_2              LATAbits.LATA10
-
-//#define mGetLED_1()         mLED_1
-#define mGetLED_2()         mLED_2
-
-//#define mLED_1_On()         mLED_1 = 1;
-#define mLED_2_On()         mLED_2 = 1;
-
-//#define mLED_1_Off()        mLED_1 = 0;
-#define mLED_2_Off()        mLED_2 = 0;
-
-//#define mLED_1_Toggle()     mLED_1 = !mLED_1;
-#define mLED_2_Toggle()     mLED_2 = !mLED_2;
-
-
 char nrf_snd_pkt_crc_encr(int size, uint8_t * pkt, uint32_t const key[4]){
     uint8_t ret;
 
 //   UART2PutStr ("NS 1\r\n");
   
-  mLED_2_On();
+//  mLED_2_On();
     
     while(1)
     {
@@ -319,7 +303,7 @@ char nrf_snd_pkt_crc_encr(int size, uint8_t * pkt, uint32_t const key[4]){
     nrf_write_reg(R_STATUS,
         R_CONFIG_MASK_RX_DR|R_CONFIG_MASK_TX_DS|R_CONFIG_MASK_MAX_RT);
 
-mLED_2_Off();
+//mLED_2_Off();
 //     UART2PutStr ("NS 2\r\n");
 //for (ret=0;ret<20;ret++)
 //delay_1ms();

@@ -7,8 +7,10 @@
 #include "myspi.h"
 #include "Pinguino.h"
 
+void wl_module_init (void);
+
 void
-wl_module_init ()
+wl_module_init (void)
 {
   SPI2_init ();
 }
@@ -16,7 +18,8 @@ wl_module_init ()
 void
 sspInit (unsigned char portNum, unsigned int dummy1, unsigned int dummy2)
 {
-  portNum + dummy1 + dummy2;
+  volatile int x;  
+  x= portNum + dummy1 + dummy2;
   wl_module_init ();
 }
 

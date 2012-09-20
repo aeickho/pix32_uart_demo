@@ -12,13 +12,13 @@ UART2Fifo_out_get_nchar (void);
 inline int
 UART2Fifo_in_get_nchar (void);
 
-void
+void 
 UART2Send (const char *buffer, UINT32 size);
 
-void
+void 
 UART2SendChar (const char character);
 
-void
+void 
 UART2PutStr (const char *buffer);
 
 void
