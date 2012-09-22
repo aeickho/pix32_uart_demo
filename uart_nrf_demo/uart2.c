@@ -202,7 +202,7 @@ UART2Init (uint32_t SystemClock)
 		      UART_DATA_SIZE_8_BITS | UART_PARITY_NONE |
 		      UART_STOP_BITS_1);
 
-  UARTSetDataRate (UART2, GetPeripheralClock (), 500000);
+  UARTSetDataRate (UART2, GetPeripheralClock (), 921600);
 //  UARTSetDataRate (UART2, GetPeripheralClock (), 115200);
   UARTEnable (UART2, UART_ENABLE_FLAGS (UART_PERIPHERAL | UART_RX | UART_TX));
   // Configure UART2 RX Interrupt
