@@ -41,6 +41,7 @@ MAIN    = main
 #LIBS = -l mchp_peripheral_$(PROC)
 
 OBJECTS =	main.o \
+		uart1.o \
 		uart2.o \
 		myspi.o \
 		crc.o \

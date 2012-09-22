@@ -24,7 +24,7 @@
 #include "myspi.h"
 #include "basic.h"
 #include "byteorder.h"
-#include "uart2.h"
+#include "uart.h"
 
 #define SystemClock()                        (40000000ul)
 #define GetPeripheralClock()            (SystemClock()/(1 << OSCCONbits.PBDIV))
@@ -196,7 +196,13 @@ main (void)
 
   /* Configure PB frequency and wait states */
   SYSTEMConfigPerformance (SystemClock ());
+  UART1Init (SystemClock ());
   UART2Init (SystemClock ());
+
+ INTConfigureSystem (INT_SYSTEM_CONFIG_MULT_VECTOR);
+ INTEnableInterrupts ();
+ 
+
 
   ANSELA = 0;
   ANSELB = 0;

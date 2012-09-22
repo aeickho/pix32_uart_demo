@@ -1,19 +1,7 @@
-#include "uart2.h"
+#include "uart.h"
 
-struct UARTFifo
-{
-  uint16_t in_read_pos;
-  uint16_t in_write_pos;
-  uint16_t out_read_pos;
-  uint16_t out_write_pos;
-  uint16_t in_nchar;
-  uint16_t out_nchar;
-  uint16_t bufsize;
-  uint8_t *in;
-  uint8_t *out;
 
-} volatile UART2Fifo;
-
+volatile struct UARTFifo UART2Fifo;
 
 // Init output fifo
 void
@@ -151,7 +139,7 @@ IntUart2Handler (void)
 #define U_VECTOR        _UART_2_VECTOR
 void
   __attribute__ ((nomips16, interrupt (ipl2),
-		  vector (U_VECTOR))) uart_interrupt (void)
+		  vector (U_VECTOR))) uart2_interrupt (void)
 {
   if (INTGetFlag (INT_SOURCE_UART_RX (UART2)))
     {
@@ -203,15 +191,8 @@ UART2Init (uint32_t SystemClock)
 		      UART_STOP_BITS_1);
 
   UARTSetDataRate (UART2, GetPeripheralClock (), 921600);
-//  UARTSetDataRate (UART2, GetPeripheralClock (), 115200);
   UARTEnable (UART2, UART_ENABLE_FLAGS (UART_PERIPHERAL | UART_RX | UART_TX));
-  // Configure UART2 RX Interrupt
   INTEnable (INT_SOURCE_UART_RX (UART2), INT_ENABLED);
-//  INTEnable (INT_SOURCE_UART_TX (UART2), INT_ENABLED);
   INTSetVectorPriority (INT_VECTOR_UART (UART2), INT_PRIORITY_LEVEL_2);
   INTSetVectorSubPriority (INT_VECTOR_UART (UART2), INT_SUB_PRIORITY_LEVEL_0);
-  // configure for multi-vectored mode
-  INTConfigureSystem (INT_SYSTEM_CONFIG_MULT_VECTOR);
-  // enable interrupts
-  INTEnableInterrupts ();
 }

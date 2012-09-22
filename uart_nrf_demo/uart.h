@@ -6,6 +6,22 @@
 #include <string.h>
 #include <stdint.h>
 
+
+
+struct UARTFifo
+{
+  uint16_t in_read_pos;
+  uint16_t in_write_pos;
+  uint16_t out_read_pos;
+  uint16_t out_write_pos;
+  uint16_t in_nchar;
+  uint16_t out_nchar;
+  uint16_t bufsize;
+  uint8_t *in;
+  uint8_t *out;
+
+}; 
+
 inline int
 UART2Fifo_out_get_nchar (void);
 
