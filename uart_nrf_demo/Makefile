@@ -43,7 +43,7 @@ MAIN    = main
 OBJECTS =	main.o \
 		uart1.o \
 		uart2.o \
-		myspi.o \
+		myspi1.o \
 		crc.o \
 		byteorder.o \
 		Pinguino.o \
