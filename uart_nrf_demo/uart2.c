@@ -72,6 +72,13 @@ FromUART2Fifo_out ()
   return (in);
 }
 
+inline int 
+UART2ReadChar()
+{
+return FromUART2Fifo_in();   
+}
+
+
 inline int
 UART2Fifo_out_get_nchar (void)
 {

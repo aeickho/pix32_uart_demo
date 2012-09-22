@@ -73,6 +73,12 @@ FromUART1Fifo_out ()
   return (in);
 }
 
+inline int 
+UART1ReadChar()
+{
+return FromUART1Fifo_in();
+}
+
 inline int
 UART1Fifo_out_get_nchar (void)
 {
@@ -190,12 +196,8 @@ UART1Init (uint32_t SystemClock)
 		      UART_STOP_BITS_1);
 
   UARTSetDataRate (UART1, GetPeripheralClock (), 921600);
-//  UARTSetDataRate (UART1, GetPeripheralClock (), 115200);
   UARTEnable (UART1, UART_ENABLE_FLAGS (UART_PERIPHERAL | UART_RX | UART_TX));
-  // Configure UART1 RX Interrupt
   INTEnable (INT_SOURCE_UART_RX (UART1), INT_ENABLED);
-//  INTEnable (INT_SOURCE_UART_TX (UART1), INT_ENABLED);
   INTSetVectorPriority (INT_VECTOR_UART (UART1), INT_PRIORITY_LEVEL_2);
   INTSetVectorSubPriority (INT_VECTOR_UART (UART1), INT_SUB_PRIORITY_LEVEL_0);
-  // configure for multi-vectored mode
 }

@@ -213,12 +213,24 @@ main (void)
   LATAbits.LATA10 = 0;		// LED2
   TRISAbits.TRISA10 = 0;
 
+ UART1PutStr
+    (".............................................................................hallo\r\n");
+  UART1PutStr ("UART1 Welt\r\n");
 
 
   UART2PutStr
     (".............................................................................hallo\r\n");
-  UART2PutStr ("Welt\r\n");
+  UART2PutStr ("UART2 Welt\r\n");
 
+
+while (1)
+ {
+ c=UART1ReadChar();
+ if (c>0) UART2SendChar((char) c);
+
+ c=UART2ReadChar();
+ if (c>0) UART1SendChar((char) c);
+ }
 
 
   UART2PutStr ("nrf_init(),");
