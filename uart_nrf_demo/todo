@@ -1,0 +1,14 @@
+1:	uart1 unterstützen
+1.0:	auf hw speed stellen
+1.1:	funktioniert inline?
+1.2:	ist es sinvoll den Pointer auf die fifo stuckt  zu übergeben?
+
+2: 	hw sd block read/write einbinden
+
+
+3: 	DMA SPI read unterstützen
+
+4:	blockread sd mit dma
+
+5:	einfacher uart1 blocktransfer 
+
