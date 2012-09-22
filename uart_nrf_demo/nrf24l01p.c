@@ -37,46 +37,46 @@ rcv_spi (uint8_t * dat)
 void
 nrf_cmd (uint8_t cmd)
 {
-  CS_LOW ();
+  CS_nRF_LOW ();
   xmit_spi (cmd);
-  CS_HIGH ();
+  CS_nRF_HIGH ();
 };
 
 uint8_t
 nrf_cmd_status (uint8_t cmd)
 {
-  CS_LOW ();
+  CS_nRF_LOW ();
   sspSendReceive (0, &cmd, 1);
-  CS_HIGH ();
+  CS_nRF_HIGH ();
   return cmd;
 };
 
 void
 nrf_cmd_rw_long (uint8_t * data, int len)
 {
-  CS_LOW ();
+  CS_nRF_LOW ();
   sspSendReceive (0, data, len);
-  CS_HIGH ();
+  CS_nRF_HIGH ();
 };
 
 
 void
 nrf_write_reg (const uint8_t reg, const uint8_t val)
 {
-  CS_LOW ();
+  CS_nRF_LOW ();
   xmit_spi (C_W_REGISTER | reg);
   xmit_spi (val);
-  CS_HIGH ();
+  CS_nRF_HIGH ();
 };
 
 uint8_t
 nrf_read_reg (const uint8_t reg)
 {
   uint8_t val;
-  CS_LOW ();
+  CS_nRF_LOW ();
   xmit_spi (C_R_REGISTER | reg);
   rcv_spi (&val);
-  CS_HIGH ();
+  CS_nRF_HIGH ();
   return val;
 };
 
@@ -84,40 +84,40 @@ void
 nrf_read_long (const uint8_t cmd, int len, uint8_t * data)
 {
   int i;
-  CS_LOW ();
+  CS_nRF_LOW ();
   xmit_spi (cmd);
   for (i = 0; i < len; i++)
     data[i] = 0x00;
   sspSendReceive (0, data, len);
-  CS_HIGH ();
+  CS_nRF_HIGH ();
 };
 
 void
 nrf_read_pkt (int len, uint8_t * data)
 {
-  CS_LOW ();
+  CS_nRF_LOW ();
   xmit_spi (C_R_RX_PAYLOAD);
   sspReceive (0, data, len);
-  CS_HIGH ();
+  CS_nRF_HIGH ();
 };
 
 void
 nrf_read_pkt_crc (int len, uint8_t * data, uint8_t * crc)
 {
-  CS_LOW ();
+  CS_nRF_LOW ();
   xmit_spi (C_R_RX_PAYLOAD);
   sspReceive (0, data, len);
   sspReceive (0, crc, 2);
-  CS_HIGH ();
+  CS_nRF_HIGH ();
 };
 
 void
 nrf_write_long (const uint8_t cmd, int len, const uint8_t * data)
 {
-  CS_LOW ();
+  CS_nRF_LOW ();
   xmit_spi (cmd);
   sspSend (0, data, len);
-  CS_HIGH ();
+  CS_nRF_HIGH ();
 };
 
 #define nrf_write_reg_long(reg, len, data) \
@@ -136,7 +136,7 @@ nrf_rcv_pkt_start (void)
   nrf_cmd (C_FLUSH_RX);
   nrf_write_reg (R_STATUS, 0);
 
-  CE_HIGH ();
+  CE_nRF_HIGH ();
 };
 
 int
@@ -207,7 +207,7 @@ nrf_rcv_pkt_poll_dec (int maxsize, uint8_t * pkt, uint32_t const key[4])
 void
 nrf_rcv_pkt_end (void)
 {
-  CE_LOW ();
+  CE_nRF_LOW ();
   nrf_cmd (C_FLUSH_RX);
   nrf_write_reg (R_STATUS, R_STATUS_RX_DR);
 };
@@ -230,7 +230,7 @@ nrf_rcv_pkt_time_encr (int maxtime, int maxsize, uint8_t * pkt,
   nrf_cmd (C_FLUSH_RX);
   nrf_write_reg (R_STATUS, 0);
 
-  CE_HIGH ();
+  CE_nRF_HIGH ();
 
 
   for (i = 0; i < maxsize; i++)
@@ -282,8 +282,8 @@ nrf_rcv_pkt_time_encr (int maxtime, int maxsize, uint8_t * pkt,
 	};
     };
 
-  CE_LOW ();
-  CS_HIGH ();
+  CE_nRF_LOW ();
+  CS_nRF_HIGH ();
 
 
   if (maxtime < LOOPY)
@@ -306,10 +306,10 @@ nrf_snd_pkt_crc_encr (int size, uint8_t * pkt, uint32_t const key[4])
 	{
 	  break;
 	}
-      CE_HIGH ();
+      CE_nRF_HIGH ();
       delay_7us ();
       delay_7us ();
-      CE_LOW ();
+      CE_nRF_LOW ();
     }
 
   //UART2PutStr ("NS 1.2\r\n");
@@ -330,15 +330,15 @@ nrf_snd_pkt_crc_encr (int size, uint8_t * pkt, uint32_t const key[4])
 //    if(key !=NULL)
 //        xxtea_encode_words((uint32_t*)pkt,size/4,key);
 
-  CS_LOW ();
+  CS_nRF_LOW ();
   xmit_spi (C_W_TX_PAYLOAD);
   sspSend (0, pkt, size);
-  CS_HIGH ();
+  CS_nRF_HIGH ();
 
-  CE_HIGH ();
+  CE_nRF_HIGH ();
   delay_7us ();
   delay_7us ();
-  CE_LOW ();
+  CE_nRF_LOW ();
 
   nrf_write_reg (R_STATUS,
 		 R_CONFIG_MASK_RX_DR | R_CONFIG_MASK_TX_DS |
@@ -494,11 +494,11 @@ nrf_init ()
 //    gpioSetPullup(&RB_SPI_NRF_CS_IO, gpioPullupMode_Inactive);
 //    gpioSetDir(RB_NRF_CE, gpioDirection_Output);
 //    gpioSetPullup(&RB_NRF_CE_IO, gpioPullupMode_PullUp);
-  CE_LOW ();
+  CE_nRF_LOW ();
 
   // Setup for nrf24l01+
   // power up takes 1.5ms - 3.5ms (depending on crystal)
-  CS_LOW ();
+  CS_nRF_LOW ();
   _delay_ms (5);
   nrf_write_reg (R_CONFIG, R_CONFIG_PRIM_RX |	// Receive mode
 		 R_CONFIG_PWR_UP |	// Power on
@@ -530,18 +530,18 @@ nrf_startCW ()
 //    gpioSetPullup(&RB_SPI_NRF_CS_IO, gpioPullupMode_Inactive);
 //    gpioSetDir(RB_NRF_CE, gpioDirection_Output);
 //    gpioSetPullup(&RB_NRF_CE_IO, gpioPullupMode_PullUp);
-  CE_LOW ();
+  CE_nRF_LOW ();
 
   // Setup for nrf24l01+
   // power up takes 1.5ms - 3.5ms (depending on crystal)
-  CS_LOW ();
+  CS_nRF_LOW ();
 
   nrf_write_reg (R_CONFIG, R_CONFIG_PWR_UP);
   _delay_ms (2);
   nrf_write_reg (R_RF_SETUP, R_RF_SETUP_CONT_WAVE |
 		 R_RF_SETUP_PLL_LOCK | R_RF_SETUP_RF_PWR_3);
   nrf_write_reg (R_RF_CH, 81);
-  CE_HIGH ();
+  CE_nRF_HIGH ();
 }
 
 void

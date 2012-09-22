@@ -5,7 +5,7 @@
 #include "myspi.h"
 #include "Pinguino.h"
 
-DmaChannel dmaTxChn = DMA_CHANNEL1;	// DMA channel to use for our example
+//DmaChannel dmaTxChn = DMA_CHANNEL1;	// DMA channel to use for our example
 
 
 void
@@ -13,20 +13,20 @@ SPI2_init (void)
 // Initialize pins for spi communication
 {
 // SPI2
-  TRISBbits.TRISB5 = 0;		// SD02 as output
-  RPB5R = 4;			// SDO2
+**  TRISBbits.TRISB5 = 0;		// SD02 as output
+**  RPB5R = 4;			// SDO2
 
-  TRISBbits.TRISB13 = 1;	// SDI2 as input
-  SDI2R = 3;			// RPB13;
+**  TRISBbits.TRISB13 = 1;	// SDI2 as input
+**  SDI2R = 3;			// RPB13;
 
-  TRISBbits.TRISB15 = 0;	// SCK2 as output  (fixed pin)
+**  TRISBbits.TRISB15 = 0;	// SCK2 as output  (fixed pin)
 
 // CS// CE
-  TRISCbits.TRISC2 = 0;		// CSN as output
-  TRISCbits.TRISC3 = 0;		// CE as output
+**  TRISCbits.TRISC2 = 0;		// CSN as output
+**  TRISCbits.TRISC3 = 0;		// CE as output
 // (D10) PGEC3/VREF-/CVREF-/AN1/RPA1/CTED2/PMD6/RA1
 
-  TRISAbits.TRISA1 = 1;
+**  TRISAbits.TRISA1 = 1;   // was hat es hiermit aufsich?
 
 
   CS_HIGH ();			// NO SPI Chip Select

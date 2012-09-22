@@ -6,6 +6,8 @@
 #include "Pinguino.h"
 
 DmaChannel dmaTxChn = DMA_CHANNEL1;	// DMA channel to use for our example
+volatile int DmaTxIntFlag;	// flag used in interrupts, signal that DMA transfer ended
+
 
 
 void
@@ -29,8 +31,8 @@ SPI2_init (void)
   TRISAbits.TRISA1 = 1;
 
 
-  CS_HIGH ();			// NO SPI Chip Select
-  CE_LOW ();			// NO Chip Enable Activates RX or TX mode
+  CS_nRF_HIGH ();		// NO SPI Chip Select
+  CE_nRF_LOW ();		// NO Chip Enable Activates RX or TX mode
 
   SPI2BRG = 4;
   SPI2STATCLR = 1 << 6;		// clear SPIROV  
@@ -50,7 +52,7 @@ SPI2_init (void)
 }
 
 void
-SPI1_transfer_sync (uint8_t * dataout, uint8_t * datain, uint8_t len)
+SPI2_transfer_sync (uint8_t * dataout, uint8_t * datain, uint8_t len)
 {
   volatile uint8_t out;
   volatile uint8_t i;
@@ -63,79 +65,6 @@ SPI1_transfer_sync (uint8_t * dataout, uint8_t * datain, uint8_t len)
       while (!SPI2STATbits.SPIRBF);
       dummy = SPI2BUF;
       datain[i] = dummy;
-    }
-}
-
-void
-SPI1_transmit_sync (const uint8_t * dataout, uint8_t len)
-{
-  uint8_t i;
-  volatile char dummy;
-  for (i = 0; i < len; i++)
-    {
-      SPI2BUF = dataout[i];
-      while (!SPI2STATbits.SPIRBF);
-      dummy = SPI2BUF;
-    }
-}
-
-uint8_t
-SPI1_fast_shift (uint8_t data)
-{
-  SPI2BUF = data;
-  while (!SPI2STATbits.SPIRBF);
-  return SPI2BUF;
-}
-
-
-
-void
-SPI2_transfer_sync (uint8_t * dataout, uint8_t * datain, uint8_t len)
-{
-  int out;
-  unsigned char i;
-
-  for (i = 0; i < len; i++)
-    {
-
-      out = dataout[i];
-      SPI2BUF = out;
-//      mLED_2_On ();
-      while (!SPI2STATbits.SPIRBF);
-//      mLED_2_Off ();
-
-
-      char dummy = SPI2BUF;
-      datain[i] = dummy;
-    }
-
-}
-
-volatile int DmaTxIntFlag;	// flag used in interrupts, signal that DMA transfer ended
-
-
-/*void
-__ISR (_DMA1_VECTOR, ipl5)
-DmaHandler1 (void)
-*/
-#define D_VECTOR        _DMA1_VECTOR
-void
-  __attribute__ ((nomips16, interrupt (ipl5),
-		  vector (D_VECTOR))) DmaHandler1 (void)
-{
-  int evFlags;			// event flags when getting the interrupt
-
-  INTClearFlag (INT_SOURCE_DMA (DMA_CHANNEL1));	// acknowledge the INT controller, we're servicing int
-
-
-  evFlags = DmaChnGetEvFlags (DMA_CHANNEL1);	// get the event flags
-
-  if (evFlags & DMA_EV_BLOCK_DONE)
-    {				// just a sanity check. we enabled just the DMA_EV_BLOCK_DONE transfer done interrupt
-      DmaTxIntFlag = 1;
-      DmaChnClrEvFlags (DMA_CHANNEL1, DMA_EV_BLOCK_DONE);
-      INTEnable (INT_SOURCE_DMA (DMA_CHANNEL1), INT_DISABLED);	///   verschoben
-//      DmaChnDisable (DMA_CHANNEL1);
     }
 }
 
@@ -174,11 +103,32 @@ SPI2_transmit_sync (const uint8_t * dataout, uint8_t len)
 
 
 
-
 uint8_t
 SPI2_fast_shift (uint8_t data)
 {
   SPI2BUF = data;
   while (!SPI2STATbits.SPIRBF);
   return SPI2BUF;
+}
+
+
+#define D_VECTOR        _DMA1_VECTOR
+void
+  __attribute__ ((nomips16, interrupt (ipl5),
+		  vector (D_VECTOR))) DmaHandler1 (void)
+{
+  int evFlags;			// event flags when getting the interrupt
+
+  INTClearFlag (INT_SOURCE_DMA (DMA_CHANNEL1));	// acknowledge the INT controller, we're servicing int
+
+
+  evFlags = DmaChnGetEvFlags (DMA_CHANNEL1);	// get the event flags
+
+  if (evFlags & DMA_EV_BLOCK_DONE)
+    {				// just a sanity check. we enabled just the DMA_EV_BLOCK_DONE transfer done interrupt
+      DmaTxIntFlag = 1;
+      DmaChnClrEvFlags (DMA_CHANNEL1, DMA_EV_BLOCK_DONE);
+      INTEnable (INT_SOURCE_DMA (DMA_CHANNEL1), INT_DISABLED);	///   verschoben
+//      DmaChnDisable (DMA_CHANNEL1);
+    }
 }

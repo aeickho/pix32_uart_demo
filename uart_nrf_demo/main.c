@@ -222,7 +222,7 @@ main (void)
     (".............................................................................hallo\r\n");
   UART2PutStr ("UART2 Welt\r\n");
 
-
+/*
 while (1)
  {
  c=UART1ReadChar();
@@ -231,7 +231,7 @@ while (1)
  c=UART2ReadChar();
  if (c>0) UART1SendChar((char) c);
  }
-
+*/
 
   UART2PutStr ("nrf_init(),");
   nrf_init ();

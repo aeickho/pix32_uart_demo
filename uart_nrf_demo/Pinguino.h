@@ -15,16 +15,6 @@
 
 
 
-#define CE  LATCbits.LATC3
-#define CSN LATCbits.LATC2
-
-
-#define CS_LOW()    CSN = 0;
-#define CS_HIGH()   CSN = 1; 
-#define CE_LOW()    CE  = 0; 
-#define CE_HIGH()   CE  = 1; 
-
-
 
 void sspInit (unsigned char portNum, unsigned int dummy1,
 	      unsigned int dummy2);
