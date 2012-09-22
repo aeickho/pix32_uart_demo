@@ -21,7 +21,7 @@ UART2FifoInit (void)
 
 
 // Add one character to output fifo 
-void
+inline void
 ToUART2Fifo_in (const char character)
 {
   UART2Fifo.in[UART2Fifo.in_write_pos] = character;
@@ -57,8 +57,7 @@ FromUART2Fifo_in (void)
 }
 
 
-
-int
+inline int
 FromUART2Fifo_out ()
 {
   int in = -1;
