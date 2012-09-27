@@ -22,8 +22,11 @@ struct UARTFifo
 
 }; 
 
+
+
 inline int UART1ReadChar(void);
 
+int UART1Read(uint8_t *buf, const uint16_t n);
 
 inline int
 UART1Fifo_out_get_nchar (void);
@@ -32,10 +35,10 @@ inline int
 UART1Fifo_in_get_nchar (void);
 
 void 
-UART1Send (const char *buffer, UINT32 size);
+UART1Send (const uint8_t *buffer, UINT32 size);
 
 void 
-UART1SendChar (const char character);
+UART1SendChar (const uint8_t character);
 
 void 
 UART1PutStr (const char *buffer);
@@ -45,6 +48,8 @@ UART1Init (uint32_t SystemClock);
 
 inline int UART2ReadChar(void);
 
+int UART2Read(uint8_t *buf, const uint16_t n);
+
 inline int
 UART2Fifo_out_get_nchar (void);
 
@@ -52,10 +57,10 @@ inline int
 UART2Fifo_in_get_nchar (void);
 
 void 
-UART2Send (const char *buffer, UINT32 size);
+UART2Send (const uint8_t *buffer, UINT32 size);
 
 void 
-UART2SendChar (const char character);
+UART2SendChar (const uint8_t character);
 
 void 
 UART2PutStr (const char *buffer);

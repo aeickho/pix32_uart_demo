@@ -1,5 +1,5 @@
-1:	uart1 unterstützen
-1.0:	auf hw speed stellen
+1:d	uart1 unterstützen
+1.0:d	auf hw speed stellen
 1.1:	funktioniert inline?
 1.2:	ist es sinvoll den Pointer auf die fifo stuckt  zu übergeben?
 

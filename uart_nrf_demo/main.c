@@ -191,17 +191,27 @@ main (void)
   uint8_t buf[32];
   char outBuf[32];
   uint16_t cnt;
+  uint8_t tmpBuf[4];
+
 
   int c;
+
+  char strIn[20];
+
+  const char str_sendblock[] = "sendblock";
+
+  uint8_t *blockbuff;
+
+
 
   /* Configure PB frequency and wait states */
   SYSTEMConfigPerformance (SystemClock ());
   UART1Init (SystemClock ());
   UART2Init (SystemClock ());
 
- INTConfigureSystem (INT_SYSTEM_CONFIG_MULT_VECTOR);
- INTEnableInterrupts ();
- 
+  INTConfigureSystem (INT_SYSTEM_CONFIG_MULT_VECTOR);
+  INTEnableInterrupts ();
+
 
 
   ANSELA = 0;
@@ -213,7 +223,14 @@ main (void)
   LATAbits.LATA10 = 0;		// LED2
   TRISAbits.TRISA10 = 0;
 
- UART1PutStr
+  blockbuff = malloc (512);
+  if (blockbuff == NULL)
+    {
+      UART2PutStr ("cant' malloc\r\n");
+      while (1);
+    }
+
+  UART1PutStr
     (".............................................................................hallo\r\n");
   UART1PutStr ("UART1 Welt\r\n");
 
@@ -221,6 +238,8 @@ main (void)
   UART2PutStr
     (".............................................................................hallo\r\n");
   UART2PutStr ("UART2 Welt\r\n");
+
+
 
 /*
 while (1)
@@ -231,8 +250,8 @@ while (1)
  c=UART2ReadChar();
  if (c>0) UART1SendChar((char) c);
  }
-*/
 
+*/
   UART2PutStr ("nrf_init(),");
   nrf_init ();
   UART2PutStr ("done\n\r");
@@ -276,10 +295,69 @@ while (1)
 
   UART2PutStr ("send:\n\r");
   cnt = 0;
+
+
   do
     {
-      cnt++;
+      c = UART1ReadChar ();
+      if (c > 0)
+	{
+	  int i;
+	  UART2SendChar ((char) c);
+	  if ((char) c == '\n')
+	    {
+	      UART2PutStr ("\n\r--");
+	      UART2PutStr (strIn);
+	      UART2PutStr ("--\n\r");
+	      if (!strncmp (strIn, str_sendblock, strlen (str_sendblock)))
+		{
+		  uint32_t sektor;
+		  uint16_t sender_crc16, calc_crc16;
 
+		  UART2PutStr (">sendblock\n\r");
+		  UART1Read (tmpBuf, 4);
+		  sektor =
+		    tmpBuf[3] << 24 | tmpBuf[2] << 16 | tmpBuf[1] << 8 |
+		    tmpBuf[0];
+
+		  UART1Read (tmpBuf, 2);
+		  sender_crc16 = tmpBuf[1] << 8 | tmpBuf[0];
+
+		  ultoa (outBuf, sender_crc16, 10);
+		  UART2PutStr ("\n\r");
+		  UART2PutStr ("sender crc16: ");
+		  UART2PutStr (outBuf);
+		  UART2PutStr ("\n\r");
+
+		  UART1Read (blockbuff, 512);
+
+		  calc_crc16 = crc16 (blockbuff, 512);
+		  ultoa (outBuf, calc_crc16, 10);
+		  UART2PutStr ("\n\r");
+		  UART2PutStr ("calc crc16: ");
+		  UART2PutStr (outBuf);
+		  UART2PutStr ("\n\r");
+
+
+
+//                UART2Send (blockbuff, 512);
+		  UART2PutStr ("done\n\r");
+
+		}
+
+	      strIn[0] = '\0';
+	      UART1PutStr ("ready\n\r");
+	    }
+	  else if (strlen (strIn) < 17)
+	    {
+	      for (i = 0; i < (17 - 1) && strIn[i] != 0; i++);
+	      strIn[i++] = (char) c;
+	      strIn[i++] = '\0';
+	    }
+
+	}
+
+      cnt++;
       buf[2] = cnt >> 8;
       buf[3] = cnt & 0xff;
 /*
@@ -293,6 +371,5 @@ while (1)
       _delay_ms (10);
     }
   while (1);
-
   return 0;
 }

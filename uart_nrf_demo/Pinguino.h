@@ -30,5 +30,6 @@ void sspSendReceive (unsigned char portNum, unsigned char *buf,
 void delay_7us(void);
 void delay_1ms (void);
 void _delay_ms (unsigned int length);
+void delay_ms (unsigned int length);
             
 #endif

@@ -22,7 +22,7 @@ UART2FifoInit (void)
 
 // Add one character to output fifo 
 inline void
-ToUART2Fifo_in (const char character)
+ToUART2Fifo_in (const uint8_t character)
 {
   UART2Fifo.in[UART2Fifo.in_write_pos] = character;
   UART2Fifo.in_write_pos = (UART2Fifo.in_write_pos + 1);
@@ -32,7 +32,7 @@ ToUART2Fifo_in (const char character)
 }
 
 void
-ToUART2Fifo_out (const char character)
+ToUART2Fifo_out (const uint8_t character)
 {
   UART2Fifo.out[UART2Fifo.out_write_pos] = character;
   UART2Fifo.out_write_pos = (UART2Fifo.out_write_pos + 1);
@@ -101,7 +101,7 @@ UART2SendTrigger (void)
 
 
 void
-UART2Send (const char *buffer, UINT32 size)
+UART2Send (const uint8_t *buffer, UINT32 size)
 {
 /*  while (size)
     {
@@ -124,7 +124,7 @@ UART2Send (const char *buffer, UINT32 size)
 }
 
 void
-UART2SendChar (const char character)
+UART2SendChar (const uint8_t character)
 {
 
   ToUART2Fifo_out (character);
@@ -134,7 +134,7 @@ UART2SendChar (const char character)
 void
 UART2PutStr (const char *buffer)
 {
-  UART2Send (buffer, strlen (buffer));
+   UART2Send ((uint8_t *) buffer, strlen (buffer));
 }
 
 /*

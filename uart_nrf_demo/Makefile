@@ -22,15 +22,16 @@ BIN2HEX = xc32-bin2hex
 AR      = xc32-ar
 
 # compiler config
-#OPTIMIZE ?=  -Os -mips16e
+#-mips16e
 OPTIMIZE ?=  -Os -mips16e 
 ##OPTIMIZE ?=  -mips16e
 #CFLAGS  = -g $(OPTIMIZE) -mprocessor=$(PROC) "-I$(APPLIB_PATH)/Include" -I.
 #CFLAGS  = -g $(OPTIMIZE) -mprocessor=$(PROC)  -I.
 #CFLAGS  = -g $(OPTIMIZE) -std=gnu99 -mprocessor=$(PROC)  -I.
 #LDFLAGS = -g $(OPTIMIZE) -std=gnu99 -mprocessor=$(PROC) -Wl,--report-mem
-CFLAGS  = -g $(OPTIMIZE) -mprocessor=$(PROC)  -I. -Wall
-LDFLAGS = -g $(OPTIMIZE) -mprocessor=$(PROC) -Wl,--report-mem,--defsym,_min_heap_size=0x1000
+CFLAGS  = -g $(OPTIMIZE) -mprocessor=$(PROC)  -I. -Wall  -MMD
+#LDFLAGS = -g $(OPTIMIZE) -mprocessor=$(PROC) -Wl,--report-mem,--defsym,_min_heap_size=0x1000
+LDFLAGS = -g $(OPTIMIZE) -mprocessor=$(PROC) -Wl,--defsym,_min_heap_size=0x1000
 
 APPLIB = 
 APPLIB_OBJECTS = 
@@ -48,6 +49,8 @@ OBJECTS =	main.o \
 		byteorder.o \
 		Pinguino.o \
                 nrf24l01p.o \
+		diskio.o \
+		hw_spi1.o \
 		openbeacon.o
 
 #		xxtea.o
@@ -64,11 +67,12 @@ $(MAIN).hex: $(MAIN).elf
 $(MAIN).elf: $(OBJECTS) $(APPLIB) procdefs.ld
 	$(CC) $(LDFLAGS) $(OBJECTS) $(APPLIB) $(LIBS) -o $(MAIN).elf
 
+
 $(APPLIB): $(APPLIB_OBJECTS)
 	$(AR) -r "$@" $(APPLIB_OBJECTS)
 
-%.o: %.c
-	$(CC) $(CFLAGS) -c "$<" -o "$@"
+#%.o: %.c
+#	$(CC) $(CFLAGS) -c "$<" -o "$@"
 
 write: $(MAIN).hex
 	$(FLASH) -w $(MAIN).hex
@@ -79,3 +83,6 @@ clean:
 
 ctags:
 	$(CC) $(CFLAGS) -c "$(MAIN).c" -M | sed -e 's/[\\ ]/\n/g' | sed -e '/^$$/d' -e '/\.o:[ \t]*$$/d'  | ctags -L - --c++-kinds=+p --fields=+iaS --extra=+q
+
+include $(wildcard *.d)
+

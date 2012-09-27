@@ -22,7 +22,7 @@ UART1FifoInit (void)
 
 // Add one character to output fifo 
 void
-ToUART1Fifo_in (const char character)
+ToUART1Fifo_in (const uint8_t character)
 {
   UART1Fifo.in[UART1Fifo.in_write_pos] = character;
   UART1Fifo.in_write_pos = (UART1Fifo.in_write_pos + 1);
@@ -32,7 +32,7 @@ ToUART1Fifo_in (const char character)
 }
 
 void
-ToUART1Fifo_out (const char character)
+ToUART1Fifo_out (const uint8_t character)
 {
   UART1Fifo.out[UART1Fifo.out_write_pos] = character;
   UART1Fifo.out_write_pos = (UART1Fifo.out_write_pos + 1);
@@ -73,10 +73,26 @@ FromUART1Fifo_out ()
   return (in);
 }
 
-inline int 
-UART1ReadChar()
+inline int
+UART1ReadChar (void)
 {
-return FromUART1Fifo_in();
+  return FromUART1Fifo_in ();
+}
+
+int
+UART1Read (uint8_t * buf, const uint16_t n)
+{
+  int i;
+  int ret;
+
+  for (i = 0; i < n; i++)
+    {
+      do
+	ret = FromUART1Fifo_in ();
+      while (ret < 0);
+
+      buf[i] = (uint8_t) ret;
+    }
 }
 
 inline int
@@ -101,10 +117,11 @@ UART1SendTrigger (void)
 
 
 void
-UART1Send (const char *buffer, UINT32 size)
+UART1Send (const uint8_t * buffer, UINT32 size)
 {
   while (size)
     {
+      while (UART1Fifo.out_nchar > (UART1Fifo.bufsize - 10));
       ToUART1Fifo_out (*buffer);
       buffer++;
       size--;
@@ -113,7 +130,7 @@ UART1Send (const char *buffer, UINT32 size)
 }
 
 void
-UART1SendChar (const char character)
+UART1SendChar (const uint8_t character)
 {
 
   ToUART1Fifo_out (character);
@@ -123,7 +140,7 @@ UART1SendChar (const char character)
 void
 UART1PutStr (const char *buffer)
 {
-  UART1Send (buffer, strlen (buffer));
+  UART1Send ((uint8_t *) buffer, strlen (buffer));
 }
 
 /*
@@ -175,15 +192,15 @@ UART1Init (uint32_t SystemClock)
   UART1FifoInit ();
 // Pinguino
 //U1
-// U1RX (P4)		34: SOSCO/RPA4/RA4/T1CK/CTED9
-// U1TX (P3)		33: SOSCI/RPB4/RB4
+// U1RX (P4)            34: SOSCO/RPA4/RA4/T1CK/CTED9
+// U1TX (P3)            33: SOSCI/RPB4/RB4
 
 //U2
-//D0 (U2RX)		04: RPC8/PMA5/RC8
-//D1 (U2TX)		05: RPC9/CTED7/PMA6/RC9
+//D0 (U2RX)             04: RPC8/PMA5/RC8
+//D1 (U2TX)             05: RPC9/CTED7/PMA6/RC9
 
-  U1RXR = 2    ;// 6;
-  RPB4R = 1   ;///;2;   
+  U1RXR = 2;			// 6;
+  RPB4R = 1;			///;2;   
 
 
 

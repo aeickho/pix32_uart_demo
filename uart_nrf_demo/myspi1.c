@@ -9,7 +9,7 @@
 
 
 void
-SPI2_init (void)
+SPI1_init (void)
 // Initialize pins for spi communication
 {
 // SPI2
@@ -90,7 +90,7 @@ SPI1_fast_shift (uint8_t data)
 
 
 void
-SPI2_transfer_sync (uint8_t * dataout, uint8_t * datain, uint8_t len)
+SPI1_transfer_sync (uint8_t * dataout, uint8_t * datain, uint8_t len)
 {
   int out;
   unsigned char i;

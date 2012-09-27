@@ -81,4 +81,12 @@ _delay_ms (unsigned int length)
     delay_1ms ();
 }
 
+void
+delay_ms (unsigned int length)
+{
+  int i;
+  for (i = 0; i < length; i++)
+    delay_1ms ();
+}
+
 
