@@ -83,7 +83,7 @@ clean:
 	- rm -f *.o *.elf *.hex
 
 ctags:
-	$(CC) $(CFLAGS) -c "$(MAIN).c" -M | sed -e 's/[\\ ]/\n/g' | sed -e '/^$$/d' -e '/\.o:[ \t]*$$/d'  | ctags -L - --c++-kinds=+p --fields=+iaS --extra=+q
+	$(CC) -g -Os  -mprocessor=$(PROC) -M -c $(MAIN).c  | sed -e 's/[\\ ]/\n/g' | sed -e '/^$$/d' -e '/\.o:[ \t]*$$/d'  | ctags -L - --c++-kinds=+p --fields=+iaS --extra=+q
 
 include $(wildcard *.d)
 

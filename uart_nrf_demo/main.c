@@ -30,103 +30,21 @@
 #define GetPeripheralClock()            (SystemClock()/(1 << OSCCONbits.PBDIV))
 #define GetInstructionClock()           (SystemClock())
 
-#define U_STAbits       U2STAbits
-#define U_TXREG         U2TXREG
-
-
-
-
-const char mainMenu[] =
-  { "Welcome to PIC32 UART Peripheral Library Demo +  nRF24L01+ !\r\n" };
-
 
 #define MAXPACKET   32
-void
-rftransfer_send (uint16_t size, uint8_t * data)
-{
-
-  UART2PutStr ("rftransfer_send\n\r");
-
-
-  static struct NRF_CFG oldconfig;
-  nrf_config_get (&oldconfig);
-
-  nrf_set_channel (81);
-  nrf_set_strength (3);
-  const uint8_t macx[5] = { 1, 2, 3, 2, 1 };
-  nrf_set_tx_mac (sizeof (macx), macx);
-
-
-
-  uint8_t buf[MAXPACKET];
-  buf[0] = 'L';
-  buf[1] = size >> 8;
-  buf[2] = size & 0xFF;
-
-//  uint16_t rand = getRandom () & 0xFFFF;
-  uint16_t rand = 0x5555;
-
-  buf[3] = rand >> 8;
-  buf[4] = rand & 0xFF;
-
-//  nrf_config_set (&config);
-  nrf_snd_pkt_crc (32, buf);	//setup packet
-  _delay_ms (20);
-  uint16_t index = 0;
-  uint8_t i;
-  uint16_t crc = crc16 (data, size);
-
-  while (size)
-    {
-      buf[0] = 'D';
-      buf[1] = index >> 8;
-      buf[2] = index & 0xFF;
-      buf[3] = rand >> 8;
-      buf[4] = rand & 0xFF;
-      for (i = 5; i < MAXPACKET - 2 && size > 0; i++, size--)
-	{
-	  buf[i] = *data++;
-	}
-      index++;
-//      nrf_config_set (&config);
-      nrf_snd_pkt_crc (32, buf);	//data packet
-      _delay_ms (20);
-    }
-
-  buf[0] = 'C';
-  buf[1] = crc >> 8;
-  buf[2] = crc & 0xFF;
-  buf[3] = rand >> 8;
-  buf[4] = rand & 0xFF;
-//  nrf_config_set (&config);
-  nrf_snd_pkt_crc (32, buf);	//setup packet
-  _delay_ms (20);
-
-  nrf_config_set (&oldconfig);
-
-}
-
 
 
 int
 main (void)
 {
-  struct NRF_CFG config;
-  uint8_t buf[32];
   char outBuf[32];
-  uint16_t cnt;
-  uint8_t tmpBuf[4];
-
-
-  int c;
-
   char strIn[20];
-
-  const char str_sendblock[] = "sendblock";
-
+  char str_sendblock[] = "sendblock";
+  int c;
+  struct NRF_CFG config;
+  uint16_t cnt;
   uint8_t *blockbuff;
-
-
+  uint8_t buf[32],tmpBuf[4];
 
   /* Configure PB frequency and wait states */
   SYSTEMConfigPerformance (SystemClock ());
@@ -136,12 +54,9 @@ main (void)
   INTConfigureSystem (INT_SYSTEM_CONFIG_MULT_VECTOR);
   INTEnableInterrupts ();
 
-
-
   ANSELA = 0;
   ANSELB = 0;
   ANSELC = 0;
-
 
 // LED2
   LATAbits.LATA10 = 0;		// LED2
@@ -163,21 +78,14 @@ main (void)
     (".............................................................................hallo\r\n");
   UART2PutStr ("UART2 Welt\r\n");
 
+  // try to reset nrf chip
 
-
-/*
-while (1)
- {
- c=UART1ReadChar();
- if (c>0) UART2SendChar((char) c);
-
- c=UART2ReadChar();
- if (c>0) UART1SendChar((char) c);
- }
-
-*/
   UART2PutStr ("nrf_init(),");
+
   nrf_init ();
+  for (c=0;c<100;c++)
+      nrf_cmd_status(C_NOP);
+
   UART2PutStr ("done\n\r");
 
   UART2PutStr ("openbeaconSend(),");
