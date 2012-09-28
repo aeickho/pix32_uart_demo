@@ -51,6 +51,7 @@ OBJECTS =	main.o \
                 nrf24l01p.o \
 		diskio.o \
 		hw_spi1.o \
+		general_exception_handler.o \
 		openbeacon.o
 
 #		xxtea.o
