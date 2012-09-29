@@ -46,6 +46,8 @@ main (void)
   uint8_t *blockbuff;
   uint8_t buf[32],tmpBuf[4];
 
+  portsetup();
+
   /* Configure PB frequency and wait states */
   SYSTEMConfigPerformance (SystemClock ());
   UART1Init (SystemClock ());
@@ -54,13 +56,6 @@ main (void)
   INTConfigureSystem (INT_SYSTEM_CONFIG_MULT_VECTOR);
   INTEnableInterrupts ();
 
-  ANSELA = 0;
-  ANSELB = 0;
-  ANSELC = 0;
-
-// LED2
-  LATAbits.LATA10 = 0;		// LED2
-  TRISAbits.TRISA10 = 0;
 
   blockbuff = malloc (512);
   if (blockbuff == NULL)
@@ -81,20 +76,7 @@ main (void)
   // try to reset nrf chip
 
   UART2PutStr ("nrf_init(),");
-
-  // reset nRF 
-  //RC4
-  LATCbits.LATC4 = 0;          // RC4
-  TRISCbits.TRISC4 = 0;
-  
-  LATBCLR = _LATC_LATC4_MASK;
-  _delay_ms (10);
-  LATBSET = _LATC_LATC4_MASK;  
-     
-
   nrf_init ();
-
-
   UART2PutStr ("done\n\r");
 
   UART2PutStr ("openbeaconSend(),");

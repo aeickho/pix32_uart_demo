@@ -291,11 +291,11 @@ DSTATUS disk_initialize() {
 		s &= ~STA_NOINIT;
 //uart_puts("success\r\n");
 		// 6. increase speed
-/*
-		SPI2CON = 0; // disable the SPI2 module
-		SPI2BRG = 0; // maximum possible baud rate = Fpb/2
-		SPI2CON = 0x8120; // re-enable the SPI2 module
-*/
+
+		SPI1CON = 0; // disable the SPI2 module
+		SPI1BRG = 0; // maximum possible baud rate = Fpb/2
+		SPI1CON = 0x8120; // re-enable the SPI2 module
+
 	} else {
 //uart_puts("fail\r\n");
 		/* Initialization failed */
@@ -398,7 +398,7 @@ PF_BYTE count /* Sector count (1..255) */
 }
 #endif /* _READONLY */
 
-#if 0
+//#if 0
 /*-----------------------------------------------------------------------*/
 /* Miscellaneous Functions                                               */
 /*-----------------------------------------------------------------------*/
@@ -513,4 +513,4 @@ void *buff /* Buffer to send/receive data block */
 
 	return res;
 }
-#endif
+//  #endif

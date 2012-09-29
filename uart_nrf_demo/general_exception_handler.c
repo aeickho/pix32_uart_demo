@@ -33,7 +33,8 @@ void __attribute__ ((nomips16)) _general_exception_handler (void)
   _excep_code = (_excep_code & 0x0000007C) >> 2;
 
   unsigned int val = _excep_code;
-  while (1)
+
+//  while (1)
     {
       while (U_STAbits.UTXBF);	// wait when buffer is full
       U_TXREG = 'E';
@@ -71,6 +72,6 @@ void __attribute__ ((nomips16)) _general_exception_handler (void)
       U_TXREG = '\r';
       while (U_STAbits.UTXBF);	// wait when buffer is full
       U_TXREG = '\n';
-
+     while(1);
     }
 }

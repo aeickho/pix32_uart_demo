@@ -30,9 +30,9 @@ DRESULT disk_read (PF_BYTE, PF_BYTE*, unsigned int, PF_BYTE);
 #if	_READONLY == 0
 DRESULT disk_write (PF_BYTE, const PF_BYTE*, unsigned int, PF_BYTE);
 #endif
-#if 0
+//#if 0
 DRESULT disk_ioctl (PF_BYTE, PF_BYTE, void*);
-#endif
+//#endif
 
 /* Disk Status Bits (DSTATUS) */
 

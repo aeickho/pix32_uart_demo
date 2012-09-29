@@ -42,6 +42,7 @@ MAIN    = main
 #LIBS = -l mchp_peripheral_$(PROC)
 
 OBJECTS =	main.o \
+		portsetup.o \
 		uart1.o \
 		uart2.o \
 		myspi2.o \
@@ -81,6 +82,8 @@ write: $(MAIN).hex
 clean:
 	- rm -f $(OBJECTS) $(APPLIB_OBJECTS) $(APPLIB)
 	- rm -f *.o *.elf *.hex
+	- rm -f *.d
+	
 
 ctags:
 	$(CC) -g -Os  -mprocessor=$(PROC) -M -c $(MAIN).c  | sed -e 's/[\\ ]/\n/g' | sed -e '/^$$/d' -e '/\.o:[ \t]*$$/d'  | ctags -L - --c++-kinds=+p --fields=+iaS --extra=+q

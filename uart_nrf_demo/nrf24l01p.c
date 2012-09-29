@@ -523,7 +523,13 @@ nrf_init ()
   // Enable SPI correctly
 
   sspInit (0, 0, 0);
-
+  
+  LATCCLR = _LATC_LATC4_MASK;
+  _delay_ms (10);
+  LATCSET = _LATC_LATC4_MASK;
+        
+        
+  
   // Enable CS & CE pins
 //    gpioSetDir(RB_SPI_NRF_CS, gpioDirection_Output);
 //    gpioSetPullup(&RB_SPI_NRF_CS_IO, gpioPullupMode_Inactive);

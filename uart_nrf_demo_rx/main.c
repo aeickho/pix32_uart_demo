@@ -25,6 +25,9 @@
 #include "basic.h"
 #include "byteorder.h"
 #include "uart.h"
+#include "portsetup.h"
+#include "hw_spi1.h"
+#include "diskio.h"
 
 #define SystemClock()                        (40000000ul)
 #define GetPeripheralClock()            (SystemClock()/(1 << OSCCONbits.PBDIV))
@@ -112,36 +115,24 @@ main (void)
 {
   struct NRF_CFG config;
   uint8_t buf[32];
-  uint8_t outBuf[32];
+  char   outBuf[32];
   uint16_t cnt;
   uint16_t bigbuf[32];
   uint16_t bigbufcnt = 0;
-
+  uint32_t ret;
   uint16_t old_cnt = 0;
 
   int c;
 
   /* Configure PB frequency and wait states */
   SYSTEMConfigPerformance (SystemClock ());
+
+  portsetup();
+
   UART2Init (SystemClock ());
 
   INTConfigureSystem (INT_SYSTEM_CONFIG_MULT_VECTOR);
   INTEnableInterrupts ();
-
-
-
-  ANSELA = 0;
-  ANSELB = 0;
-  ANSELC = 0;
-
-
-
-
-// LED2
-  LATAbits.LATA10 = 0;		// LED2
-  TRISAbits.TRISA10 = 0;
-
-
 
   UART2PutStr ("...........................\n\rhallo\r\n");
   UART2PutStr ("Welt\r\n");
@@ -149,21 +140,35 @@ main (void)
   
 
   UART2PutStr ("nrf_init(),");
-  // reset nRF 
-   //   D4			37: RPC4/PMA4/RC4
-  //RC4
-  LATCbits.LATC4 = 0;		// RC4
-  TRISCbits.TRISC4 = 0;
-
-  LATCCLR = _LATC_LATC4_MASK;
-  _delay_ms (10);
-  LATCSET = _LATC_LATC4_MASK;
-
-
   nrf_init ();
   UART2PutStr ("done\n\r");
 
-  
+
+
+
+
+  UART2PutStr ("spi_sd_init,");
+  spi_sd_init ();
+  UART2PutStr ("done\n\r");
+
+  int counter = 0;
+  unsigned int stat = disk_initialize ();
+      
+  UART2PutStr ("disk_initialize: ");
+  UART2PutHex (stat);
+  UART2PutStr ("\r\n");
+
+                    
+  while (1)
+{
+  disk_ioctl (0, GET_SECTOR_COUNT, &ret);
+  UART2PutStr ("GET_SECTOR_COUNT: ");
+  UART2PutHex (ret);
+  UART2PutStr("\r\n");
+}
+
+
+   
 
 //  openbeaconSend ();
   UART2PutStr ("done\n\r");

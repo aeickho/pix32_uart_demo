@@ -124,6 +124,33 @@ UART2Send (const uint8_t *buffer, UINT32 size)
   UART2SendTrigger ();
 }
 
+
+void
+UART2PutHexChar (const int val)
+{
+  if (val > 9)
+    {
+      UART2SendChar ((char) ('A' - 10) + val);
+    }
+  else
+    {
+      UART2SendChar ((char) '0' + val);
+    }
+
+}
+
+void
+UART2PutHex (unsigned int val)
+{
+  register unsigned int i;
+  for (i = 0; i < 8; i++)
+    {
+      UART2PutHexChar ((val & 0xF0000000) >> 28);
+      val <<= 4;
+    }
+}
+
+
 void
 UART2SendChar (const uint8_t character)
 {

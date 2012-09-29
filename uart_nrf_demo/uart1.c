@@ -95,6 +95,31 @@ UART1Read (uint8_t * buf, const uint16_t n)
     }
 }
 
+void
+UART1PutHexChar (const int val)
+{
+  if (val > 9)
+    {
+      UART1SendChar (('A' - 10) + val);
+    }
+  else
+    {
+      UART1SendChar ('0' + val);
+    }
+
+}
+
+void
+UART1PutHex (unsigned int val)
+{
+  register unsigned int i;
+  for (i = 0; i < 8; i++)
+    {
+      UART1PutHexChar ((val & 0xF0000000) >> 28);
+      val <<= 4;
+    }
+}
+
 inline int
 UART1Fifo_out_get_nchar (void)
 {

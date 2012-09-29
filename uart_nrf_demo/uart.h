@@ -46,6 +46,10 @@ UART1PutStr (const char *buffer);
 void
 UART1Init (uint32_t SystemClock);
 
+void UART1PutHexChar(const int val);
+void UART1PutHex(unsigned int val);
+
+
 inline int UART2ReadChar(void);
 
 void
@@ -69,6 +73,9 @@ UART2PutStr (const char *buffer);
 void
 UART2Init (uint32_t SystemClock);
 
+
+void UART2PutHexChar(const int val);
+void UART2PutHex(unsigned int val);
 
 
 #endif
