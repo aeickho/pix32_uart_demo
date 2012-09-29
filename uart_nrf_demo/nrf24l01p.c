@@ -118,10 +118,17 @@ nrf_read_long (const uint8_t cmd, int len, uint8_t * data)
 void
 nrf_read_pkt (int len, uint8_t * data)
 {
+int i;
   UART2PutDbgStr (__func__);
   CS_nRF_LOW ();
   xmit_spi (C_R_RX_PAYLOAD);
-  sspReceive (0, data, len);
+  for (i = 0; i < len; i++)
+      data[i] = 0x00;
+      
+      
+//  sspReceive (0, data, len);
+ sspSendReceive0(0, data, len); //xxxxxxx
+ 
   CS_nRF_HIGH ();
 };
 

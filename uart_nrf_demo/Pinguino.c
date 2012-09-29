@@ -34,8 +34,9 @@ void
 sspReceive (unsigned char portNum, unsigned char *buf, unsigned int length)
 {
   portNum--;
-  SPI2_transfer_sync (buf, buf, length);
-  
+//  SPI2_transfer_sync (buf, buf, length);
+   SPI2_read (buf, buf[0], length);
+   
 }
 
 void
