@@ -79,7 +79,7 @@ UART1ReadChar (void)
   return FromUART1Fifo_in ();
 }
 
-int
+void
 UART1Read (uint8_t * buf, const uint16_t n)
 {
   int i;

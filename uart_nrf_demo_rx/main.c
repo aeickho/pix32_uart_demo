@@ -146,16 +146,18 @@ main (void)
   UART2PutStr ("...........................\n\rhallo\r\n");
   UART2PutStr ("Welt\r\n");
 
+  
 
   UART2PutStr ("nrf_init(),");
   // reset nRF 
+   //   D4			37: RPC4/PMA4/RC4
   //RC4
   LATCbits.LATC4 = 0;		// RC4
   TRISCbits.TRISC4 = 0;
 
-  LATBCLR = _LATC_LATC4_MASK;
+  LATCCLR = _LATC_LATC4_MASK;
   _delay_ms (10);
-  LATBSET = _LATC_LATC4_MASK;
+  LATCSET = _LATC_LATC4_MASK;
 
 
   nrf_init ();

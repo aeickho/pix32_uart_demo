@@ -178,8 +178,6 @@ nrf_rcv_pkt_poll (int maxsize, uint8_t * pkt)
   uint8_t len;
   uint8_t status = 0;
   int i;
-  for (i = 0; i < maxsize; i++)
-    pkt[i] = 0x00;		// Sanity: clear packet buffer
 
   status = nrf_cmd_status (C_NOP);
 
@@ -208,8 +206,12 @@ nrf_rcv_pkt_poll (int maxsize, uint8_t * pkt)
       return -1;		// packet too large
     };
 
-  nrf_read_pkt (len, pkt);
+  for (i = 0; i < maxsize; i++)
+    pkt[i] = 0x00;		// Sanity: clear packet buffer
 
+  mLED_2_On();
+  nrf_read_pkt (len, pkt);
+  mLED_2_Off();
   return len;
 };
 

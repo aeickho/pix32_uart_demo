@@ -87,21 +87,14 @@ void
 SPI2_read (uint8_t * inBuf, uint8_t fillchar, uint8_t length)
 {
   volatile int i;
-  uint8_t dataout[100];
-  char outBuf[10];
-
-  for (i=0;i<100;i++) dataout[i]=0;
  
   SPI2_UART2PutDbgStr (__func__);
   
-  if (length>50)
-     _general_exception_handler ();      // darf nicht vorkommen
-     
   DmaChnSetTxfer (dmaRxChn, (void *) &SPI2BUF, inBuf, 1, length, 1);
   DmaChnSetEvEnableFlags (dmaRxChn, DMA_EV_BLOCK_DONE);	// enable the transfer done interrupt, when all buffer transferred
   DmaRxIntFlag = 0;
 
-// set output 
+  RPB5R = 0;
   if (fillchar == 0xff)
     LATBSET = _LATB_LATB5_MASK;
   else if (fillchar == 0)
@@ -114,28 +107,17 @@ SPI2_read (uint8_t * inBuf, uint8_t fillchar, uint8_t length)
 
   DmaTxIntFlag = 0;
  
-  DmaChnSetTxfer (dmaTxChn, dataout, (void *) &SPI2BUF, length, 1, 1);
+  DmaChnSetTxfer (dmaTxChn, inBuf, (void *) &SPI2BUF, length, 1, 1);  // dummy data, not used SDO2 set as output
   DmaChnSetEvEnableFlags (dmaTxChn, DMA_EV_BLOCK_DONE);	// enable the transfer done interrupt, whe
   INTEnable (INT_SOURCE_DMA (dmaTxChn), INT_ENABLED);
   DmaChnStartTxfer (dmaTxChn, DMA_WAIT_NOT, 0);
 
 
-  while (!DmaRxIntFlag);
-  while (!DmaTxIntFlag);
-/*
- UART2PutStr("\r\n");
-for (i=0;i<20;i++)
-{
-ultoa (outBuf, inBuf[i], 10);
-          UART2PutStr (outBuf);
-                    UART2PutStr (" ");
-                    }
-                    
-*/
-  TRISBbits.TRISB5 = 0;		// SD02 as output
+  while ( (!DmaRxIntFlag) &&  (!DmaTxIntFlag));
+
   RPB5R = 4;			// SDO2
-   
-  i=SPI2BUF;
+
+  i=SPI2BUF;			// Clear Input
     
   SPI2STATCLR = 1 << 6;		// clear SPIROV  
   SPI2CON = 0x8120;
