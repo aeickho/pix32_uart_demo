@@ -163,6 +163,8 @@ main (void)
   nrf_init ();
   UART2PutStr ("done\n\r");
 
+  
+
 //  openbeaconSend ();
   UART2PutStr ("done\n\r");
 
