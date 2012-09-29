@@ -88,6 +88,10 @@ SPI2_read (uint8_t * inBuf, uint8_t fillchar, uint8_t length)
 {
   volatile int i;
   uint8_t dataout[100];
+  char outBuf[10];
+
+  for (i=0;i<100;i++) dataout[i]=0;
+ 
   SPI2_UART2PutDbgStr (__func__);
   
   if (length>50)
@@ -106,7 +110,7 @@ SPI2_read (uint8_t * inBuf, uint8_t fillchar, uint8_t length)
     _general_exception_handler ();	// darf nicht vorkommen
 
   INTEnable (INT_SOURCE_DMA (dmaRxChn), INT_ENABLED);
-  DmaChnStartTxfer (dmaRxChn, DMA_WAIT_NOT, 0);
+  DmaChnEnable (dmaRxChn);
 
   DmaTxIntFlag = 0;
  
@@ -118,7 +122,16 @@ SPI2_read (uint8_t * inBuf, uint8_t fillchar, uint8_t length)
 
   while (!DmaRxIntFlag);
   while (!DmaTxIntFlag);
-
+/*
+ UART2PutStr("\r\n");
+for (i=0;i<20;i++)
+{
+ultoa (outBuf, inBuf[i], 10);
+          UART2PutStr (outBuf);
+                    UART2PutStr (" ");
+                    }
+                    
+*/
   TRISBbits.TRISB5 = 0;		// SD02 as output
   RPB5R = 4;			// SDO2
    
