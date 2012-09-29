@@ -110,7 +110,7 @@ nrf_read_long (const uint8_t cmd, int len, uint8_t * data)
   for (i = 0; i < len; i++)
     data[i] = 0x00;
 
-  sspSendReceive (0, data, len); //xxxxxxx
+  sspSendReceive0(0, data, len); //xxxxxxx
 
   CS_nRF_HIGH ();
 };
