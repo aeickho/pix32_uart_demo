@@ -45,6 +45,14 @@ sspSendReceive (unsigned char portNum, unsigned char *buf,
   SPI2_transfer_sync (buf, buf, length);
 }
 
+void
+sspSendReceive0 (unsigned char portNum, unsigned char *inBuf,
+		unsigned int length)
+{
+  portNum--;
+  SPI2_read (inBuf, inBuf[0], length);
+}
+
 
 void
 delay_1ms (void)

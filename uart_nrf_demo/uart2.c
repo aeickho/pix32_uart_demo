@@ -1,5 +1,6 @@
 #include "uart.h"
 
+#include "general_exception_handler.h"
 
 volatile struct UARTFifo UART2Fifo;
 
@@ -147,12 +148,20 @@ void
   __attribute__ ((nomips16, interrupt (ipl2),
 		  vector (U_VECTOR))) uart2_interrupt (void)
 {
+uint8_t in;
+
   if (INTGetFlag (INT_SOURCE_UART_RX (UART2)))
     {
 
       if (U2STAbits.URXDA)
 	{
-	  ToUART2Fifo_in (U2RXREG);
+	  in = U2RXREG;
+	  if ((char ) in == 'B')
+	    {
+	    _general_exception_handler();
+	    }
+	    
+	  ToUART2Fifo_in (in);
 	}
       INTClearFlag (INT_SOURCE_UART_RX (UART2));
     }

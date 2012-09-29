@@ -5,7 +5,8 @@
 #include "nrf24l01p.h"
 #include "myspi.h"
 #include "Pinguino.h"
-
+#include "uart.h"
+#include "general_exception_handler.h"
 
 
 
@@ -18,18 +19,32 @@ void uputs0_ (uint8_t * s);
 
 uint8_t _nrfresets = 0;
 
+
+void UART2PutDbgStr(const  char * buf)
+{
+#ifdef DEBUG_ON
+  UART2PutStr(buf);
+  UART2PutStr("\r\n");
+#endif  
+}
+
+
 /*-----------------------------------------------------------------------*/
 /* Transmit a byte via SPI                                               */
 /*-----------------------------------------------------------------------*/
 inline void
 xmit_spi (uint8_t dat)
 {
+  
+  UART2PutDbgStr (__func__);
+
   sspSend (0, (uint8_t *) & dat, 1);
 }
 
 inline void
 rcv_spi (uint8_t * dat)
 {
+  UART2PutDbgStr (__func__);
   sspReceive (0, dat, 1);
 }
 
@@ -37,6 +52,7 @@ rcv_spi (uint8_t * dat)
 void
 nrf_cmd (uint8_t cmd)
 {
+  UART2PutDbgStr (__func__);
   CS_nRF_LOW ();
   xmit_spi (cmd);
   CS_nRF_HIGH ();
@@ -45,6 +61,7 @@ nrf_cmd (uint8_t cmd)
 uint8_t
 nrf_cmd_status (uint8_t cmd)
 {
+  UART2PutDbgStr (__func__);
   CS_nRF_LOW ();
   sspSendReceive (0, &cmd, 1);
   CS_nRF_HIGH ();
@@ -54,6 +71,7 @@ nrf_cmd_status (uint8_t cmd)
 void
 nrf_cmd_rw_long (uint8_t * data, int len)
 {
+  UART2PutDbgStr (__func__);
   CS_nRF_LOW ();
   sspSendReceive (0, data, len);
   CS_nRF_HIGH ();
@@ -63,6 +81,7 @@ nrf_cmd_rw_long (uint8_t * data, int len)
 void
 nrf_write_reg (const uint8_t reg, const uint8_t val)
 {
+  UART2PutDbgStr (__func__);
   CS_nRF_LOW ();
   xmit_spi (C_W_REGISTER | reg);
   xmit_spi (val);
@@ -72,6 +91,7 @@ nrf_write_reg (const uint8_t reg, const uint8_t val)
 uint8_t
 nrf_read_reg (const uint8_t reg)
 {
+  UART2PutDbgStr (__func__);
   uint8_t val;
   CS_nRF_LOW ();
   xmit_spi (C_R_REGISTER | reg);
@@ -83,18 +103,22 @@ nrf_read_reg (const uint8_t reg)
 void
 nrf_read_long (const uint8_t cmd, int len, uint8_t * data)
 {
+  UART2PutDbgStr (__func__);
   int i;
   CS_nRF_LOW ();
   xmit_spi (cmd);
   for (i = 0; i < len; i++)
     data[i] = 0x00;
-  sspSendReceive (0, data, len);
+
+  sspSendReceive (0, data, len); //xxxxxxx
+
   CS_nRF_HIGH ();
 };
 
 void
 nrf_read_pkt (int len, uint8_t * data)
 {
+  UART2PutDbgStr (__func__);
   CS_nRF_LOW ();
   xmit_spi (C_R_RX_PAYLOAD);
   sspReceive (0, data, len);
@@ -104,6 +128,7 @@ nrf_read_pkt (int len, uint8_t * data)
 void
 nrf_read_pkt_crc (int len, uint8_t * data, uint8_t * crc)
 {
+  UART2PutDbgStr (__func__);
   CS_nRF_LOW ();
   xmit_spi (C_R_RX_PAYLOAD);
   sspReceive (0, data, len);
@@ -114,6 +139,7 @@ nrf_read_pkt_crc (int len, uint8_t * data, uint8_t * crc)
 void
 nrf_write_long (const uint8_t cmd, int len, const uint8_t * data)
 {
+  UART2PutDbgStr (__func__);
   CS_nRF_LOW ();
   xmit_spi (cmd);
   sspSend (0, data, len);

@@ -82,9 +82,18 @@ main (void)
 
   UART2PutStr ("nrf_init(),");
 
+  // reset nRF 
+  //RC4
+  LATCbits.LATC4 = 0;          // RC4
+  TRISCbits.TRISC4 = 0;
+  
+  LATBCLR = _LATC_LATC4_MASK;
+  _delay_ms (10);
+  LATBSET = _LATC_LATC4_MASK;  
+     
+
   nrf_init ();
-  for (c=0;c<100;c++)
-      nrf_cmd_status(C_NOP);
+
 
   UART2PutStr ("done\n\r");
 
@@ -192,13 +201,13 @@ main (void)
       cnt++;
       buf[2] = cnt >> 8;
       buf[3] = cnt & 0xff;
-/*
+
       ultoa (outBuf, cnt, 10);
       UART2PutStr ("\n\r");
       UART2PutStr ("cnt: ");
       UART2PutStr (outBuf);
       UART2PutStr ("\n\r");
-*/
+
       nrf_snd_pkt_crc (32, buf);
       _delay_ms (10);
     }

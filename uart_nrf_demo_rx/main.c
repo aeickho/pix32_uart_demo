@@ -24,33 +24,11 @@
 #include "myspi.h"
 #include "basic.h"
 #include "byteorder.h"
-#include "uart2.h"
+#include "uart.h"
 
 #define SystemClock()                        (40000000ul)
 #define GetPeripheralClock()            (SystemClock()/(1 << OSCCONbits.PBDIV))
 #define GetInstructionClock()           (SystemClock())
-
-
-
-//#define mLED_1              LATBbits.LATB15
-#define mLED_2              LATAbits.LATA10
-
-//#define mGetLED_1()         mLED_1
-#define mGetLED_2()         mLED_2
-
-//#define mLED_1_On()         mLED_1 = 1;
-#define mLED_2_On()         mLED_2 = 1;
-
-//#define mLED_1_Off()        mLED_1 = 0;
-#define mLED_2_Off()        mLED_2 = 0;
-
-//#define mLED_1_Toggle()     mLED_1 = !mLED_1;
-#define mLED_2_Toggle()     mLED_2 = !mLED_2;
-
-
-
-const char mainMenu[] =
-  { "Welcome to PIC32 UART Peripheral Library Demo +  nRF24L01+ !\r\n" };
 
 
 #define MAXPACKET   32
@@ -147,9 +125,16 @@ main (void)
   SYSTEMConfigPerformance (SystemClock ());
   UART2Init (SystemClock ());
 
+  INTConfigureSystem (INT_SYSTEM_CONFIG_MULT_VECTOR);
+  INTEnableInterrupts ();
+
+
+
   ANSELA = 0;
   ANSELB = 0;
   ANSELC = 0;
+
+
 
 
 // LED2
@@ -158,14 +143,21 @@ main (void)
 
 
 
-  UART2PutStr ("...........................hallo\r\n");
+  UART2PutStr ("...........................\n\rhallo\r\n");
   UART2PutStr ("Welt\r\n");
 
 
-
-
-
   UART2PutStr ("nrf_init(),");
+  // reset nRF 
+  //RC4
+  LATCbits.LATC4 = 0;		// RC4
+  TRISCbits.TRISC4 = 0;
+
+  LATBCLR = _LATC_LATC4_MASK;
+  _delay_ms (10);
+  LATBSET = _LATC_LATC4_MASK;
+
+
   nrf_init ();
   UART2PutStr ("done\n\r");
 
@@ -178,7 +170,6 @@ main (void)
   config.channel = 81;
   memcpy (config.mac0, "\x01\x02\x03\x02\x01", 5);
   nrf_config_set (&config);
-
   UART2PutStr ("\n\r");
 
   nrf_rcv_pkt_start ();
@@ -193,14 +184,22 @@ main (void)
 
 	  cnt = buf[2] << 8 | buf[3];
 
-	  ultoa (outBuf, cnt, 10);
-      UART2PutStr ("\r");
-      UART2PutStr ("             \r");
 
+	  UART2PutStr ("\r\n");
+	  UART2PutStr ("recv: ");
+	  ultoa (outBuf, rcv, 10);
 	  UART2PutStr (outBuf);
-//	  UART2PutStr ("\n\r");
+          UART2PutStr (" ");
 
-	  if (old_cnt != (cnt - 1))
+	  ultoa (outBuf, old_cnt++, 10);
+	  UART2PutStr (outBuf);
+          UART2PutStr (" ");
+ 
+	  ultoa (outBuf, cnt, 10);
+	  UART2PutStr (outBuf);
+//        UART2PutStr ("\n\r");
+
+/*	  if (old_cnt != (cnt - 1))
 	    {
 	      ultoa (outBuf, cnt, 10);
 	      UART2PutStr (outBuf);
@@ -209,6 +208,7 @@ main (void)
 	      bigbufcnt = 0;
 	    }
 	  old_cnt = cnt;
+*/
 	}
     }
   while (1);

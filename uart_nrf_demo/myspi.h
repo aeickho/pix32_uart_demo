@@ -22,5 +22,6 @@ void	SPI2_init(void);
 void	SPI2_transfer_sync (uint8_t * dataout, uint8_t * datain, uint8_t len);
 void	SPI2_transmit_sync (const uint8_t * dataout, uint8_t len);
 uint8_t SPI2_fast_shift (uint8_t data);
+void 	SPI2_read (uint8_t * inBuf, uint8_t fillchar ,uint8_t length);
 
 #endif /* _SPI_H_ */

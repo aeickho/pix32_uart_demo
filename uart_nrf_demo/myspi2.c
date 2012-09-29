@@ -4,16 +4,31 @@
 
 #include "myspi.h"
 #include "Pinguino.h"
+#include "uart.h"
+#include "general_exception_handler.h"
+
 
 DmaChannel dmaTxChn = DMA_CHANNEL1;	// DMA channel to use for our example
+DmaChannel dmaRxChn = DMA_CHANNEL2;	// DMA channel to use for our example
+
 volatile int DmaTxIntFlag;	// flag used in interrupts, signal that DMA transfer ended
+volatile int DmaRxIntFlag;	// flag used in interrupts, signal that DMA transfer ended
 
-
+void SPI2_UART2PutDbgStr(const  char * buf)
+{
+#ifdef DEBUG_ON
+  UART2PutStr(buf);
+  UART2PutStr("\r\n");
+#endif  
+}
+    
 
 void
 SPI2_init (void)
 // Initialize pins for spi communication
 {
+SPI2_UART2PutDbgStr (__func__);
+
 // SPI2
   TRISBbits.TRISB5 = 0;		// SD02 as output
   RPB5R = 4;			// SDO2
@@ -38,6 +53,7 @@ SPI2_init (void)
   SPI2STATCLR = 1 << 6;		// clear SPIROV  
   SPI2CON = 0x8120;
 
+
   DmaChnOpen (dmaTxChn, DMA_CHN_PRI2, DMA_OPEN_DEFAULT);
   DmaChnSetEventControl (dmaTxChn,
 			 DMA_EV_START_IRQ_EN |
@@ -47,8 +63,72 @@ SPI2_init (void)
   INTSetVectorSubPriority (INT_VECTOR_DMA (dmaTxChn),
 			   INT_SUB_PRIORITY_LEVEL_3);
 
+//**************
+  DmaChnOpen (dmaRxChn, DMA_CHN_PRI2, DMA_OPEN_DEFAULT);
+  DmaChnSetEventControl (dmaRxChn,
+			 DMA_EV_START_IRQ_EN |
+			 DMA_EV_START_IRQ (_SPI2_RX_IRQ));
+  INTSetVectorPriority (INT_VECTOR_DMA (dmaRxChn), INT_PRIORITY_LEVEL_5);
+
+  INTSetVectorSubPriority (INT_VECTOR_DMA (dmaRxChn),
+			   INT_SUB_PRIORITY_LEVEL_3);
+//**************
+
 
   ;
+}
+
+//  ultoa (outBuf, cnt, 10);
+//  UART2PutStr ("\n\r");
+//  UART2PutStr ("cnt: ");
+
+// dma read 
+void
+SPI2_read (uint8_t * inBuf, uint8_t fillchar, uint8_t length)
+{
+  volatile int i;
+  uint8_t dataout[100];
+  SPI2_UART2PutDbgStr (__func__);
+  
+  if (length>50)
+     _general_exception_handler ();      // darf nicht vorkommen
+     
+  DmaChnSetTxfer (dmaRxChn, (void *) &SPI2BUF, inBuf, 1, length, 1);
+  DmaChnSetEvEnableFlags (dmaRxChn, DMA_EV_BLOCK_DONE);	// enable the transfer done interrupt, when all buffer transferred
+  DmaRxIntFlag = 0;
+
+// set output 
+  if (fillchar == 0xff)
+    LATBSET = _LATB_LATB5_MASK;
+  else if (fillchar == 0)
+    LATBCLR = _LATB_LATB5_MASK;
+  else
+    _general_exception_handler ();	// darf nicht vorkommen
+
+  INTEnable (INT_SOURCE_DMA (dmaRxChn), INT_ENABLED);
+  DmaChnStartTxfer (dmaRxChn, DMA_WAIT_NOT, 0);
+
+  DmaTxIntFlag = 0;
+ 
+  DmaChnSetTxfer (dmaTxChn, dataout, (void *) &SPI2BUF, length, 1, 1);
+  DmaChnSetEvEnableFlags (dmaTxChn, DMA_EV_BLOCK_DONE);	// enable the transfer done interrupt, whe
+  INTEnable (INT_SOURCE_DMA (dmaTxChn), INT_ENABLED);
+  DmaChnStartTxfer (dmaTxChn, DMA_WAIT_NOT, 0);
+
+
+  while (!DmaRxIntFlag);
+  while (!DmaTxIntFlag);
+
+  TRISBbits.TRISB5 = 0;		// SD02 as output
+  RPB5R = 4;			// SDO2
+   
+  i=SPI2BUF;
+    
+  SPI2STATCLR = 1 << 6;		// clear SPIROV  
+  SPI2CON = 0x8120;
+
+
+
 }
 
 void
@@ -67,6 +147,17 @@ SPI2_transfer_sync (uint8_t * dataout, uint8_t * datain, uint8_t len)
       datain[i] = dummy;
     }
 }
+
+
+
+uint8_t
+SPI2_fast_shift (uint8_t data)
+{
+  SPI2BUF = data;
+  while (!SPI2STATbits.SPIRBF);
+  return SPI2BUF;
+}
+
 
 void
 SPI2_transmit_sync (const uint8_t * dataout, uint8_t len)
@@ -101,26 +192,13 @@ SPI2_transmit_sync (const uint8_t * dataout, uint8_t len)
     }
 }
 
-
-
-uint8_t
-SPI2_fast_shift (uint8_t data)
-{
-  SPI2BUF = data;
-  while (!SPI2STATbits.SPIRBF);
-  return SPI2BUF;
-}
-
-
-#define D_VECTOR        _DMA1_VECTOR
 void
   __attribute__ ((nomips16, interrupt (ipl5),
-		  vector (D_VECTOR))) DmaHandler1 (void)
+		  vector (_DMA1_VECTOR))) DmaHandler1 (void)
 {
   int evFlags;			// event flags when getting the interrupt
 
   INTClearFlag (INT_SOURCE_DMA (DMA_CHANNEL1));	// acknowledge the INT controller, we're servicing int
-
 
   evFlags = DmaChnGetEvFlags (DMA_CHANNEL1);	// get the event flags
 
@@ -129,6 +207,24 @@ void
       DmaTxIntFlag = 1;
       DmaChnClrEvFlags (DMA_CHANNEL1, DMA_EV_BLOCK_DONE);
       INTEnable (INT_SOURCE_DMA (DMA_CHANNEL1), INT_DISABLED);	///   verschoben
-//      DmaChnDisable (DMA_CHANNEL1);
+    }
+}
+
+
+void
+  __attribute__ ((nomips16, interrupt (ipl5),
+		  vector (_DMA2_VECTOR))) DmaHandler2 (void)
+{
+  int evFlags;			// event flags when getting the interrupt
+//  SPI2_UART2PutDbgStr (__func__);
+  INTClearFlag (INT_SOURCE_DMA (DMA_CHANNEL2));	// acknowledge the INT controller, we're servicing int
+
+  evFlags = DmaChnGetEvFlags (DMA_CHANNEL2);	// get the event flags
+
+  if (evFlags & DMA_EV_BLOCK_DONE)
+    {				// just a sanity check. we enabled just the DMA_EV_BLOCK_DONE transfer done interrupt
+      DmaRxIntFlag = 1;
+      DmaChnClrEvFlags (DMA_CHANNEL2, DMA_EV_BLOCK_DONE);
+      INTEnable (INT_SOURCE_DMA (DMA_CHANNEL2), INT_DISABLED);	///   verschoben
     }
 }
