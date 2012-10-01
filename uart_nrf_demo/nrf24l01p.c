@@ -286,7 +286,7 @@ nrf_rcv_pkt_time_encr (int maxtime, int maxsize, uint8_t * pkt,
 #define LOOPY 10
   for (; maxtime >= LOOPY; maxtime -= LOOPY)
     {
-      _delay_ms (LOOPY);
+      delay_ms (LOOPY);
 
       status = nrf_cmd_status (C_NOP);
 
@@ -295,7 +295,7 @@ nrf_rcv_pkt_time_encr (int maxtime, int maxsize, uint8_t * pkt,
 	  if ((status & R_STATUS_RX_P_NO) == R_STATUS_RX_FIFO_EMPTY)
 	    {
 	      nrf_cmd (C_FLUSH_RX);
-	      _delay_ms (1);
+	      delay_ms (1);
 	      nrf_write_reg (R_STATUS, 0);
 	      continue;
 	    }
@@ -379,7 +379,11 @@ nrf_snd_pkt_crc_encr (int size, uint8_t * pkt, uint32_t const key[4])
 
   CS_nRF_LOW ();
   xmit_spi (C_W_TX_PAYLOAD);
-  sspSend (0, pkt, size);
+
+//  sspSend (0, pkt, size);
+  SPI2_transmit_sync( pkt, 1);
+//  sspSend (0, (uint8_t *) & dat, 1);
+
   CS_nRF_HIGH ();
 
   CE_nRF_HIGH ();
@@ -534,10 +538,10 @@ nrf_init ()
 {
   // Enable SPI correctly
 
-  sspInit (0, 0, 0);
+  SPI2_init ();
   
   LATCCLR = _LATC_LATC4_MASK;
-  _delay_ms (10);
+  delay_ms (10);
   LATCSET = _LATC_LATC4_MASK;
         
         
@@ -552,7 +556,7 @@ nrf_init ()
   // Setup for nrf24l01+
   // power up takes 1.5ms - 3.5ms (depending on crystal)
   CS_nRF_LOW ();
-  _delay_ms (5);
+  delay_ms (5);
   nrf_write_reg (R_CONFIG, R_CONFIG_PRIM_RX |	// Receive mode
 		 R_CONFIG_PWR_UP |	// Power on
 		 R_CONFIG_EN_CRC	// CRC on, single byte
@@ -571,13 +575,13 @@ nrf_off ()
 {
   nrf_write_reg (R_CONFIG, R_CONFIG_MASK_RX_DR | R_CONFIG_MASK_TX_DS | R_CONFIG_MASK_MAX_RT);	// Most important: no R_CONFIG_PWR_UP
 };
-
+/*
 void
 nrf_startCW ()
 {
   // Enable SPI correctly
-  sspInit (0, 0, 0);
 
+SPI2_init ();
   // Enable CS & CE pins
 //    gpioSetDir(RB_SPI_NRF_CS, gpioDirection_Output);
 //    gpioSetPullup(&RB_SPI_NRF_CS_IO, gpioPullupMode_Inactive);
@@ -590,13 +594,14 @@ nrf_startCW ()
   CS_nRF_LOW ();
 
   nrf_write_reg (R_CONFIG, R_CONFIG_PWR_UP);
-  _delay_ms (2);
+  delay_ms (2);
   nrf_write_reg (R_RF_SETUP, R_RF_SETUP_CONT_WAVE |
 		 R_RF_SETUP_PLL_LOCK | R_RF_SETUP_RF_PWR_3);
   nrf_write_reg (R_RF_CH, 81);
   CE_nRF_HIGH ();
 }
-
+*/
+/*
 void
 nrf_check_reset (void)
 {
@@ -606,3 +611,4 @@ nrf_check_reset (void)
       nrf_init ();
     };
 };
+*/
