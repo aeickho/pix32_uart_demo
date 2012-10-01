@@ -26,7 +26,7 @@
 #include "byteorder.h"
 #include "uart.h"
 #include "portsetup.h"
-#include "hw_spi1.h"
+//#include "hw_spi1.h"
 #include "diskio.h"
 
 #define SystemClock()                        (40000000ul)
@@ -35,79 +35,6 @@
 
 
 #define MAXPACKET   32
-void
-rftransfer_send (uint16_t size, uint8_t * data)
-{
-  uint8_t mac[5] = { 1, 2, 3, 2, 1 };
-  struct NRF_CFG config = {
-    .channel = 81,
-    .txmac = "\x1\x2\x3\x2\x1",
-    .nrmacs = 1,
-    .mac0 = "\x1\x2\x3\x2\x1",
-    .maclen = "\x20",
-  };
-
-  UART2PutStr ("rftransfer_send\n\r");
-
-
-  static struct NRF_CFG oldconfig;
-  nrf_config_get (&oldconfig);
-
-  nrf_set_channel (81);
-  nrf_set_strength (3);
-  const uint8_t macx[5] = { 1, 2, 3, 2, 1 };
-  nrf_set_tx_mac (sizeof (macx), macx);
-
-
-
-  uint8_t buf[MAXPACKET];
-  buf[0] = 'L';
-  buf[1] = size >> 8;
-  buf[2] = size & 0xFF;
-
-//  uint16_t rand = getRandom () & 0xFFFF;
-  uint16_t rand = 0x5555;
-
-  buf[3] = rand >> 8;
-  buf[4] = rand & 0xFF;
-
-//  nrf_config_set (&config);
-  nrf_snd_pkt_crc (32, buf);	//setup packet
-  _delay_ms (20);
-  uint16_t index = 0;
-  uint8_t i;
-  uint16_t crc = crc16 (data, size);
-
-  while (size)
-    {
-      buf[0] = 'D';
-      buf[1] = index >> 8;
-      buf[2] = index & 0xFF;
-      buf[3] = rand >> 8;
-      buf[4] = rand & 0xFF;
-      for (i = 5; i < MAXPACKET - 2 && size > 0; i++, size--)
-	{
-	  buf[i] = *data++;
-	}
-      index++;
-//      nrf_config_set (&config);
-      nrf_snd_pkt_crc (32, buf);	//data packet
-      _delay_ms (20);
-    }
-
-  buf[0] = 'C';
-  buf[1] = crc >> 8;
-  buf[2] = crc & 0xFF;
-  buf[3] = rand >> 8;
-  buf[4] = rand & 0xFF;
-//  nrf_config_set (&config);
-  nrf_snd_pkt_crc (32, buf);	//setup packet
-  _delay_ms (20);
-
-  nrf_config_set (&oldconfig);
-
-}
-
 
 
 int
@@ -134,8 +61,7 @@ main (void)
   INTConfigureSystem (INT_SYSTEM_CONFIG_MULT_VECTOR);
   INTEnableInterrupts ();
 
-  UART2PutStr ("...........................\n\rhallo\r\n");
-  UART2PutStr ("Welt\r\n");
+  UART2PutStr ("\n\rhallo\r\n");
 
   
 
@@ -148,13 +74,13 @@ main (void)
 
 
   UART2PutStr ("spi_sd_init,");
-  spi_sd_init ();
+  SPI1_init();
   UART2PutStr ("done\n\r");
 
   int counter = 0;
   unsigned int stat = disk_initialize ();
       
-  UART2PutStr ("disk_initialize: ");
+  UART2PutStr ("disk_init: ");
   UART2PutHex (stat);
   UART2PutStr ("\r\n");
 
@@ -206,18 +132,6 @@ main (void)
  
 	  ultoa (outBuf, cnt, 10);
 	  UART2PutStr (outBuf);
-//        UART2PutStr ("\n\r");
-
-/*	  if (old_cnt != (cnt - 1))
-	    {
-	      ultoa (outBuf, cnt, 10);
-	      UART2PutStr (outBuf);
-
-	      UART2PutStr ("\n\r");
-	      bigbufcnt = 0;
-	    }
-	  old_cnt = cnt;
-*/
 	}
     }
   while (1);

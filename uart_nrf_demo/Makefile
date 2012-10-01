@@ -51,10 +51,8 @@ OBJECTS =	main.o \
 		Pinguino.o \
                 nrf24l01p.o \
 		diskio.o \
-		hw_spi1.o \
-		general_exception_handler.o \
-		openbeacon.o
-
+		myspi1.o  \
+		general_exception_handler.o
 #		xxtea.o
 		
 

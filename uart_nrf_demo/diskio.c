@@ -11,7 +11,7 @@
  /
  /-------------------------------------------------------------------------*/
 
-#include "hw_spi1.h"
+#include "myspi.h"
 #include "diskio.h"
 #include "uart.h"
 #include "Pinguino.h"
@@ -53,12 +53,19 @@ static unsigned int CardType;
 /* Exchange a byte between PIC and MMC via SPI  (Platform dependent)     */
 /*-----------------------------------------------------------------------*/
 
-#define xmit_spi(dat) 	spi_sd_xmit(dat)
-#define rcvr_spi()	spi_sd_xmit(0xFF)
-#define rcvr_spi_m(p)	*(p) = spi_sd_xmit(0xFF);
-#define xchg_spi (dat)  dat=spi_sd_xmit(dat);
-#define CS_H()		SD_CS=1;
-#define CS_L()		SD_CS=0;
+//#define xmit_spi(dat) 	spi_sd_xmit(dat)
+#define xmit_spi(dat)	SPI1_fast_shift(dat)
+//#define rcvr_spi()	spi_sd_xmit(0xFF)
+#define rcvr_spi()	SPI1_fast_shift(0xFF)
+//#define rcvr_spi_m(p)	*(p) = spi_sd_xmit(0xFF);
+#define rcvr_spi_m(p)	*(p) = SPI1_fast_shift(0xFF);
+//#define xchg_spi (dat)  dat=spi_sd_xmit(dat);
+#define xchg_spi (dat)  dat=SPI1_fast_shift(dat);
+
+#define CS_H()		LATAbits.LATA7=1;
+#define CS_L()		LATAbits.LATA7=0;
+
+
 
 /*-----------------------------------------------------------------------*/
 /* Wait for card ready                                                   */
@@ -88,7 +95,7 @@ int wait_ready(void) {
 /* Deselect the card and release SPI bus                                 */
 /*-----------------------------------------------------------------------*/
 
-#define deselect() SD_CS=1;
+#define deselect() LATAbits.LATA7=1;
 
 /*-----------------------------------------------------------------------*/
 /* Select the card and wait ready                                        */
@@ -97,7 +104,7 @@ int wait_ready(void) {
 static
 int select(void) /* 1:Successful, 0:Timeout */
 {
-	SD_CS=0;
+	LATAbits.LATA7=0;
 	rcvr_spi(); /* Dummy clock (force DO enabled) */
 
 	if (wait_ready())
