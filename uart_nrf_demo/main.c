@@ -98,7 +98,7 @@ main (void)
       nrf_snd_pkt_crc (32, buf);
       time2 = ReadCoreTimer();
  
-      delay_ms (100);
+      delay_ms (1);
      time3 = ReadCoreTimer();
  
       UART2PutStr ("time: ");

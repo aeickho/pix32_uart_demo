@@ -25,6 +25,7 @@
 #include "byteorder.h"
 #include "uart.h"
 #include "portsetup.h"
+#include "base128.h"
 //#include "hw_spi1.h"
 #include "diskio.h"
 
@@ -41,7 +42,7 @@ main (void)
 {
   struct NRF_CFG config;
   uint8_t buf[32];
-  char   outBuf[32];
+  char   outBuf[128];
   uint16_t cnt;
   uint16_t bigbuf[32];
   uint16_t bigbufcnt = 0;
@@ -124,19 +125,12 @@ main (void)
 	  uint16_t cnt;
 
 	  
-//	  76543210 76543210 76543210 76543210 76543210 76543210 76543210 76543210 76543210 76543210 76543210 76543210 76543210
-//	  65432106 54321065 43210654 32106543 21065432 10654321 06543210 
-//        
-//        7654321 0765432 1076543 2107654 3210765 4321076 5432107 6543210	  
-//  7 zu  8 1x	  
-// 14 zu 16 2x
-// 28 zu 32 4x
-// 35 zu 40 5x
+         to_base128n  (buf, outBuf, 5);
 
-
-
-       
-
+         UART1SendChar(0x01);
+         UART1Send(outBuf, 40);
+         
+                                            
 	  cnt = buf[2] << 8 | buf[3];
 
 

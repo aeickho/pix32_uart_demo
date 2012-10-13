@@ -31,7 +31,7 @@ to_base128n(const uint8_t * in, uint8_t * out, uint8_t n)
 {
  int i;
  for (i=0; i < n; i++)
-  to_base128(&in[i*7],&out[i*8]);
+  to_base128(&in[i*7], &out[i*8]);
 }
 
 void 
@@ -39,5 +39,7 @@ from_base128n(const uint8_t * in, uint8_t * out, uint8_t n)
 {
 int i;
 for (i=0; i < n; i++)
- from_base128(&in[i*8],&out[i*7]);
+  from_base128(&in[i * 8], &out[i * 7]);
 }
+
+
