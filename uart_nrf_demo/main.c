@@ -27,8 +27,11 @@ main (void)
   char strIn[20];
   char str_sendblock[] = "sendblock";
   int c;
-  struct NRF_CFG config;
+    struct NRF_CFG config;
   uint16_t cnt;
+  uint32_t time1;
+  uint32_t time2;
+  uint32_t time3;
   uint8_t buf[32],tmpBuf[4];
   
   
@@ -90,9 +93,31 @@ main (void)
       UART2PutStr ("cnt: ");
       UART2PutStr (outBuf);
       UART2PutStr ("\n\r");
+      time1 = ReadCoreTimer();
 
       nrf_snd_pkt_crc (32, buf);
+       time2 = ReadCoreTimer();
+ 
       delay_ms (100);
+     time3 = ReadCoreTimer();
+ 
+      UART2PutStr ("time: ");
+      ultoa (outBuf, time1, 10);
+      UART2PutStr (outBuf);
+      UART2PutStr (" ");
+      ultoa (outBuf, time2, 10);
+      UART2PutStr (outBuf);
+      UART2PutStr (" ");
+      ultoa (outBuf, time3, 10);
+      UART2PutStr (outBuf);
+      UART2PutStr (" ");
+      ultoa (outBuf, (time2-time1)*50, 10);
+      UART2PutStr (outBuf);
+      UART2PutStr (" ");
+      ultoa (outBuf, (time3-time2)*50, 10);
+      UART2PutStr (outBuf);
+      UART2PutStr ("\n\r");
+
     }
   while (1);
   return 0;
