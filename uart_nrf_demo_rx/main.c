@@ -96,38 +96,14 @@ main (void)
   
   disk_read(0, diskbuf, 0, 1);
 
-
   
   i = diskbuf [ 0x1c9 ] << 24 |  diskbuf [ 0x1c8 ] << 16 |  diskbuf [ 0x1c7 ] << 8  |  diskbuf [ 0x1c6 ]; 
-
   UART2PutHex (i);
   UART2PutStr("\n\r");
 
   i = diskbuf [ 0x1cD ] << 24 |  diskbuf [ 0x1cC ] << 16 |  diskbuf [ 0x1cB ] << 8  |  diskbuf [ 0x1cA ]; 
-
   UART2PutHex (i);
   UART2PutStr("\n\r");
-
-   
-/*  
-  for (i=0;i<500;i++)
-    {
-    UART2PutHex (i);
-    UART2PutStr(": ");
-//    c=
-    UART2PutHex (diskbuf[i]);
-    UART2PutStr("\n\r");
-    } 
-
-*/  
-
-//  while (1);
-
-
-   
-
-//  openbeaconSend ();
-  UART2PutStr ("done\n\r");
 
   UART2PutStr ("nrf_config_set(),");
   config.nrmacs = 1;
@@ -135,7 +111,7 @@ main (void)
   config.channel = 81;
   memcpy (config.mac0, "\x01\x02\x03\x02\x01", 5);
   nrf_config_set (&config);
-  UART2PutStr ("\n\r");
+  UART2PutStr ("done\n\r");
 
   nrf_rcv_pkt_start ();
 
