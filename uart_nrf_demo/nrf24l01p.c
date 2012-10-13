@@ -381,7 +381,7 @@ nrf_snd_pkt_crc_encr (int size, uint8_t * pkt, uint32_t const key[4])
   xmit_spi (C_W_TX_PAYLOAD);
 
 //  sspSend (0, pkt, size);
-  SPI2_transmit_sync( pkt, 1);
+  SPI2_transmit_sync( pkt, size);
 //  sspSend (0, (uint8_t *) & dat, 1);
 
   CS_nRF_HIGH ();

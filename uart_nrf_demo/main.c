@@ -92,7 +92,7 @@ main (void)
       UART2PutStr ("\n\r");
 
       nrf_snd_pkt_crc (32, buf);
-      delay_ms (100);
+      delay_ms (1);
     }
   while (1);
   return 0;
