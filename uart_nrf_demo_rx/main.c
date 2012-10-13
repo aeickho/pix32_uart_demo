@@ -59,13 +59,14 @@ main (void)
   SYSTEMConfigPerformance (SystemClock ());
 
   portsetup();
-
+  UART1Init (SystemClock ());
   UART2Init (SystemClock ());
 
   INTConfigureSystem (INT_SYSTEM_CONFIG_MULT_VECTOR);
   INTEnableInterrupts ();
-
+  UART1PutStr ("\n\rhallo\r\n");
   UART2PutStr ("\n\rhallo\r\n");
+
 
 
 
@@ -117,10 +118,24 @@ main (void)
   do
     {
       int rcv = nrf_rcv_pkt_poll (32, buf);
-      if (rcv != 0)
+      if (rcv == 32)
 	{
 	  int i;
 	  uint16_t cnt;
+
+	  
+//	  76543210 76543210 76543210 76543210 76543210 76543210 76543210 76543210 76543210 76543210 76543210 76543210 76543210
+//	  65432106 54321065 43210654 32106543 21065432 10654321 06543210 
+//        
+//        7654321 0765432 1076543 2107654 3210765 4321076 5432107 6543210	  
+//  7 zu  8 1x	  
+// 14 zu 16 2x
+// 28 zu 32 4x
+// 35 zu 40 5x
+
+
+
+       
 
 	  cnt = buf[2] << 8 | buf[3];
 
@@ -128,6 +143,7 @@ main (void)
 	  UART2PutStr ("\r\n");
 	  UART2PutStr ("recv: ");
 	  ultoa (outBuf, rcv, 10);
+
 	  UART2PutStr (outBuf);
           UART2PutStr (" ");
 

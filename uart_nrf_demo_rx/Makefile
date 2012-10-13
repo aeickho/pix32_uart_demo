@@ -46,6 +46,7 @@ OBJECTS =	main.o \
 		uart1.o \
 		uart2.o \
 		myspi2.o \
+		base128.o \
 		crc.o \
 		byteorder.o \
 		Pinguino.o \

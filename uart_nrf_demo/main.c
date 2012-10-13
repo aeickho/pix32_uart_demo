@@ -96,7 +96,7 @@ main (void)
       time1 = ReadCoreTimer();
 
       nrf_snd_pkt_crc (32, buf);
-       time2 = ReadCoreTimer();
+      time2 = ReadCoreTimer();
  
       delay_ms (100);
      time3 = ReadCoreTimer();
