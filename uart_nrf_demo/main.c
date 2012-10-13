@@ -30,14 +30,12 @@ main (void)
   int c;
   struct NRF_CFG config;
   uint16_t cnt;
-  uint8_t * blockbuff;
   uint8_t buf[32],tmpBuf[4];
   
   
 
   portsetup();
 
-  blockbuff = (uint8_t *) malloc(512);
   
   /* Configure PB frequency and wait states */
   SYSTEMConfigPerformance (SystemClock ());
@@ -102,63 +100,6 @@ main (void)
 
   do
     {
-      c = UART1ReadChar ();
-      if (c > 0)
-	{
-	  int i;
-	  UART2SendChar ((char) c);
-	  if ((char) c == '\n')
-	    {
-	      UART2PutStr ("\n\r--");
-	      UART2PutStr (strIn);
-	      UART2PutStr ("--\n\r");
-	      if (!strncmp (strIn, str_sendblock, strlen (str_sendblock)))
-		{
-		  uint32_t sektor;
-		  uint16_t sender_crc16, calc_crc16;
-
-		  UART2PutStr (">sendblock\n\r");
-		  UART1Read (tmpBuf, 4);
-		  sektor =
-		    tmpBuf[3] << 24 | tmpBuf[2] << 16 | tmpBuf[1] << 8 |
-		    tmpBuf[0];
-
-		  UART1Read (tmpBuf, 2);
-		  sender_crc16 = tmpBuf[1] << 8 | tmpBuf[0];
-
-		  ultoa (outBuf, sender_crc16, 10);
-		  UART2PutStr ("\n\r");
-		  UART2PutStr ("sender crc16: ");
-		  UART2PutStr (outBuf);
-		  UART2PutStr ("\n\r");
-
-		  UART1Read (blockbuff, 512);
-
-		  calc_crc16 = crc16 (blockbuff, 512);
-		  ultoa (outBuf, calc_crc16, 10);
-		  UART2PutStr ("\n\r");
-		  UART2PutStr ("calc crc16: ");
-		  UART2PutStr (outBuf);
-		  UART2PutStr ("\n\r");
-
-
-
-//                UART2Send (blockbuff, 512);
-		  UART2PutStr ("done\n\r");
-
-		}
-
-	      strIn[0] = '\0';
-	      UART1PutStr ("ready\n\r");
-	    }
-	  else if (strlen (strIn) < 17)
-	    {
-	      for (i = 0; i < (17 - 1) && strIn[i] != 0; i++);
-	      strIn[i++] = (char) c;
-	      strIn[i++] = '\0';
-	    }
-
-	}
       cnt++;
       buf[2] = cnt >> 8;
       buf[3] = cnt & 0xff;
