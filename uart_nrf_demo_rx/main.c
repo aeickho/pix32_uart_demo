@@ -20,7 +20,6 @@
 
 #include "Pinguino.h"
 #include "nrf24l01p.h"
-#include "openbeacon.h"
 #include "myspi.h"
 #include "basic.h"
 #include "byteorder.h"

@@ -30,8 +30,8 @@ OPTIMIZE ?=  -Os -mips16e
 #CFLAGS  = -g $(OPTIMIZE) -std=gnu99 -mprocessor=$(PROC)  -I.
 #LDFLAGS = -g $(OPTIMIZE) -std=gnu99 -mprocessor=$(PROC) -Wl,--report-mem
 CFLAGS  = -g $(OPTIMIZE) -mprocessor=$(PROC)  -I. -Wall  -MMD
-#LDFLAGS = -g $(OPTIMIZE) -mprocessor=$(PROC) -Wl,--report-mem,--defsym,_min_heap_size=0x1000
-LDFLAGS = -g $(OPTIMIZE) -mprocessor=$(PROC) -Wl,--defsym,_min_heap_size=0x1000
+LDFLAGS = -g $(OPTIMIZE) -mprocessor=$(PROC) -Wl,--report-mem,--defsym,_min_heap_size=0x1000
+#LDFLAGS = -g $(OPTIMIZE) -mprocessor=$(PROC) -Wl,--defsym,_min_heap_size=0x1000
 
 APPLIB = 
 APPLIB_OBJECTS = 
