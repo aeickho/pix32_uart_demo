@@ -75,9 +75,6 @@ main (void)
   UART2PutStr ("done\n\r");
 
 
-
-
-
   UART2PutStr ("spi_sd_init,");
   SPI1_init();
   UART2PutStr ("done\n\r");
