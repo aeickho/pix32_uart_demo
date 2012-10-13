@@ -6,7 +6,6 @@
 
 #include "Pinguino.h"
 #include "nrf24l01p.h"
-#include "openbeacon.h"
 #include "myspi.h"
 #include "basic.h"
 #include "byteorder.h"
@@ -39,16 +38,13 @@ main (void)
   
   /* Configure PB frequency and wait states */
   SYSTEMConfigPerformance (SystemClock ());
-  UART1Init (SystemClock ());
+//  UART1Init (SystemClock ());
   UART2Init (SystemClock ());
 
   INTConfigureSystem (INT_SYSTEM_CONFIG_MULT_VECTOR);
   INTEnableInterrupts ();
 
 
-  UART1PutStr
-    (".............................................................................hallo\r\n");
-  UART1PutStr ("UART1 Welt\r\n");
 
 
   UART2PutStr
@@ -69,24 +65,9 @@ main (void)
   UART2PutStr ("cannel: ,");
   UART2PutStr (outBuf);
   memcpy (config.mac0, "\x01\x02\x03\x02\x01", 5);
+  memcpy (config.txmac, "\x1\x2\x3\x2\x1",5);
   nrf_config_set (&config);
   UART2PutStr ("done\n\r");
-
-  struct NRF_CFG oldconfig;
-
-  struct NRF_CFG config1 = {
-    .channel = 81,
-    .txmac = "\x1\x2\x3\x2\x1",
-    .nrmacs = 1,
-    .mac0 = "\x1\x2\x3\x2\x1",
-    .maclen = "\x20",
-  };
-
-  nrf_config_get (&oldconfig);
-  UART2PutStr ("config_get_done\n\r");
-
-  nrf_config_set (&config1);
-  UART2PutStr ("config_set_done\n\r");
 
 
   buf[0] = 32;
@@ -111,7 +92,7 @@ main (void)
       UART2PutStr ("\n\r");
 
       nrf_snd_pkt_crc (32, buf);
-      delay_ms (10);
+      delay_ms (100);
     }
   while (1);
   return 0;
