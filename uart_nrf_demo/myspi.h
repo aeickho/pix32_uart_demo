@@ -13,7 +13,7 @@
 #define CE_nRF_LOW()    CE_nRF  = 0; 
 #define CE_nRF_HIGH()   CE_nRF  = 1; 
 
-
+void    SPI1_init(void);
 void	SPI1_transfer_sync (uint8_t * dataout, uint8_t * datain, uint8_t len);
 void	SPI1_transmit_sync (const uint8_t * dataout, uint8_t len);
 uint8_t SPI1_fast_shift (uint8_t data);

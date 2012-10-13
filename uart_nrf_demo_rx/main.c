@@ -42,19 +42,14 @@ main (void)
 {
   struct NRF_CFG config;
   uint8_t buf[32];
-  char   outBuf[128];
-  uint16_t cnt;
-  uint16_t bigbuf[32];
-  uint16_t bigbufcnt = 0;
+  uint8_t outBuf[128];
   uint32_t ret;
   uint16_t old_cnt = 0;
-
+  uint32_t seq_nr=0;
   uint8_t diskbuf[512];
  
-  uint32_t * p;
    
   unsigned int i;
-   char c;
   
   /* Configure PB frequency and wait states */
   SYSTEMConfigPerformance (SystemClock ());
@@ -80,7 +75,6 @@ main (void)
   SPI1_init();
   UART2PutStr ("done\n\r");
 
-  int counter = 0;
   unsigned int stat = disk_initialize ();
       
   UART2PutStr ("disk_init: ");
@@ -121,32 +115,32 @@ main (void)
       int rcv = nrf_rcv_pkt_poll (32, buf);
       if (rcv == 32)
 	{
-	  int i;
-	  uint16_t cnt;
+	  uint32_t tmpspace[10];
 
+         *tmpspace = (int) seq_nr; 
 	  
-         to_base128n  (buf, outBuf, 5);
-
          UART1SendChar(0x01);
+         to_base128(tmpspace, outBuf);
+         UART1Send(outBuf, 8);
+
+         to_base128n  (buf, outBuf, 5);
          UART1Send(outBuf, 40);
          
-                                            
+/*                                            
+	  uint16_t cnt;
 	  cnt = buf[2] << 8 | buf[3];
-
-
 	  UART2PutStr ("\r\n");
 	  UART2PutStr ("recv: ");
-	  ultoa (outBuf, rcv, 10);
-
-	  UART2PutStr (outBuf);
+	  ultoa ((char *) outBuf, (unsigned int) rcv, 10);
+	  UART2PutStr ((char *) outBuf);
           UART2PutStr (" ");
-
-	  ultoa (outBuf, old_cnt++, 10);
-	  UART2PutStr (outBuf);
+	  ultoa ((char *)outBuf, old_cnt++, 10);
+	  UART2PutStr ((char *) outBuf);
           UART2PutStr (" ");
- 
-	  ultoa (outBuf, cnt, 10);
-	  UART2PutStr (outBuf);
+	  ultoa ((char *)outBuf, cnt, 10);
+	  UART2PutStr ((char *) outBuf);
+*/
+	  seq_nr++;
 	}
     }
   while (1);

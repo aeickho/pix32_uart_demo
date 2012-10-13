@@ -89,35 +89,16 @@ main (void)
       buf[3] = cnt & 0xff;
 
       ultoa (outBuf, cnt, 10);
-      UART2PutStr ("\n\r");
       UART2PutStr ("cnt: ");
       UART2PutStr (outBuf);
       UART2PutStr ("\n\r");
-      time1 = ReadCoreTimer();
 
-      nrf_snd_pkt_crc (32, buf);
-      time2 = ReadCoreTimer();
+      uint16_t crc = crc16 (buf, 32 - 2);
+      buf[32 - 2] = (crc >> 8) & 0xff;
+      buf[32 - 1] = crc & 0xff;
+      nrf_snd_pkt(32,buf);
  
-      delay_ms (1);
-     time3 = ReadCoreTimer();
- 
-      UART2PutStr ("time: ");
-      ultoa (outBuf, time1, 10);
-      UART2PutStr (outBuf);
-      UART2PutStr (" ");
-      ultoa (outBuf, time2, 10);
-      UART2PutStr (outBuf);
-      UART2PutStr (" ");
-      ultoa (outBuf, time3, 10);
-      UART2PutStr (outBuf);
-      UART2PutStr (" ");
-      ultoa (outBuf, (time2-time1)*50, 10);
-      UART2PutStr (outBuf);
-      UART2PutStr (" ");
-      ultoa (outBuf, (time3-time2)*50, 10);
-      UART2PutStr (outBuf);
-      UART2PutStr ("\n\r");
-
+      delay_ms (10);
     }
   while (1);
   return 0;

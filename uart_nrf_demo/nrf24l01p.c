@@ -359,31 +359,65 @@ nrf_snd_pkt_crc_encr (int size, uint8_t * pkt, uint32_t const key[4])
       CE_nRF_LOW ();
     }
 
-  //UART2PutStr ("NS 1.2\r\n");
 
   if (size > MAX_PKT)
     size = MAX_PKT;
-
 
 
   nrf_write_reg (R_CONFIG, R_CONFIG_PWR_UP |	// Power on
 		 R_CONFIG_EN_CRC	// CRC on, single byte
     );
 
-//    nrf_write_long(C_W_TX_PAYLOAD,size,pkt);
   uint16_t crc = crc16 (pkt, size - 2);
   pkt[size - 2] = (crc >> 8) & 0xff;
   pkt[size - 1] = crc & 0xff;
-//    if(key !=NULL)
-//        xxtea_encode_words((uint32_t*)pkt,size/4,key);
 
   CS_nRF_LOW ();
   xmit_spi (C_W_TX_PAYLOAD);
-
-//  sspSend (0, pkt, size);
   SPI2_transmit_sync( pkt, size);
-//  sspSend (0, (uint8_t *) & dat, 1);
 
+  CS_nRF_HIGH ();
+  CE_nRF_HIGH ();
+  delay_7us ();
+  delay_7us ();
+  CE_nRF_LOW ();
+
+  nrf_write_reg (R_STATUS,
+		 R_CONFIG_MASK_RX_DR | R_CONFIG_MASK_TX_DS |
+		 R_CONFIG_MASK_MAX_RT);
+
+  ret = nrf_cmd_status (C_NOP);
+  return ret;
+};
+
+char
+nrf_snd_pkt (int size, uint8_t * pkt)
+{
+  uint8_t ret;
+
+  while (1)
+    {
+      ret = nrf_cmd_status (C_NOP);
+      if ((ret & R_STATUS_TX_FULL) == 0)
+	{
+	  break;
+	}
+      CE_nRF_HIGH ();
+      delay_7us ();
+      delay_7us ();
+      CE_nRF_LOW ();
+    }
+
+
+  if (size > MAX_PKT)
+    size = MAX_PKT;
+
+
+  nrf_write_reg (R_CONFIG, R_CONFIG_PWR_UP | R_CONFIG_EN_CRC);
+
+  CS_nRF_LOW ();
+  xmit_spi (C_W_TX_PAYLOAD);
+  SPI2_transmit_sync( pkt, size);
   CS_nRF_HIGH ();
 
   CE_nRF_HIGH ();

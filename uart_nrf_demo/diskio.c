@@ -76,7 +76,6 @@ int wait_ready(void) {
 	PF_BYTE d;
 	int i;
 	unsigned int tmr;
-	volatile unsigned int tmr2;
 
 	for (tmr = 5000; tmr; tmr--) { /* Wait for ready in timeout of 500ms */
 		d = rcvr_spi();
@@ -238,7 +237,7 @@ DSTATUS disk_initialize() {
 	int i;
 	PF_BYTE n, ty, cmd, buf[4];
 	unsigned int tmr;
-	DSTATUS s;
+	DSTATUS s=0;
 
 	if (Stat & STA_NODISK)
 		return Stat; /* No card in the socket */
