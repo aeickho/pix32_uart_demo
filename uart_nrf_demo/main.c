@@ -1,17 +1,3 @@
-/*
-	Example "blinkenlights" program for the UBW32 and C32 compiler.
-	Demonstrates software PWM, use of floating-point library, etc.
-
-	IMPORTANT: file 'procdefs.ld' absolutely must Must MUST be present
-	in the working directory when compiling code for the UBW32!  Failure
-	to do so will almost certainly result in your UBW32 getting 'bricked'
-	and requiring re-flashing the bootloader (which, if you don't have a
-	PICkit 2 or similar PIC programmer, you're screwed).
-	YOU HAVE BEEN WARNED.
-
-	2/19/2009 - Phillip Burgess - pburgess@dslextreme.com
-*/
-
 #include <p32xxxx.h>
 #include <plib.h>
 #include <stdio.h>
@@ -25,6 +11,7 @@
 #include "basic.h"
 #include "byteorder.h"
 #include "uart.h"
+#include "portsetup.h"
 
 #define SystemClock()                        (40000000ul)
 #define GetPeripheralClock()            (SystemClock()/(1 << OSCCONbits.PBDIV))
@@ -43,11 +30,15 @@ main (void)
   int c;
   struct NRF_CFG config;
   uint16_t cnt;
-  uint8_t *blockbuff;
+  uint8_t * blockbuff;
   uint8_t buf[32],tmpBuf[4];
+  
+  
 
   portsetup();
 
+  blockbuff = (uint8_t *) malloc(512);
+  
   /* Configure PB frequency and wait states */
   SYSTEMConfigPerformance (SystemClock ());
   UART1Init (SystemClock ());
@@ -56,13 +47,6 @@ main (void)
   INTConfigureSystem (INT_SYSTEM_CONFIG_MULT_VECTOR);
   INTEnableInterrupts ();
 
-
-  blockbuff = malloc (512);
-  if (blockbuff == NULL)
-    {
-      UART2PutStr ("cant' malloc\r\n");
-      while (1);
-    }
 
   UART1PutStr
     (".............................................................................hallo\r\n");
@@ -77,10 +61,6 @@ main (void)
 
   UART2PutStr ("nrf_init(),");
   nrf_init ();
-  UART2PutStr ("done\n\r");
-
-  UART2PutStr ("openbeaconSend(),");
-  openbeaconSend ();
   UART2PutStr ("done\n\r");
 
   UART2PutStr ("nrf_config_set(),");
@@ -179,7 +159,6 @@ main (void)
 	    }
 
 	}
-
       cnt++;
       buf[2] = cnt >> 8;
       buf[3] = cnt & 0xff;
@@ -191,7 +170,7 @@ main (void)
       UART2PutStr ("\n\r");
 
       nrf_snd_pkt_crc (32, buf);
-      _delay_ms (10);
+      delay_ms (10);
     }
   while (1);
   return 0;

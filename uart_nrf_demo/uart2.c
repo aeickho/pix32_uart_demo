@@ -4,6 +4,13 @@
 
 volatile struct UARTFifo UART2Fifo;
 
+#define BUFSIZE 300
+
+
+uint8_t pIn[BUFSIZE];
+uint8_t pOut[BUFSIZE];
+
+
 // Init output fifo
 void
 UART2FifoInit (void)
@@ -16,13 +23,13 @@ UART2FifoInit (void)
   UART2Fifo.out_nchar = 0;
   UART2Fifo.bufsize = 300;
 
-  UART2Fifo.in = malloc (UART2Fifo.bufsize);
-  UART2Fifo.out = malloc (UART2Fifo.bufsize);
+  UART2Fifo.in = pIn;
+  UART2Fifo.out = pOut;
 }
 
 
 // Add one character to output fifo 
-inline void
+void
 ToUART2Fifo_in (const uint8_t character)
 {
   UART2Fifo.in[UART2Fifo.in_write_pos] = character;
@@ -58,7 +65,7 @@ FromUART2Fifo_in (void)
 }
 
 
-inline int
+int
 FromUART2Fifo_out ()
 {
   int in = -1;
@@ -73,20 +80,20 @@ FromUART2Fifo_out ()
   return (in);
 }
 
-inline int 
+int 
 UART2ReadChar()
 {
 return FromUART2Fifo_in();   
 }
 
 
-inline int
+int
 UART2Fifo_out_get_nchar (void)
 {
   return (UART2Fifo.out_nchar);
 }
 
-inline int
+int
 UART2Fifo_in_get_nchar (void)
 {
   return (UART2Fifo.in_nchar);
@@ -94,7 +101,7 @@ UART2Fifo_in_get_nchar (void)
 
 
 
-inline void
+void
 UART2SendTrigger (void)
 {
   INTEnable (INT_SOURCE_UART_TX (UART2), INT_ENABLED);
@@ -114,7 +121,7 @@ UART2Send (const uint8_t *buffer, UINT32 size)
 }
 }
 */
-//  while (UART2Fifo.out_nchar != 0);
+  while (UART2Fifo.out_nchar != 0);
   while (size)
     {
       ToUART2Fifo_out (*buffer);

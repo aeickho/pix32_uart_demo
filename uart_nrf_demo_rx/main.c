@@ -49,8 +49,13 @@ main (void)
   uint32_t ret;
   uint16_t old_cnt = 0;
 
-  int c;
-
+  uint8_t diskbuf[512];
+ 
+  uint32_t * p;
+   
+  unsigned int i;
+   char c;
+  
   /* Configure PB frequency and wait states */
   SYSTEMConfigPerformance (SystemClock ());
 
@@ -63,7 +68,7 @@ main (void)
 
   UART2PutStr ("\n\rhallo\r\n");
 
-  
+
 
   UART2PutStr ("nrf_init(),");
   nrf_init ();
@@ -85,13 +90,41 @@ main (void)
   UART2PutStr ("\r\n");
 
                     
-  while (1)
-{
+
   disk_ioctl (0, GET_SECTOR_COUNT, &ret);
   UART2PutStr ("GET_SECTOR_COUNT: ");
   UART2PutHex (ret);
   UART2PutStr("\r\n");
-}
+
+  
+  disk_read(0, diskbuf, 0, 1);
+
+
+  
+  i = diskbuf [ 0x1c9 ] << 24 |  diskbuf [ 0x1c8 ] << 16 |  diskbuf [ 0x1c7 ] << 8  |  diskbuf [ 0x1c6 ]; 
+
+  UART2PutHex (i);
+  UART2PutStr("\n\r");
+
+  i = diskbuf [ 0x1cD ] << 24 |  diskbuf [ 0x1cC ] << 16 |  diskbuf [ 0x1cB ] << 8  |  diskbuf [ 0x1cA ]; 
+
+  UART2PutHex (i);
+  UART2PutStr("\n\r");
+
+   
+/*  
+  for (i=0;i<500;i++)
+    {
+    UART2PutHex (i);
+    UART2PutStr(": ");
+//    c=
+    UART2PutHex (diskbuf[i]);
+    UART2PutStr("\n\r");
+    } 
+
+*/  
+
+//  while (1);
 
 
    

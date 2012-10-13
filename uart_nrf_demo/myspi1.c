@@ -37,8 +37,6 @@ LATAbits.LATA7 = 1; // set CS high
  SDI1R = 5; // MISO / RX
  RPA9R = 3; // MOSI / TX
  
-
-//SPI1STATCLR = 1<<6; // clear SPIROV (not needed)
                                                                       
 SPI1BRG = 85; /* 232.56 kHz */
 SPI1CON = 0x8120;
@@ -55,7 +53,6 @@ SPI1STATCLR = 1 << 6;		// clear SPIROV
   INTSetVectorSubPriority (INT_VECTOR_DMA (dma0TxChn),
 			   INT_SUB_PRIORITY_LEVEL_3);
 
-//**************
   DmaChnOpen (dma3RxChn, DMA_CHN_PRI2, DMA_OPEN_DEFAULT);
   DmaChnSetEventControl (dma3RxChn,
 			 DMA_EV_START_IRQ_EN |
@@ -64,10 +61,6 @@ SPI1STATCLR = 1 << 6;		// clear SPIROV
 
   INTSetVectorSubPriority (INT_VECTOR_DMA (dma3RxChn),
 			   INT_SUB_PRIORITY_LEVEL_3);
-//**************
-
-
-  ;
 }
 
 //  ultoa (outBuf, cnt, 10);
@@ -124,7 +117,6 @@ SPI1_transfer_sync (uint8_t * dataout, uint8_t * datain, uint8_t len)
   volatile uint8_t dummy;
   for (i = 0; i < len; i++)
     {
-
       out = dataout[i];
       SPI1BUF = out;
       while (!SPI1STATbits.SPIRBF);

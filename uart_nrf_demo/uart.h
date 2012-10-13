@@ -20,62 +20,47 @@ struct UARTFifo
   uint8_t *in;
   uint8_t *out;
 
-}; 
+};
 
 
+void UART1Init (uint32_t SystemClock);
 
-inline int UART1ReadChar(void);
+int UART1ReadChar (void);
 
-void UART1Read(uint8_t *buf, const uint16_t n);
+void UART1Read (uint8_t * buf, const uint16_t n);
 
-inline int
-UART1Fifo_out_get_nchar (void);
+void UART1Send (const uint8_t * buffer, UINT32 size);
 
-inline int
-UART1Fifo_in_get_nchar (void);
+void UART1SendChar (const uint8_t character);
 
-void 
-UART1Send (const uint8_t *buffer, UINT32 size);
+void UART1PutStr (const char *buffer);
 
-void 
-UART1SendChar (const uint8_t character);
+int UART1Fifo_out_get_nchar (void);
 
-void 
-UART1PutStr (const char *buffer);
+int UART1Fifo_in_get_nchar (void);
 
-void
-UART1Init (uint32_t SystemClock);
-
-void UART1PutHexChar(const int val);
-void UART1PutHex(unsigned int val);
+void UART1PutHexChar (const int val);
+void UART1PutHex (unsigned int val);
 
 
-inline int UART2ReadChar(void);
+int UART2ReadChar (void);
 
-void
-UART2Read(uint8_t *buf, const uint16_t n);
+void UART2Read (uint8_t * buf, const uint16_t n);
 
-inline int
-UART2Fifo_out_get_nchar (void);
+int UART2Fifo_out_get_nchar (void);
 
-inline int
-UART2Fifo_in_get_nchar (void);
+int UART2Fifo_in_get_nchar (void);
 
-void 
-UART2Send (const uint8_t *buffer, UINT32 size);
+void UART2Send (const uint8_t * buffer, UINT32 size);
 
-void 
-UART2SendChar (const uint8_t character);
+void UART2SendChar (const uint8_t character);
 
-void 
-UART2PutStr (const char *buffer);
+void UART2PutStr (const char *buffer);
 
-void
-UART2Init (uint32_t SystemClock);
+void UART2Init (uint32_t SystemClock);
 
-
-void UART2PutHexChar(const int val);
-void UART2PutHex(unsigned int val);
+void UART2PutHexChar (const int val);
+void UART2PutHex (unsigned int val);
 
 
 #endif

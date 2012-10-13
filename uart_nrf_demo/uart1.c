@@ -1,7 +1,12 @@
 #include "uart.h"
 
-
 volatile struct UARTFifo UART1Fifo;
+
+#define BUFSIZE 300
+
+uint8_t pIn[BUFSIZE];
+uint8_t pOut[BUFSIZE];
+
 
 // Init output fifo
 void
@@ -13,10 +18,10 @@ UART1FifoInit (void)
   UART1Fifo.out_write_pos = 0;
   UART1Fifo.in_nchar = 0;
   UART1Fifo.out_nchar = 0;
-  UART1Fifo.bufsize = 300;
+  UART1Fifo.bufsize = BUFSIZE;
 
-  UART1Fifo.in = malloc (UART1Fifo.bufsize);
-  UART1Fifo.out = malloc (UART1Fifo.bufsize);
+  UART1Fifo.in = pIn;
+  UART1Fifo.out = pOut;
 }
 
 
@@ -73,7 +78,7 @@ FromUART1Fifo_out ()
   return (in);
 }
 
-inline int
+int
 UART1ReadChar (void)
 {
   return FromUART1Fifo_in ();
@@ -120,13 +125,13 @@ UART1PutHex (unsigned int val)
     }
 }
 
-inline int
+int
 UART1Fifo_out_get_nchar (void)
 {
   return (UART1Fifo.out_nchar);
 }
 
-inline int
+int
 UART1Fifo_in_get_nchar (void)
 {
   return (UART1Fifo.in_nchar);
@@ -134,7 +139,7 @@ UART1Fifo_in_get_nchar (void)
 
 
 
-inline void
+void
 UART1SendTrigger (void)
 {
   INTEnable (INT_SOURCE_UART_TX (UART1), INT_ENABLED);
@@ -157,7 +162,6 @@ UART1Send (const uint8_t * buffer, UINT32 size)
 void
 UART1SendChar (const uint8_t character)
 {
-
   ToUART1Fifo_out (character);
   UART1SendTrigger ();
 }

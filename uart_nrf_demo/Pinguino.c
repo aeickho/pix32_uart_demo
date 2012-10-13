@@ -16,9 +16,6 @@ delay_1ms (void)
   PR1 = 0xffff;
   TMR1 = 0;
   while (TMR1 < DELAY);
-
-
-  return;
 }
 
 void
@@ -29,12 +26,7 @@ delay_7us (void)
   PR1 = 0xffff;
   TMR1 = 0;
   while (TMR1 < DELAYU);
-
-
-  return;
 }
-
-
 
 void
 delay_ms (unsigned int length)
