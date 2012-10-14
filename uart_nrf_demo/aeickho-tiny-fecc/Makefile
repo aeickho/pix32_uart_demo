@@ -1,6 +1,6 @@
 include ../Makefile.rules
 
-OBJECTS =	sg_crc.o tfec3.o   
+OBJECTS = tfec3.o   
 
 include $(wildcard *.d)
 
