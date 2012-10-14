@@ -11,6 +11,8 @@
 #include "byteorder.h"
 #include "uart.h"
 #include "portsetup.h"
+#include "tfec3_tools.h"
+#include "tools/printf.h"
 
 #define SystemClock()                        (40000000ul)
 #define GetPeripheralClock()            (SystemClock()/(1 << OSCCONbits.PBDIV))
@@ -45,8 +47,11 @@ main (void)
   UART2PutStr
     (".............................................................................hallo\r\n");
   UART2PutStr ("UART2 Welt\r\n");
-
-  // try to reset nrf chip
+  
+  init_printf();
+ // try to reset nrf chip
+  test();
+  while(1);
 
   UART2PutStr ("nrf_init(),");
   nrf_init ();

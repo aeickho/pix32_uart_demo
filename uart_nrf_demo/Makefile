@@ -16,7 +16,7 @@ include Makefile.rules
 MAIN    = main
 
 
-DIRS = aeickho-tiny-fecc
+DIRS = aeickho-tiny-fecc tools
 
 OBJECTS =	main.o \
 		portsetup.o \
@@ -26,7 +26,8 @@ OBJECTS =	main.o \
 		byteorder.o \
 		Pinguino.o \
                 nrf24l01p.o \
-		general_exception_handler.o
+		general_exception_handler.o \
+		tfec3_tools.o
 #		uart1.o
 #		myspi1.o  \
 		
@@ -42,7 +43,7 @@ $(MAIN).hex: $(MAIN).elf
 $(MAIN).elf: $(OBJECTS) $(APPLIB) procdefs.ld Makefile
 	for i in $(DIRS); do make -C $$i; done
 #	$(CC) $(LDFLAGS) $(OBJECTS) $(APPLIB) $(LIBS) aeickho-tiny-fecc/sg_crc.o -o $(MAIN).elf
-	$(CC) $(LDFLAGS) $(OBJECTS) $(APPLIB) $(LIBS) aeickho-tiny-fecc/tfec3.o -o $(MAIN).elf
+	$(CC) $(LDFLAGS) $(OBJECTS) $(APPLIB) $(LIBS) tools/printf.o aeickho-tiny-fecc/tfec3.o -o $(MAIN).elf
 #	$(CC) $(LDFLAGS) $(OBJECTS) $(APPLIB) $(LIBS)  -o $(MAIN).elf
 
  

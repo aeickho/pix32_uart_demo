@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 // crc.c
-uint16_t crc16(uint8_t * buf, int len);
+uint16_t crc16(const void *raw, int len);
 
 
 
