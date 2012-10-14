@@ -50,8 +50,6 @@ main (void)
   
   init_printf();
  // try to reset nrf chip
-  test();
-  while(1);
 
   UART2PutStr ("nrf_init(),");
   nrf_init ();
@@ -69,6 +67,10 @@ main (void)
   nrf_config_set (&config);
   UART2PutStr ("done\n\r");
 
+
+ UART2PutStr ("call\n\r");
+  test();
+while(1);
 
   buf[0] = 32;
 

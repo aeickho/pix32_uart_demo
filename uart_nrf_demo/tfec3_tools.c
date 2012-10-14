@@ -1,12 +1,23 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
+#include <p32xxxx.h>
+#include <plib.h>
+
 #include "aeickho-tiny-fecc/tfec3.h"
 #include "basic.h"
 #include "tools/printf.h"
+#include "nrf24l01p.h"   
+
 
 #define NDEBUG
 
 #include <assert.h>
+
+int random() {
+        srand(ReadCoreTimer());
+return (rand());
+}
 
 
 /*                           FRAME (32bytes)
@@ -110,7 +121,7 @@ int prepare_send_message(int n, const char msg[], int redundancy_percentage)
         tfec3_u32 *fragdatas[FRAME_BUFF_SIZE];
         memset(tx_valid,0,sizeof tx_valid);
         assert(0<n && n<=MAX_MESSAGE_SIZE);
-        mid = 0x1729BEEF; /* we should pick a message id at random!!! */
+        mid = rand(); //0x1729BEEF; /* we should pick a message id at random!!! */
         s = (n+BYTES_PER_FRAGMENT-1)/BYTES_PER_FRAGMENT; /* # of user fragments */
         k = MIN(3,(s*redundancy_percentage+99)/100);     /* # of redundancy fragments */
         i = 0;
@@ -202,8 +213,9 @@ static void destroy_frame(int whichone)
         tx_valid[whichone] = 0;
 }
 
-int test(void)
+int sendblock(void)
 {
+
         int n, r, i;
         const char* msg =
                 "Hello World! This is a m"  /* fragment 0 */
@@ -221,6 +233,7 @@ int test(void)
         tfp_printf("           actual redundancy = %d%%\n\r",r);
         for (i=0; i<send_count; ++i) {
                 print_frame(tx_frame+i);
+                nrf_snd_pkt(32,tx_frame+i);  
         }
 
         tfp_printf("Destroying frames (simulated erasure)...\n\r");
@@ -242,3 +255,14 @@ int test(void)
         }
         return 0;
 }
+
+
+void test(void)
+        {
+        while(1)
+                {
+                sendblock();
+                delay_ms(2000);
+                }
+         }        
+        
