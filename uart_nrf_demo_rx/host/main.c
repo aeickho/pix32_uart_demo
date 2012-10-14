@@ -7,7 +7,9 @@
 #include <time.h>
 #include "base128.h"
 #include "crc.h"
-
+#include <termios.h>
+#include <sys/fcntl.h>
+ 
 #define BUFSIZE 1024
 
 #define UART1 "/dev/serial/by-id/usb-Silicon_Labs_CP2102-Alex_0104-if00-port0"
@@ -29,6 +31,8 @@ main (int argc, char **argv)
   int step;
 
   unsigned int seq_nr;  
+  struct termios termOptions;
+
 
   tty = open (UART1, O_RDWR | O_NOCTTY );
   if (tty < 0)
@@ -36,6 +40,12 @@ main (int argc, char **argv)
       perror ("opening TTY");
       exit (2);
     }
+
+  tcgetattr( tty, &termOptions );
+  
+  cfsetispeed( &termOptions, B921600 );
+  cfsetospeed( &termOptions, B921600 );
+  tcsetattr( tty, TCSANOW, &termOptions );
 
   step = STEP_INIT;
   while (step > STEP_END)
