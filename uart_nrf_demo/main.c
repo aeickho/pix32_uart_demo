@@ -57,7 +57,7 @@ main (void)
   config.maclen[0] = 32;
   config.channel = 81;
   ultoa (outBuf, config.channel, 10);
-  UART2PutStr ("cannel: ,");
+  UART2PutStr ("channel: ,");
   UART2PutStr (outBuf);
   memcpy (config.mac0, "\x01\x02\x03\x02\x01", 5);
   memcpy (config.txmac, "\x1\x2\x3\x2\x1",5);
