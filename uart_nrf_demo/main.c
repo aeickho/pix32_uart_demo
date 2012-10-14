@@ -24,17 +24,11 @@ int
 main (void)
 {
   char outBuf[32];
-  char strIn[20];
-  char str_sendblock[] = "sendblock";
   int c;
     struct NRF_CFG config;
   uint16_t cnt;
-  uint32_t time1;
-  uint32_t time2;
-  uint32_t time3;
-  uint8_t buf[32],tmpBuf[4];
+  uint8_t buf[32];
   
-  uint8_t *pdump;  
   
 
   portsetup();

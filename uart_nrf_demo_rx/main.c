@@ -26,7 +26,6 @@
 #include "uart.h"
 #include "portsetup.h"
 #include "base128.h"
-//#include "hw_spi1.h"
 #include "diskio.h"
 
 #define SystemClock()                        (40000000ul)
@@ -44,7 +43,6 @@ main (void)
   uint8_t buf[32];
   uint8_t outBuf[128];
   uint32_t ret;
-  uint16_t old_cnt = 0;
   uint32_t seq_nr=0;
   uint8_t diskbuf[512];
  
@@ -120,7 +118,7 @@ main (void)
          *tmpspace = (int) seq_nr; 
 	  
          UART1SendChar(0x01);
-         to_base128(tmpspace, outBuf);
+         to_base128((uint8_t *) tmpspace, outBuf);
          UART1Send(outBuf, 8);
 
          to_base128n  (buf, outBuf, 5);
