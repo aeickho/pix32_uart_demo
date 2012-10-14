@@ -1,5 +1,5 @@
-#ifndef UART2_H__
-#define UART2_H__
+#ifndef AE_UART_H__
+#define AE_UART_H__
 
 #include <p32xxxx.h>
 #include <plib.h>
@@ -61,6 +61,6 @@ void UART2Init (uint32_t SystemClock);
 
 void UART2PutHexChar (const int val);
 void UART2PutHex (unsigned int val);
-
+void UART2PutCharHex (unsigned char val);
 
 #endif

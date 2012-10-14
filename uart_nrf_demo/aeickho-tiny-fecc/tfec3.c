@@ -23,8 +23,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#define NDEBUG
+
 #include <assert.h>
 #include "tfec3.h"
+
 
 /*
  *  Generator polynomial: x^16 + x^1 + 1 (0x13)
@@ -189,7 +192,7 @@ int tfec3_decode(int words, int blocks, int redundancy,
 	}
 	if (missctr==0) return 1; /* nothing to do */
 
-	/* check which redundancy blocks we can use for recovery... */
+/	/* check which redundancy blocks we can use for recovery... */
 	for (b=0; b<redundancy && order<missctr; ++b) {
 		if (valid[blocks+b]) {
 			partial_pqr[b] = io[misslist[order]];

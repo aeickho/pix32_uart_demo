@@ -11,47 +11,24 @@
 # around a copy of the original, which can be downloaded from the product
 # web page here: http://www.schmalzhaus.com/UBW32/
 
-
-# MCU to compile for:
-PROC    = 32MX220F032D
-
-# tool configuration
-FLASH   = mphidflash -n -r
-CC      = xc32-gcc
-BIN2HEX = xc32-bin2hex
-AR      = xc32-ar
-
-# compiler config
-#-mips16e
-OPTIMIZE ?=  -Os -mips16e 
-##OPTIMIZE ?=  -mips16e
-#CFLAGS  = -g $(OPTIMIZE) -mprocessor=$(PROC) "-I$(APPLIB_PATH)/Include" -I.
-#CFLAGS  = -g $(OPTIMIZE) -mprocessor=$(PROC)  -I.
-#CFLAGS  = -g $(OPTIMIZE) -std=gnu99 -mprocessor=$(PROC)  -I.
-#LDFLAGS = -g $(OPTIMIZE) -std=gnu99 -mprocessor=$(PROC) -Wl,--report-mem
-CFLAGS  = -g $(OPTIMIZE) -mprocessor=$(PROC)  -I. -Wall  -MMD
-LDFLAGS = -g $(OPTIMIZE) -mprocessor=$(PROC) -Wl,--report-mem,--defsym,_min_heap_size=0x1000
-#LDFLAGS = -g $(OPTIMIZE) -mprocessor=$(PROC) -Wl,--defsym,_min_heap_size=0x1000
-
-APPLIB = 
-APPLIB_OBJECTS = 
+include Makefile.rules
 
 MAIN    = main
-                
-                
-#LIBS = -l mchp_peripheral_$(PROC)
+
+
+DIRS = aeickho-tiny-fecc
 
 OBJECTS =	main.o \
 		portsetup.o \
-		uart1.o \
 		uart2.o \
 		myspi2.o \
 		crc.o \
 		byteorder.o \
 		Pinguino.o \
                 nrf24l01p.o \
-		myspi1.o  \
 		general_exception_handler.o
+#		uart1.o
+#		myspi1.o  \
 		
 
 #############################################################################
@@ -62,9 +39,13 @@ all: $(MAIN).hex
 $(MAIN).hex: $(MAIN).elf
 	$(BIN2HEX) -a $<
 
-$(MAIN).elf: $(OBJECTS) $(APPLIB) procdefs.ld
-	$(CC) $(LDFLAGS) $(OBJECTS) $(APPLIB) $(LIBS) -o $(MAIN).elf
+$(MAIN).elf: $(OBJECTS) $(APPLIB) procdefs.ld Makefile
+	for i in $(DIRS); do make -C $$i; done
+#	$(CC) $(LDFLAGS) $(OBJECTS) $(APPLIB) $(LIBS) aeickho-tiny-fecc/sg_crc.o -o $(MAIN).elf
+	$(CC) $(LDFLAGS) $(OBJECTS) $(APPLIB) $(LIBS) aeickho-tiny-fecc/tfec3.o -o $(MAIN).elf
+#	$(CC) $(LDFLAGS) $(OBJECTS) $(APPLIB) $(LIBS)  -o $(MAIN).elf
 
+ 
 
 $(APPLIB): $(APPLIB_OBJECTS)
 	$(AR) -r "$@" $(APPLIB_OBJECTS)
@@ -79,7 +60,7 @@ clean:
 	- rm -f $(OBJECTS) $(APPLIB_OBJECTS) $(APPLIB)
 	- rm -f *.o *.elf *.hex
 	- rm -f *.d
-	
+	for i in $(DIRS); do make -C $$i clean; done	
 
 ctags:
 	$(CC) -g -Os  -mprocessor=$(PROC) -M -c $(MAIN).c  | sed -e 's/[\\ ]/\n/g' | sed -e '/^$$/d' -e '/\.o:[ \t]*$$/d'  | ctags -L - --c++-kinds=+p --fields=+iaS --extra=+q

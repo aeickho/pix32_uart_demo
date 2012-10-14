@@ -4,7 +4,7 @@
 
 volatile struct UARTFifo UART2Fifo;
 
-#define BUFSIZE 300
+#define BUFSIZE 100
 
 
 static uint8_t pIn[BUFSIZE];
@@ -156,11 +156,19 @@ UART2PutHex (unsigned int val)
       val <<= 4;
     }
 }
+void
+UART2PutCharHex (unsigned char val)
+{
+UART2PutHexChar ((val & 0xF0) >>4);
+UART2PutHexChar ((val & 0x0F));
+}
 
 
 void
 UART2SendChar (const uint8_t character)
 {
+
+  while (UART2Fifo.out_nchar != 0);
 
   ToUART2Fifo_out (character);
   UART2SendTrigger ();

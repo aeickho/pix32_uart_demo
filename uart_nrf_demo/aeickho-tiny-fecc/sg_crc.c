@@ -23,7 +23,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "crc.h"
+#include "sg_crc.h"
 
 extern unsigned short crc16_update(unsigned short state, int n, const void *raw)
 {

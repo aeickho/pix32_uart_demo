@@ -34,6 +34,7 @@ main (void)
   uint32_t time3;
   uint8_t buf[32],tmpBuf[4];
   
+  uint8_t *pdump;  
   
 
   portsetup();
@@ -46,9 +47,6 @@ main (void)
 
   INTConfigureSystem (INT_SYSTEM_CONFIG_MULT_VECTOR);
   INTEnableInterrupts ();
-
-
-
 
   UART2PutStr
     (".............................................................................hallo\r\n");
