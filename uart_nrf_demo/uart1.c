@@ -1,12 +1,13 @@
 #include "uart.h"
 
+#include "general_exception_handler.h"
+
 volatile struct UARTFifo UART1Fifo;
 
 #define BUFSIZE 300
 
 static uint8_t pIn[BUFSIZE];
 static uint8_t pOut[BUFSIZE];
-
 
 // Init output fifo
 void
@@ -20,17 +21,10 @@ UART1FifoInit (void)
   UART1Fifo.out_nchar = 0;
   UART1Fifo.bufsize = BUFSIZE;
 
-/*
-  UART1Fifo.in =  malloc (UART1Fifo.bufsize);
-  UART1Fifo.out =  malloc (UART1Fifo.bufsize);
-*/
-  UART1Fifo.in  = pIn;
-  UART1Fifo.out =pOut;;
-
+  UART1Fifo.in = pIn;
+  UART1Fifo.out = pOut;
 }
 
-
-// Add one character to output fifo 
 void
 ToUART1Fifo_in (const uint8_t character)
 {
@@ -41,32 +35,37 @@ ToUART1Fifo_in (const uint8_t character)
   UART1Fifo.in_nchar++;
 }
 
-void
-ToUART1Fifo_out (const uint8_t character)
+void __attribute__ ((nomips16)) ToUART1Fifo_out (const uint8_t character)
 {
+  unsigned int status = 0;
+
   UART1Fifo.out[UART1Fifo.out_write_pos] = character;
   UART1Fifo.out_write_pos = (UART1Fifo.out_write_pos + 1);
   if (UART1Fifo.out_write_pos == UART1Fifo.bufsize)
     UART1Fifo.out_write_pos = 0;
+
+  asm volatile ("di    %0":"=r" (status));
   UART1Fifo.out_nchar++;
+  asm volatile ("ei    %0":"=r" (status));
 }
 
-int
-FromUART1Fifo_in (void)
+int __attribute__ ((nomips16)) FromUART1Fifo_in (void)
 {
   int in = -1;
+  unsigned int status = 0;
+
   if (UART1Fifo.in_nchar > 0)
     {
       in = UART1Fifo.in[UART1Fifo.in_read_pos];
       UART1Fifo.in_read_pos = (UART1Fifo.in_read_pos + 1);
       if (UART1Fifo.in_read_pos == UART1Fifo.bufsize)
 	UART1Fifo.in_read_pos = 0;
+      asm volatile ("di    %0":"=r" (status));
       UART1Fifo.in_nchar--;
+      asm volatile ("ei    %0":"=r" (status));
     }
   return (in);
 }
-
-
 
 int
 FromUART1Fifo_out ()
@@ -154,9 +153,9 @@ UART1SendTrigger (void)
 void
 UART1Send (const uint8_t * buffer, UINT32 size)
 {
-  while(UART1Fifo.out_nchar!=0);
   while (size)
     {
+      while (UART1Fifo.out_nchar > BUFSIZE - 2);
       ToUART1Fifo_out (*buffer);
       buffer++;
       size--;
@@ -167,7 +166,7 @@ UART1Send (const uint8_t * buffer, UINT32 size)
 void
 UART1SendChar (const uint8_t character)
 {
-  while(UART1Fifo.out_nchar!=0);
+  while (UART1Fifo.out_nchar > BUFSIZE - 2);
   ToUART1Fifo_out (character);
   UART1SendTrigger ();
 }
@@ -178,15 +177,9 @@ UART1PutStr (const char *buffer)
   UART1Send ((uint8_t *) buffer, strlen (buffer));
 }
 
-/*
-void
-__ISR (_UART1_VECTOR, IPL2SOFT)
-IntUart1Handler (void)
-*/
-#define U_VECTOR        _UART_1_VECTOR
 void
   __attribute__ ((nomips16, interrupt (ipl2),
-		  vector (U_VECTOR))) uart1_interrupt (void)
+		  vector (_UART_1_VECTOR))) uart1_interrupt (void)
 {
   if (INTGetFlag (INT_SOURCE_UART_RX (UART1)))
     {

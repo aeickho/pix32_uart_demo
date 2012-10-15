@@ -115,7 +115,7 @@ main (void)
 	{
 	  uint32_t tmpspace[10];
 
-//         *tmpspace = (int) seq_nr; 
+         *tmpspace = (int) seq_nr; 
 	  
          UART1SendChar(0x01);
          to_base128((uint8_t *) tmpspace, outBuf);

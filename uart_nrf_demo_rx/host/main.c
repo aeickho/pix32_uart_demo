@@ -9,19 +9,23 @@
 #include "crc.h"
 #include <termios.h>
 #include <sys/fcntl.h>
+#include <linits.h>
 
 #define BUFSIZE 1024
 
 #define UART1 "/dev/serial/by-id/usb-Silicon_Labs_CP2102-Alex_0101-if00-port0"
 
 
-#define	STEP_INIT 	0
-#define STEP_WAIT	1
-#define STEP_READ	2
-#define STEP_END	-1
+#define	STEP_INIT 		0
+#define STEP_WAIT		1
+#define STEP_READ		2
+#define STEP_RX_NEWFRAME	3
+#define STEP_END		-1
 
 #define WORDS_PER_FRAGMENT   6
 #define BYTES_PER_FRAGMENT  (WORDS_PER_FRAGMENT*4)
+
+#define FRAMEBUFSIZE	20	
 
 //#if UINT_MAX >= 0xFFFFFFFF
 typedef unsigned int  tfec3_u32; /* let's prefer int if wide enough */
@@ -37,7 +41,21 @@ struct frame {
   unsigned short metad;
   unsigned short crc16;
   };
+           
+
+struct sframe {
+  unsigned int	timeout;
+  unsigned int  seqnr;
+  struct frame  frame;
+  };
+ 
+struct msgindex {
+  unsigned int msg;
+  unsigned int n;
+  };
                                 
+struct sframe frameBuffer[FRAMEBUFSIZE];
+
 
 static void
 print_frame (const struct frame *pf)
@@ -71,7 +89,13 @@ main (int argc, char **argv)
   unsigned int seq_nr;
   struct termios termOptions;
 
-
+  for (i=0;i<FRAMEBUFSIZE;i++)
+    {
+    frameBuffer[i].timeout=0;
+    frameBuffer[i].seqnr=0;
+    }
+    
+ 
   tty = open (UART1, O_RDWR | O_NOCTTY);
   if (tty < 0)
     {
@@ -128,11 +152,45 @@ main (int argc, char **argv)
 	    printf ("%02x ", outBuf[i]);
 	   printf ("%04x %s\n",  c_crc16,r_crc16 == c_crc16?"ok":"nok"); 
 	   
+	  if (r_crc16 == c_crc16)
+            {
+            // Add Frame to FameBuffer
+            int seq_nr_id;
+            int	ii;
+            int seq_nr_diff_min;
+            struct msgindex msg_index[FRAMEBUFSIZE];   
+            
+            for(i = 0; i < FRAMEBUFSIZE; i++)
+              {
+              msg_index[i].id = 0;    
+              msg_index[i].n = 0;
+              }
+              
+            for(i = 0; i < FRAMEBUFSIZE; i++)
+              if ( seq_nr - frameBuffer[i].seqnr > seq_nr_diff_min)
+                {
+                seq_nr_diff_min =  seq_nr - frameBuffer[i].seqnr;
+                seq_nr_id = i;
+                }                        
+            memcpy(&frameBuffer[seq_nr_id].frame, outBuf, 32);
+            frameBuffer[seq_nr_id].seqnr = seq_nr;
+            }
 
-
-	  
+            for(i = 0; i < FRAMEBUFSIZE; i++)
+              {
+              for(ii=0;ii <	 FRAMEBUFSIZE; ii++)
+                {
+                if (msg_index[ii].id == frameBuffer[i].frame.mid)
+                  {              
+                  msg_index[i].n =
+              }
+                        
+            
+              
+            }    
 	  step = STEP_WAIT;
 	  break;
+
 	}
     }
   return (0);

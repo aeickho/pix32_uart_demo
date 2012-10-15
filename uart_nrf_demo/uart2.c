@@ -6,7 +6,6 @@ volatile struct UARTFifo UART2Fifo;
 
 #define BUFSIZE 100
 
-
 static uint8_t pIn[BUFSIZE];
 static uint8_t pOut[BUFSIZE];
 
@@ -23,12 +22,10 @@ UART2FifoInit (void)
   UART2Fifo.out_nchar = 0;
   UART2Fifo.bufsize = BUFSIZE;
 
-  UART2Fifo.in = pIn ;
-  UART2Fifo.out = pOut ;
+  UART2Fifo.in = pIn;
+  UART2Fifo.out = pOut;
 }
 
-
-// Add one character to output fifo 
 void
 ToUART2Fifo_in (const uint8_t character)
 {
@@ -39,36 +36,44 @@ ToUART2Fifo_in (const uint8_t character)
   UART2Fifo.in_nchar++;
 }
 
-void
-ToUART2Fifo_out (const uint8_t character)
+void __attribute__ ((nomips16)) ToUART2Fifo_out (const uint8_t character)
 {
+  unsigned int status = 0;
+
   UART2Fifo.out[UART2Fifo.out_write_pos] = character;
   UART2Fifo.out_write_pos = (UART2Fifo.out_write_pos + 1);
   if (UART2Fifo.out_write_pos == UART2Fifo.bufsize)
     UART2Fifo.out_write_pos = 0;
+
+  asm volatile ("di    %0":"=r" (status));
   UART2Fifo.out_nchar++;
+  asm volatile ("ei    %0":"=r" (status));
 }
 
-int
-FromUART2Fifo_in (void)
+int __attribute__ ((nomips16)) FromUART2Fifo_in (void)
 {
   int in = -1;
+  unsigned int status = 0;
+
+
   if (UART2Fifo.in_nchar > 0)
     {
       in = UART2Fifo.in[UART2Fifo.in_read_pos];
       UART2Fifo.in_read_pos = (UART2Fifo.in_read_pos + 1);
       if (UART2Fifo.in_read_pos == UART2Fifo.bufsize)
 	UART2Fifo.in_read_pos = 0;
+      asm volatile ("di    %0":"=r" (status));
       UART2Fifo.in_nchar--;
+      asm volatile ("ei    %0":"=r" (status));
     }
   return (in);
 }
-
 
 int
 FromUART2Fifo_out ()
 {
   int in = -1;
+
   if (UART2Fifo.out_nchar > 0)
     {
       in = UART2Fifo.out[UART2Fifo.out_read_pos];
@@ -80,11 +85,29 @@ FromUART2Fifo_out ()
   return (in);
 }
 
-int 
-UART2ReadChar()
+int
+UART2ReadChar ()
 {
-return FromUART2Fifo_in();   
+  return FromUART2Fifo_in ();
 }
+
+
+void
+UART2Read (uint8_t * buf, const uint16_t n)
+{
+  int i;
+  int ret;
+
+  for (i = 0; i < n; i++)
+    {
+      do
+	ret = FromUART2Fifo_in ();
+      while (ret < 0);
+
+      buf[i] = (uint8_t) ret;
+    }
+}
+
 
 
 int
@@ -109,21 +132,11 @@ UART2SendTrigger (void)
 
 
 void
-UART2Send (const uint8_t *buffer, UINT32 size)
+UART2Send (const uint8_t * buffer, UINT32 size)
 {
-/*  while (size)
-    {
-    while(U2STAbits.UTXBF); // wait when buffer is full
-         U2TXREG = *buffer;
-         buffer++;
-         
- size--;
-}
-}
-*/
-  while (UART2Fifo.out_nchar != 0);
   while (size)
     {
+      while (UART2Fifo.out_nchar > BUFSIZE - 2);
       ToUART2Fifo_out (*buffer);
       buffer++;
       size--;
@@ -156,20 +169,19 @@ UART2PutHex (unsigned int val)
       val <<= 4;
     }
 }
+
 void
 UART2PutCharHex (unsigned char val)
 {
-UART2PutHexChar ((val & 0xF0) >>4);
-UART2PutHexChar ((val & 0x0F));
+  UART2PutHexChar ((val & 0xF0) >> 4);
+  UART2PutHexChar ((val & 0x0F));
 }
 
 
 void
 UART2SendChar (const uint8_t character)
 {
-
-  while (UART2Fifo.out_nchar != 0);
-
+  while (UART2Fifo.out_nchar > BUFSIZE - 2);
   ToUART2Fifo_out (character);
   UART2SendTrigger ();
 }
@@ -177,20 +189,14 @@ UART2SendChar (const uint8_t character)
 void
 UART2PutStr (const char *buffer)
 {
-   UART2Send ((uint8_t *) buffer, strlen (buffer));
+  UART2Send ((uint8_t *) buffer, strlen (buffer));
 }
 
-/*
-void
-__ISR (_UART2_VECTOR, IPL2SOFT)
-IntUart2Handler (void)
-*/
-#define U_VECTOR        _UART_2_VECTOR
 void
   __attribute__ ((nomips16, interrupt (ipl2),
-		  vector (U_VECTOR))) uart2_interrupt (void)
+		  vector (_UART_2_VECTOR))) uart2_interrupt (void)
 {
-uint8_t in;
+  uint8_t in;
 
   if (INTGetFlag (INT_SOURCE_UART_RX (UART2)))
     {
@@ -198,11 +204,11 @@ uint8_t in;
       if (U2STAbits.URXDA)
 	{
 	  in = U2RXREG;
-	  if ((char ) in == 'B')
+	  if ((char) in == 'B')
 	    {
-	    _general_exception_handler();
+	      _general_exception_handler ();
 	    }
-	    
+
 	  ToUART2Fifo_in (in);
 	}
       INTClearFlag (INT_SOURCE_UART_RX (UART2));
