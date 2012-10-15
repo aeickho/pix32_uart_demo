@@ -62,6 +62,8 @@ struct frame {
 #define NUM_DATA_FRAGS(pf)  ((pf)->metad >> 12)
 #define FRAGMENT_INDEX(pf)  ((pf)->metad &  63)
 
+uint32_t t[10];
+
 static unsigned compute_frame_crc(const struct frame *pf)
 {
         return crc16(pf,
@@ -233,8 +235,22 @@ int sendblock(void)
         tfp_printf("           actual redundancy = %d%%\n\r",r);
         for (i=0; i<send_count; ++i) {
                 print_frame(tx_frame+i);
+        } 
+      
+        tfp_printf("send frames: \n\r");
+    
+        t[0]=ReadCoreTimer();        
+        for (i=0; i<send_count; ++i) {
+                print_frame(tx_frame+i);
+                t[i+1]=ReadCoreTimer();
                 nrf_snd_pkt(32,tx_frame+i);  
         }
+        
+        for (i=0; i<send_count; ++i) {
+                printf("%08d ns %08d ns\n\r", (t[i+1]-t[0])*50, (t[i+1]-t[i])*50);
+        }
+
+
 
         tfp_printf("Destroying frames (simulated erasure)...\n\r");
         destroy_frame(1);
@@ -262,7 +278,7 @@ void test(void)
         while(1)
                 {
                 sendblock();
-                delay_ms(2000);
+                delay_ms(20);
                 }
          }        
         

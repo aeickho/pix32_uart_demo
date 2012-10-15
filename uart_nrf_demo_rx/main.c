@@ -115,7 +115,7 @@ main (void)
 	{
 	  uint32_t tmpspace[10];
 
-         *tmpspace = (int) seq_nr; 
+//         *tmpspace = (int) seq_nr; 
 	  
          UART1SendChar(0x01);
          to_base128((uint8_t *) tmpspace, outBuf);
@@ -124,20 +124,12 @@ main (void)
          to_base128n  (buf, outBuf, 5);
          UART1Send(outBuf, 40);
          
-/*                                            
+                                            
 	  uint16_t cnt;
-	  cnt = buf[2] << 8 | buf[3];
+	  cnt = buf[0] << 8 | buf[1];
+	  UART2PutHex(cnt);
 	  UART2PutStr ("\r\n");
-	  UART2PutStr ("recv: ");
-	  ultoa ((char *) outBuf, (unsigned int) rcv, 10);
-	  UART2PutStr ((char *) outBuf);
-          UART2PutStr (" ");
-	  ultoa ((char *)outBuf, old_cnt++, 10);
-	  UART2PutStr ((char *) outBuf);
-          UART2PutStr (" ");
-	  ultoa ((char *)outBuf, cnt, 10);
-	  UART2PutStr ((char *) outBuf);
-*/
+	  
 	  seq_nr++;
 	}
     }

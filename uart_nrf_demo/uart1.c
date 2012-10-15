@@ -154,9 +154,9 @@ UART1SendTrigger (void)
 void
 UART1Send (const uint8_t * buffer, UINT32 size)
 {
+  while(UART1Fifo.out_nchar!=0);
   while (size)
     {
-      while (UART1Fifo.out_nchar > (UART1Fifo.bufsize - 10));
       ToUART1Fifo_out (*buffer);
       buffer++;
       size--;
@@ -167,6 +167,7 @@ UART1Send (const uint8_t * buffer, UINT32 size)
 void
 UART1SendChar (const uint8_t character)
 {
+  while(UART1Fifo.out_nchar!=0);
   ToUART1Fifo_out (character);
   UART1SendTrigger ();
 }

@@ -111,19 +111,26 @@ main (int argc, char **argv)
 	  r_crc16 = outBuf[31] << 8 | outBuf[30];
 	  c_crc16 = crc16 (outBuf, 30);
 
-	  if (r_crc16 != c_crc16)
+/*	  if (r_crc16 != c_crc16)
 	    {
 	      printf ("checksum error %x %x", r_crc16, c_crc16);
 	      step = STEP_WAIT;
 	      break;
 	    }
+*/
 /*	  for (i = 0; i < 32; i++)
 	    printf ("%02x(%c) ", outBuf[i], outBuf[i] < 32 ? '.' : outBuf[i] > 127 ? '.' : outBuf[i]);
 	  printf ("\n");
 */
 	  print_frame((const struct frame *) outBuf);
+
+	  for (i = 0; i < 32; i++)
+	    printf ("%02x ", outBuf[i]);
+	   printf ("%04x %s\n",  c_crc16,r_crc16 == c_crc16?"ok":"nok"); 
+	   
+
+
 	  
-	   printf ("Calc CRC [%04x] %s\n",  c_crc16, r_crc16 != c_crc16 ? "NOK" : "OK");
 	  step = STEP_WAIT;
 	  break;
 	}
