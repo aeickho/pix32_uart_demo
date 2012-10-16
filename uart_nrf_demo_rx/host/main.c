@@ -195,6 +195,8 @@ main (int argc, char **argv)
 		{
 		  msg_index[i].msg = 0;
 		  msg_index[i].n = 0;
+		  for (ii = 0; ii < FRAMEBUFSIZE; ii++)
+		    msg_buff[i][ii].metad=0;
 		}
 
 
