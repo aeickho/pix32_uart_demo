@@ -90,6 +90,7 @@ main (int argc, char **argv)
   unsigned char outBuf[BUFSIZE];
   unsigned short c_crc16 = 12345, r_crc16;
   int step;
+  unsigned int last_msg_id = 0;
 
   unsigned int seq_nr;
   struct termios termOptions;
@@ -156,119 +157,139 @@ main (int argc, char **argv)
 	  for (i = 0; i < 32; i++)
 	    printf ("%02x ", outBuf[i]);
 	  printf ("%04x %s\n", c_crc16, r_crc16 == c_crc16 ? "ok" : "nok");
-
+#define huhu
+#ifdef huhu
 	  if (r_crc16 == c_crc16)
 	    {
-	      // Add Frame to FameBuffer
-	      int seq_nr_id;
-	      int ii;
-	      int seq_nr_diff_min = 0;
-	      struct msgindex msg_index[FRAMEBUFSIZE];
-	      struct frame msg_buff[FRAMEBUFSIZE][MAX_MSG_FRAME_NR];
-
-
-	      for (i = 0; i < FRAMEBUFSIZE; i++)
+	      struct frame tmp_msg_buff;
+	      memcpy (&tmp_msg_buff, outBuf, 32);
+	      if (tmp_msg_buff.mid != last_msg_id)
 		{
-		  if (seq_nr - frameBuffer[i].seqnr > seq_nr_diff_min)
-		    {
-		      seq_nr_diff_min = seq_nr - frameBuffer[i].seqnr;
-		      seq_nr_id = i;
-		    }
-		}
-	      memcpy (&frameBuffer[seq_nr_id].frame, outBuf, 32);
-	      frameBuffer[seq_nr_id].seqnr = seq_nr;
 
-      printf ("....framebuffer..............................................\n");
-
-	      for (ii = 0; ii < FRAMEBUFSIZE; ii++)	/// ++++++++++++++++
-		{
-		  printf ("%08d .. ", frameBuffer[ii].seqnr);
-
-		  print_frame ((const struct frame *) &frameBuffer[ii].frame);
-		  printf ("\n");
-		}
-	      printf ("..................................................\n");
-
-
-
-	      for (i = 0; i < FRAMEBUFSIZE; i++)
-		{
-		  msg_index[i].msg = 0;
-		  msg_index[i].n = 0;
-		  for (ii = 0; ii < FRAMEBUFSIZE; ii++)
-		    msg_buff[i][ii].metad=0;
-		}
-
-
-	      for (i = 0; i < FRAMEBUFSIZE; i++)
-		{
+		  // Add Frame to FameBuffer
+		  int seq_nr_id;
 		  int ii;
-		  int msg_id;
-		  int fnum;
+		  int seq_nr_diff_min = 0;
+		  struct msgindex msg_index[FRAMEBUFSIZE];
+		  struct frame msg_buff[FRAMEBUFSIZE][MAX_MSG_FRAME_NR];
 
-		  fnum = frameBuffer[i].frame.metad & 0x1f;
-		  msg_id = frameBuffer[i].frame.mid;
-                  
-                  printf ("msg_id %08x fnum %d\n", msg_id, fnum);
-                  
-		  for (ii = 0; ii < FRAMEBUFSIZE; ii++)
+
+		  for (i = 0; i < FRAMEBUFSIZE; i++)
 		    {
-		      if ((msg_index[ii].msg == msg_id) && msg_id != 0)
-			{	// es gibt den eintrag mit dieser id schon
-			  msg_index[ii].n++;
-			  memcpy (&msg_buff[ii][fnum], &frameBuffer[i].frame , 32);
-			  break;
+		      if (seq_nr - frameBuffer[i].seqnr > seq_nr_diff_min)
+			{
+			  seq_nr_diff_min = seq_nr - frameBuffer[i].seqnr;
+			  seq_nr_id = i;
 			}
-		      else
-			{	// es gibt den eintrag noch nicht
-			  if (msg_index[ii].n == 0)
-			    {	// und id ist noch nicht in gebrauch
-			      msg_index[ii].msg = msg_id;
+		    }
+		  memcpy (&frameBuffer[seq_nr_id].frame, outBuf, 32);
+		  frameBuffer[seq_nr_id].seqnr = seq_nr;
+
+		  printf
+		    ("....framebuffer..............................................\n");
+
+		  for (ii = 0; ii < FRAMEBUFSIZE; ii++)	/// ++++++++++++++++
+		    {
+		      printf ("%08d .. ", frameBuffer[ii].seqnr);
+
+		      print_frame ((const struct frame *) &frameBuffer[ii].
+				   frame);
+		      printf ("\n");
+		    }
+		  printf
+		    ("..................................................\n");
+
+
+
+		  for (i = 0; i < FRAMEBUFSIZE; i++)
+		    {
+		      msg_index[i].msg = 0;
+		      msg_index[i].n = 0;
+		      for (ii = 0; ii < FRAMEBUFSIZE; ii++)
+			msg_buff[i][ii].metad = 0;
+		    }
+
+
+		  for (i = 0; i < FRAMEBUFSIZE; i++)
+		    {
+		      int ii;
+		      int msg_id;
+		      int fnum;
+
+		      fnum = frameBuffer[i].frame.metad & 0x1f;
+		      msg_id = frameBuffer[i].frame.mid;
+
+
+		      for (ii = 0; ii < FRAMEBUFSIZE; ii++)
+			{
+			  if ((msg_index[ii].msg == msg_id) && msg_id != 0)
+			    {	// es gibt den eintrag mit dieser id schon
 			      msg_index[ii].n++;
-			      memcpy (&msg_buff[ii][fnum], &frameBuffer[i].frame, 32);
+			      memcpy (&msg_buff[ii][fnum],
+				      &frameBuffer[i].frame, 32);
 			      break;
+			    }
+			  else
+			    {	// es gibt den eintrag noch nicht
+			      if (msg_index[ii].n == 0 && msg_id != 0)
+				{	// und id ist noch nicht in gebrauch
+				  msg_index[ii].msg = msg_id;
+				  msg_index[ii].n++;
+				  memcpy (&msg_buff[ii][fnum],
+					  &frameBuffer[i].frame, 32);
+				  break;
+				}
 			    }
 			}
 		    }
-		}
 
-	      for (i = 0; i < FRAMEBUFSIZE && msg_index[i].n > 0; i++)
-		{
-		  printf ("\n%i..", i);
-		  printf ("msg: %08x n: %d, ", msg_index[i].msg,
-			  msg_index[i].n++);
-		  for (ii = 0; ii < 10; ii++)
-		    printf ("%04x ", msg_buff[i][ii].metad);
-		}
-	      printf ("\n");
-
-	      for (i = 0; i < FRAMEBUFSIZE; i++)
-		{
-		  if (msg_index[i].n > 5)
+		  for (i = 0; i < FRAMEBUFSIZE && msg_index[i].n > 0; i++)
 		    {
-		      printf
-			("..................................................\n");
-		      for (ii = 0; ii < 8; ii++)	/// ++++++++++++++++
-			{
-			  print_frame ((const struct frame *)
-				       &msg_buff[i][ii]);
-			  printf ("\n");
-			}
-		      printf
-			("..................................................\n");
-
-
-/*		      for (ii = 0; ii < FRAMEBUFSIZE; ii++)
-			if (frameBuffer[i].seqnr == frameBuffer[i].seqnr)
-			  frameBuffer[i].seqnr = 0;
-*/
+		      printf ("\n%i..", i);
+		      printf ("msg: %08x n: %d, ", msg_index[i].msg,
+			      msg_index[i].n);
+		      for (ii = 0; ii < 10; ii++)
+			printf ("%04x ", msg_buff[i][ii].metad);
 		    }
-		  break;
-		}
 
-	      step = STEP_WAIT;
-	      break;
+		  printf ("\n");
+
+		  for (i = 0; i < FRAMEBUFSIZE; i++)
+		    {
+		      if (msg_index[i].n > 6 && msg_index[i].msg != last_msg_id)
+			{
+			  printf
+			    ("  n>6..................................................\n");
+			  for (ii = 0; ii < 9; ii++)	/// ++++++++++++++++
+			    {
+			      if (msg_buff[i][ii].mid == msg_index[i].msg)
+				print_frame ((const struct frame *)
+					     &msg_buff[i][ii]);
+			      printf ("\n");
+			    }
+			  printf
+			    ("..................................................\n");
+			  last_msg_id = msg_index[i].msg;
+
+/*		    	
+                      msg_index[i].n=0;
+                      printf ("\n ......... del: %08x\n ",msg_index[i].msg);
+		      for (ii = 0; ii < FRAMEBUFSIZE; ii++)
+			if (msg_index[i].msg == frameBuffer[ii].frame.mid)
+			  {
+			    frameBuffer[ii].seqnr = 0;
+			    frameBuffer[ii].frame.mid = 0;
+			  }
+
+*/
+			}
+		    }
+		}
 	    }
+#endif
+
+	  step = STEP_WAIT;
+	  break;
 	}
     }
   return (0);
