@@ -9,7 +9,7 @@
 #include "crc.h"
 #include <termios.h>
 #include <sys/fcntl.h>
-#include <linits.h>
+#include <limits.h>
 
 #define BUFSIZE 1024
 
@@ -25,35 +25,40 @@
 #define WORDS_PER_FRAGMENT   6
 #define BYTES_PER_FRAGMENT  (WORDS_PER_FRAGMENT*4)
 
-#define FRAMEBUFSIZE	20	
+#define FRAMEBUFSIZE		20
+#define MAX_MSG_FRAME_NR	10
 
 //#if UINT_MAX >= 0xFFFFFFFF
-typedef unsigned int  tfec3_u32; /* let's prefer int if wide enough */
+typedef unsigned int tfec3_u32;	/* let's prefer int if wide enough */
 //#else
 //typedef unsigned long tfec3_u32; /* long is at least 32 bits wide */
 //#endif
 
 
 
-struct frame {
+struct frame
+{
   tfec3_u32 mid;
   tfec3_u32 fragmentdata[WORDS_PER_FRAGMENT];
   unsigned short metad;
   unsigned short crc16;
-  };
-           
+};
 
-struct sframe {
-  unsigned int	timeout;
-  unsigned int  seqnr;
-  struct frame  frame;
-  };
- 
-struct msgindex {
+
+struct sframe
+{
+  unsigned int timeout;
+  unsigned int seqnr;
+  struct frame frame;
+};
+
+struct msgindex
+{
   unsigned int msg;
   unsigned int n;
-  };
-                                
+  unsigned char used;
+};
+
 struct sframe frameBuffer[FRAMEBUFSIZE];
 
 
@@ -89,13 +94,13 @@ main (int argc, char **argv)
   unsigned int seq_nr;
   struct termios termOptions;
 
-  for (i=0;i<FRAMEBUFSIZE;i++)
+  for (i = 0; i < FRAMEBUFSIZE; i++)
     {
-    frameBuffer[i].timeout=0;
-    frameBuffer[i].seqnr=0;
+      frameBuffer[i].timeout = 0;
+      frameBuffer[i].seqnr = 0;
     }
-    
- 
+
+
   tty = open (UART1, O_RDWR | O_NOCTTY);
   if (tty < 0)
     {
@@ -146,51 +151,118 @@ main (int argc, char **argv)
 	    printf ("%02x(%c) ", outBuf[i], outBuf[i] < 32 ? '.' : outBuf[i] > 127 ? '.' : outBuf[i]);
 	  printf ("\n");
 */
-	  print_frame((const struct frame *) outBuf);
+	  print_frame ((const struct frame *) outBuf);
 
 	  for (i = 0; i < 32; i++)
 	    printf ("%02x ", outBuf[i]);
-	   printf ("%04x %s\n",  c_crc16,r_crc16 == c_crc16?"ok":"nok"); 
-	   
+	  printf ("%04x %s\n", c_crc16, r_crc16 == c_crc16 ? "ok" : "nok");
+
 	  if (r_crc16 == c_crc16)
-            {
-            // Add Frame to FameBuffer
-            int seq_nr_id;
-            int	ii;
-            int seq_nr_diff_min;
-            struct msgindex msg_index[FRAMEBUFSIZE];   
-            
-            for(i = 0; i < FRAMEBUFSIZE; i++)
-              {
-              msg_index[i].id = 0;    
-              msg_index[i].n = 0;
-              }
-              
-            for(i = 0; i < FRAMEBUFSIZE; i++)
-              if ( seq_nr - frameBuffer[i].seqnr > seq_nr_diff_min)
-                {
-                seq_nr_diff_min =  seq_nr - frameBuffer[i].seqnr;
-                seq_nr_id = i;
-                }                        
-            memcpy(&frameBuffer[seq_nr_id].frame, outBuf, 32);
-            frameBuffer[seq_nr_id].seqnr = seq_nr;
-            }
+	    {
+	      // Add Frame to FameBuffer
+	      int seq_nr_id;
+	      int ii;
+	      int seq_nr_diff_min=0;
+	      struct msgindex msg_index[FRAMEBUFSIZE];
+	      struct frame msg_buff[FRAMEBUFSIZE][MAX_MSG_FRAME_NR];
 
-            for(i = 0; i < FRAMEBUFSIZE; i++)
-              {
-              for(ii=0;ii <	 FRAMEBUFSIZE; ii++)
-                {
-                if (msg_index[ii].id == frameBuffer[i].frame.mid)
-                  {              
-                  msg_index[i].n =
-              }
-                        
-            
-              
-            }    
-	  step = STEP_WAIT;
-	  break;
+	      for (i = 0; i < FRAMEBUFSIZE; i++)
+		{
+		  msg_index[i].msg = 0;
+		  msg_index[i].n = 0;
+		  msg_index[i].used = 0;
+		}
 
+	      for (i = 0; i < FRAMEBUFSIZE; i++)
+		{
+		  if (seq_nr - frameBuffer[i].seqnr > seq_nr_diff_min)
+		    {
+		      seq_nr_diff_min = seq_nr - frameBuffer[i].seqnr;
+		      seq_nr_id = i;
+		    }
+		}
+	      memcpy (&frameBuffer[seq_nr_id].frame, outBuf, 32);
+	      frameBuffer[seq_nr_id].seqnr = seq_nr;
+
+              printf
+                ("..................................................\n");
+	      
+              for (ii = 0; ii < FRAMEBUFSIZE; ii++)	/// ++++++++++++++++
+                {
+                  printf ("%08d .. ", frameBuffer[ii].seqnr);
+                  
+                  print_frame ((const struct frame *)
+                               &frameBuffer[ii].frame);
+                  printf ("\n");
+                }
+              printf
+                ("..................................................\n");
+
+	      
+
+
+	      for (i = 0; i < FRAMEBUFSIZE; i++)
+		{
+		  int ii;
+		  int msg_id;
+		  int fnum;
+
+		  fnum = frameBuffer[i].frame.metad & 0x1f;
+		  printf ("\n%d ", fnum);
+		  msg_id = frameBuffer[i].frame.mid;
+		  printf ("%08x ", msg_id);
+
+		  for (ii = 0; ii < FRAMEBUFSIZE; ii++)
+		    {
+		      if (msg_id == msg_index[ii].msg)
+			{
+			  msg_index[ii].n++;
+			}
+		      else
+			{
+			  if (msg_index[ii].used == 0)
+			    {
+			      msg_index[ii].used == 1;
+			      msg_index[ii].msg = msg_id;
+			      msg_index[ii].n++;
+			    }
+			}
+		      memcpy (&msg_buff[ii][fnum], outBuf, 32);
+		    }
+		}
+
+              for (i = 0; i < FRAMEBUFSIZE; i++)
+                {
+                printf("\n%i..",i);
+                printf("msg: %d used: %d n: %d",msg_index[i].msg ,msg_index[i].used, msg_index[i].n++);
+                }
+	   	
+/*	      for (i = 0; i < FRAMEBUFSIZE; i++)
+		{
+		  if (msg_index[i].n > 5)
+		    {
+		      printf
+			("..................................................\n");
+		      for (ii = 0; ii < 8; ii++)	/// ++++++++++++++++
+			{
+			  print_frame ((const struct frame *)
+				       &msg_buff[i][ii]);
+			  printf ("\n");
+			}
+		      printf
+			("..................................................\n");
+
+
+		      for (ii = 0; ii < FRAMEBUFSIZE; ii++)
+			if (frameBuffer[i].seqnr == frameBuffer[i].seqnr)
+			  frameBuffer[i].seqnr = 0;
+		    }
+		  break;
+		}
+*/
+	      step = STEP_WAIT;
+	      break;
+	    }
 	}
     }
   return (0);
