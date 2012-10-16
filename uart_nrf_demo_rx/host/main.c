@@ -135,46 +135,18 @@ main (int argc, char **argv)
 	  read (tty, buf, 8);
 	  from_base128n (buf, outBuf, 1);
 	  seq_nr = *(unsigned int *) outBuf;
-//        printf ("%08d ", seq_nr);
-
 	  read (tty, buf, 40);
 	  from_base128n (buf, outBuf, 5);
 
 	  r_crc16 = outBuf[31] << 8 | outBuf[30];
 	  c_crc16 = crc16 (outBuf, 30);
-
-/*	  if (r_crc16 != c_crc16)
-	    {
-	      printf ("checksum error %x %x", r_crc16, c_crc16);
-	      step = STEP_WAIT;
-	      break;
-	    }
-*/
-/*	  for (i = 0; i < 32; i++)
-	    printf ("%02x(%c) ", outBuf[i], outBuf[i] < 32 ? '.' : outBuf[i] > 127 ? '.' : outBuf[i]);
-	  printf ("\n");
-*/
-/*	  print_frame ((const struct frame *) outBuf);
-
-	  for (i = 0; i < 32; i++)
-	    printf ("%02x ", outBuf[i]);
-	  printf ("%04x %s\n", c_crc16, r_crc16 == c_crc16 ? "ok" : "nok");
-*/
-#define huhu
-#ifdef huhu
 	  if (r_crc16 == c_crc16)
 	    {
-	      struct frame tmp_msg_buff;
-	      memcpy (&tmp_msg_buff, outBuf, 32);
-
-
-	      // Add Frame to FameBuffer
 	      int seq_nr_id;
 	      int ii;
 	      int seq_nr_diff_min = 0;
 	      struct msgindex msg_index[FRAMEBUFSIZE];
 	      struct frame msg_buff[FRAMEBUFSIZE][MAX_MSG_FRAME_NR];
-
 
 	      for (i = 0; i < FRAMEBUFSIZE; i++)
 		{
@@ -184,28 +156,16 @@ main (int argc, char **argv)
 		      seq_nr_id = i;
 		    }
 		}
+
 	      memcpy (&frameBuffer[seq_nr_id].frame, outBuf, 32);
 	      frameBuffer[seq_nr_id].seqnr = seq_nr;
 
-/*	      printf
-		("....framebuffer..............................................\n");
-
-	      for (ii = 0; ii < FRAMEBUFSIZE; ii++)	/// ++++++++++++++++
-		{
-		  printf ("%08d .. ", frameBuffer[ii].seqnr);
-
-		  print_frame ((const struct frame *) &frameBuffer[ii].frame);
-		  printf ("\n");
-		}
-	      printf ("..................................................\n");
-
-*/
 
 	      for (i = 0; i < FRAMEBUFSIZE; i++)
 		{
 		  msg_index[i].msg = 0;
 		  msg_index[i].n = 0;
-		  for (ii = 0; ii < FRAMEBUFSIZE; ii++)
+		  for (ii = 0; ii < MAX_MSG_FRAME_NR; ii++)
 		    msg_buff[i][ii].metad = 0;
 		}
 
@@ -219,20 +179,19 @@ main (int argc, char **argv)
 		  fnum = frameBuffer[i].frame.metad & 0x1f;
 		  msg_id = frameBuffer[i].frame.mid;
 
-
 		  for (ii = 0; ii < FRAMEBUFSIZE; ii++)
 		    {
 		      if ((msg_index[ii].msg == msg_id) && msg_id != 0)
-			{	// es gibt den eintrag mit dieser id schon
+			{
 			  msg_index[ii].n++;
 			  memcpy (&msg_buff[ii][fnum],
 				  &frameBuffer[i].frame, 32);
 			  break;
 			}
 		      else
-			{	// es gibt den eintrag noch nicht
+			{
 			  if (msg_index[ii].n == 0 && msg_id != 0)
-			    {	// und id ist noch nicht in gebrauch
+			    {
 			      msg_index[ii].msg = msg_id;
 			      msg_index[ii].n++;
 			      memcpy (&msg_buff[ii][fnum],
@@ -243,17 +202,8 @@ main (int argc, char **argv)
 		    }
 		}
 
-/*	      for (i = 0; i < FRAMEBUFSIZE && msg_index[i].n > 0; i++)
-		{
-		  printf ("\n%i..", i);
-		  printf ("msg: %08x n: %d, ", msg_index[i].msg,
-			  msg_index[i].n);
-		  for (ii = 0; ii < 10; ii++)
-		    printf ("%04x ", msg_buff[i][ii].metad);
-		}
 
-	      printf ("\n");
-*/
+
 	      for (i = 0; i < FRAMEBUFSIZE; i++)
 		{
 		  int f = 0;
@@ -261,38 +211,22 @@ main (int argc, char **argv)
 		    if (delete_msg_id[ii] == msg_index[i].msg)
 		      f = 1;
 
-
 		  if (msg_index[i].n > 6 && msg_index[i].msg && f == 0)
 		    {
-		      for (ii = 0; ii < 9; ii++)	/// ++++++++++++++++
+		      printf ("xxxxxxx\n");
+		      for (ii = 0; ii < 9; ii++)
 			{
+			  printf ("%01d: ", ii);
 			  if (msg_buff[i][ii].mid == msg_index[i].msg)
 			    print_frame ((const struct frame *)
 					 &msg_buff[i][ii]);
 			  printf ("\n");
 			}
-		      printf ("....\n");
 		      delete_msg_id[delete_msg_id_idx++] = msg_index[i].msg;
 		      delete_msg_id_idx %= FRAMEBUFSIZE;
-/*
-ringbuffer über FRAMEBUFSIZE mit den gelöschten
-		    	
-                      msg_index[i].n=0;
-                      printf ("\n ......... del: %08x\n ",msg_index[i].msg);
-		      for (ii = 0; ii < FRAMEBUFSIZE; ii++)
-			if (msg_index[i].msg == frameBuffer[ii].frame.mid)
-			  {
-			    frameBuffer[ii].seqnr = 0;
-			    frameBuffer[ii].frame.mid = 0;
-			  }
-
-*/
 		    }
 		}
-
 	    }
-#endif
-
 	  step = STEP_WAIT;
 	  break;
 	}
