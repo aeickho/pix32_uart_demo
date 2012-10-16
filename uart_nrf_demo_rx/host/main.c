@@ -162,16 +162,10 @@ main (int argc, char **argv)
 	      // Add Frame to FameBuffer
 	      int seq_nr_id;
 	      int ii;
-	      int seq_nr_diff_min=0;
+	      int seq_nr_diff_min = 0;
 	      struct msgindex msg_index[FRAMEBUFSIZE];
 	      struct frame msg_buff[FRAMEBUFSIZE][MAX_MSG_FRAME_NR];
 
-	      for (i = 0; i < FRAMEBUFSIZE; i++)
-		{
-		  msg_index[i].msg = 0;
-		  msg_index[i].n = 0;
-		  msg_index[i].used = 0;
-		}
 
 	      for (i = 0; i < FRAMEBUFSIZE; i++)
 		{
@@ -184,21 +178,24 @@ main (int argc, char **argv)
 	      memcpy (&frameBuffer[seq_nr_id].frame, outBuf, 32);
 	      frameBuffer[seq_nr_id].seqnr = seq_nr;
 
-              printf
-                ("..................................................\n");
-	      
-              for (ii = 0; ii < FRAMEBUFSIZE; ii++)	/// ++++++++++++++++
-                {
-                  printf ("%08d .. ", frameBuffer[ii].seqnr);
-                  
-                  print_frame ((const struct frame *)
-                               &frameBuffer[ii].frame);
-                  printf ("\n");
-                }
-              printf
-                ("..................................................\n");
+      printf ("....framebuffer..............................................\n");
 
-	      
+	      for (ii = 0; ii < FRAMEBUFSIZE; ii++)	/// ++++++++++++++++
+		{
+		  printf ("%08d .. ", frameBuffer[ii].seqnr);
+
+		  print_frame ((const struct frame *) &frameBuffer[ii].frame);
+		  printf ("\n");
+		}
+	      printf ("..................................................\n");
+
+
+
+	      for (i = 0; i < FRAMEBUFSIZE; i++)
+		{
+		  msg_index[i].msg = 0;
+		  msg_index[i].n = 0;
+		}
 
 
 	      for (i = 0; i < FRAMEBUFSIZE; i++)
@@ -208,36 +205,42 @@ main (int argc, char **argv)
 		  int fnum;
 
 		  fnum = frameBuffer[i].frame.metad & 0x1f;
-		  printf ("\n%d ", fnum);
 		  msg_id = frameBuffer[i].frame.mid;
-		  printf ("%08x ", msg_id);
-
+                  
+                  printf ("msg_id %08x fnum %d\n", msg_id, fnum);
+                  
 		  for (ii = 0; ii < FRAMEBUFSIZE; ii++)
 		    {
-		      if (msg_id == msg_index[ii].msg)
-			{
+		      if ((msg_index[ii].msg == msg_id) && msg_id != 0)
+			{	// es gibt den eintrag mit dieser id schon
 			  msg_index[ii].n++;
+			  memcpy (&msg_buff[ii][fnum], &frameBuffer[i].frame , 32);
+			  break;
 			}
 		      else
-			{
-			  if (msg_index[ii].used == 0)
-			    {
-			      msg_index[ii].used == 1;
+			{	// es gibt den eintrag noch nicht
+			  if (msg_index[ii].n == 0)
+			    {	// und id ist noch nicht in gebrauch
 			      msg_index[ii].msg = msg_id;
 			      msg_index[ii].n++;
+			      memcpy (&msg_buff[ii][fnum], &frameBuffer[i].frame, 32);
+			      break;
 			    }
 			}
-		      memcpy (&msg_buff[ii][fnum], outBuf, 32);
 		    }
 		}
 
-              for (i = 0; i < FRAMEBUFSIZE; i++)
-                {
-                printf("\n%i..",i);
-                printf("msg: %d used: %d n: %d",msg_index[i].msg ,msg_index[i].used, msg_index[i].n++);
-                }
-	   	
-/*	      for (i = 0; i < FRAMEBUFSIZE; i++)
+	      for (i = 0; i < FRAMEBUFSIZE && msg_index[i].n > 0; i++)
+		{
+		  printf ("\n%i..", i);
+		  printf ("msg: %08x n: %d, ", msg_index[i].msg,
+			  msg_index[i].n++);
+		  for (ii = 0; ii < 10; ii++)
+		    printf ("%04x ", msg_buff[i][ii].metad);
+		}
+	      printf ("\n");
+
+	      for (i = 0; i < FRAMEBUFSIZE; i++)
 		{
 		  if (msg_index[i].n > 5)
 		    {
@@ -253,13 +256,14 @@ main (int argc, char **argv)
 			("..................................................\n");
 
 
-		      for (ii = 0; ii < FRAMEBUFSIZE; ii++)
+/*		      for (ii = 0; ii < FRAMEBUFSIZE; ii++)
 			if (frameBuffer[i].seqnr == frameBuffer[i].seqnr)
 			  frameBuffer[i].seqnr = 0;
+*/
 		    }
 		  break;
 		}
-*/
+
 	      step = STEP_WAIT;
 	      break;
 	    }
