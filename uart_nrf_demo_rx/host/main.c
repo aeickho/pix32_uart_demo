@@ -59,7 +59,7 @@ struct msgindex
   unsigned char used;
 };
 
-struct sframe frameBuffer[FRAMEBUFSIZE];
+struct sframe frameBuffer[FRAMEBUFSIZE];                                                          // 800 
 
 
 static void
@@ -90,7 +90,7 @@ main (int argc, char **argv)
   unsigned char outBuf[BUFSIZE];
   unsigned short c_crc16 = 12345, r_crc16;
   int step;
-  unsigned int delete_msg_id[FRAMEBUFSIZE];
+  unsigned int delete_msg_id[FRAMEBUFSIZE];							// 80
   int delete_msg_id_idx = 0;
 
   unsigned int seq_nr;
@@ -144,9 +144,9 @@ main (int argc, char **argv)
 	    {
 	      int seq_nr_id;
 	      int ii;
-	      int seq_nr_diff_min = 0;
-	      struct msgindex msg_index[FRAMEBUFSIZE];
-	      struct frame msg_buff[FRAMEBUFSIZE][MAX_MSG_FRAME_NR];
+	      int seq_nr_diff_min = 0;						
+	      struct msgindex msg_index[FRAMEBUFSIZE];                          // 180
+	      struct frame msg_buff[FRAMEBUFSIZE][MAX_MSG_FRAME_NR];		// 7200 
 
 	      for (i = 0; i < FRAMEBUFSIZE; i++)
 		{

@@ -171,7 +171,7 @@ SPI1_transmit_sync (const uint8_t * dataout, uint8_t len)
 
 void
   __attribute__ ((nomips16, interrupt (ipl5),
-		  vector (_DMA1_VECTOR))) DmaHandler0 (void)
+		  vector (_DMA0_VECTOR))) DmaHandler0 (void)
 {
   int evFlags;			// event flags when getting the interrupt
 
@@ -187,10 +187,9 @@ void
     }
 }
 
-
 void
   __attribute__ ((nomips16, interrupt (ipl5),
-		  vector (_DMA2_VECTOR))) DmaHandler3 (void)
+		  vector (_DMA3_VECTOR))) DmaHandler3 (void)
 {
   int evFlags;			// event flags when getting the interrupt
   INTClearFlag (INT_SOURCE_DMA (DMA_CHANNEL3));	// acknowledge the INT controller, we're servicing int
