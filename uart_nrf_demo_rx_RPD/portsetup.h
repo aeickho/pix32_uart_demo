@@ -1,0 +1,1 @@
+../uart_nrf_demo/portsetup.h

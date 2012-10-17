@@ -1,0 +1,1 @@
+../uart_nrf_demo/uart2.c
