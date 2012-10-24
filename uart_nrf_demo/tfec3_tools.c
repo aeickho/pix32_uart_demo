@@ -8,7 +8,7 @@
 #include "basic.h"
 #include "tools/printf.h"
 #include "nrf24l01p.h"   
-
+#include "myspi.h"
 
 #define NDEBUG
 
@@ -237,38 +237,31 @@ int sendblock(void)
                 print_frame(tx_frame+i);
         } 
       
-        tfp_printf("send frames: \n\r");
+//        tfp_printf("send frames: \n\r");
     
         t[0]=ReadCoreTimer();        
+ CE_nRF_HIGH ();
         for (i=0; i<send_count; ++i) {
-                print_frame(tx_frame+i);
                 t[i+1]=ReadCoreTimer();
                 nrf_snd_pkt(32,tx_frame+i);  
-        }
+                
+//                 delay_ms(10);
+                 
+         }
+  delay_ms(10);
+  
+CE_nRF_LOW ();
+
         
         for (i=0; i<send_count; ++i) {
                 printf("%08d ns %08d ns\n\r", (t[i+1]-t[0])*50, (t[i+1]-t[i])*50);
         }
 
-
-
-        tfp_printf("Destroying frames (simulated erasure)...\n\r");
-        destroy_frame(1);
-        destroy_frame(3);
         for (i=0; i<send_count; ++i) {
                 print_frame(tx_frame+i);
-        }
+        } 
 
-        tfp_printf("Trying to recover missing fragments...\n\r");
-        r = recover_received_message();
-        if (r) {
-                tfp_printf("Success! The message was...\r\n");
-                for (i=0; i<r; ++i) {
-                        print_frame(tx_frame+i);
-                }
-        } else {
-                tfp_printf("Failure!\r\n");
-        }
+
         return 0;
 }
 
@@ -278,7 +271,7 @@ void test(void)
         while(1)
                 {
                 sendblock();
-                delay_ms(20);
+                delay_ms(1000);
                 }
          }        
         

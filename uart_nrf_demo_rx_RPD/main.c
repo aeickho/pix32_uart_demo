@@ -43,16 +43,16 @@ main (void)
   uint8_t buf[32];
   uint8_t outBuf[128];
   uint32_t ret;
-  uint32_t seq_nr=0;
+  uint32_t seq_nr = 0;
   uint8_t diskbuf[512];
- 
-   
-  unsigned int i;
-  
+
+  int status;
+//  unsigned int i;
+
   /* Configure PB frequency and wait states */
   SYSTEMConfigPerformance (SystemClock ());
 
-  portsetup();
+  portsetup ();
   UART1Init (SystemClock ());
   UART2Init (SystemClock ());
 
@@ -70,69 +70,63 @@ main (void)
 
 
   UART2PutStr ("spi_sd_init,");
-  SPI1_init();
+//  SPI1_init ();
   UART2PutStr ("done\n\r");
 
-  unsigned int stat = disk_initialize ();
-      
-  UART2PutStr ("disk_init: ");
-  UART2PutHex (stat);
+//  unsigned int stat = disk_initialize ();
+
+//  UART2PutStr ("disk_init: ");
+//  UART2PutHex (stat);
   UART2PutStr ("\r\n");
+//
 
-                    
 
-  disk_ioctl (0, GET_SECTOR_COUNT, &ret);
-  UART2PutStr ("GET_SECTOR_COUNT: ");
-  UART2PutHex (ret);
-  UART2PutStr("\r\n");
+ // disk_ioctl (0, GET_SECTOR_COUNT, &ret);
+ // UART2PutStr ("GET_SECTOR_COUNT: ");
+  //UART2PutHex (ret);
+ // UART2PutStr ("\r\n");
 
-  
-  disk_read(0, diskbuf, 0, 1);
 
-  
-  i = diskbuf [ 0x1c9 ] << 24 |  diskbuf [ 0x1c8 ] << 16 |  diskbuf [ 0x1c7 ] << 8  |  diskbuf [ 0x1c6 ]; 
-  UART2PutHex (i);
-  UART2PutStr("\n\r");
+ // disk_read (0, diskbuf, 0, 1);
 
-  i = diskbuf [ 0x1cD ] << 24 |  diskbuf [ 0x1cC ] << 16 |  diskbuf [ 0x1cB ] << 8  |  diskbuf [ 0x1cA ]; 
-  UART2PutHex (i);
-  UART2PutStr("\n\r");
+
+  //i =
+   // diskbuf[0x1c9] << 24 | diskbuf[0x1c8] << 16 | diskbuf[0x1c7] << 8 |
+   // diskbuf[0x1c6];
+ // UART2PutHex (i);
+  //UART2PutStr ("\n\r");
+
+ // i =
+  //  diskbuf[0x1cD] << 24 | diskbuf[0x1cC] << 16 | diskbuf[0x1cB] << 8 |
+  //  diskbuf[0x1cA];
+ // UART2PutHex (i);
+ // UART2PutStr ("\n\r");
 
   UART2PutStr ("nrf_config_set(),");
   config.nrmacs = 1;
   config.maclen[0] = 32;
   config.channel = 81;
-  memcpy (config.mac0, "\x01\x02\x03\x02\x01", 5);
+  memcpy (config.mac0, "\x02\x02\x03\x02\x01", 5);
   nrf_config_set (&config);
-  UART2PutStr ("done\n\r");
+  UART2PutStr ("--- falsche mac (nicht meine) done.......\n\r");
+
 
   nrf_rcv_pkt_start ();
-
+  
   do
     {
-      int rcv = nrf_rcv_pkt_poll (32, buf);
-      if (rcv == 32)
-	{
-	  uint32_t tmpspace[10];
-
-         *tmpspace = (int) seq_nr; 
-	  
-         UART1SendChar(0x01);
-         to_base128((uint8_t *) tmpspace, outBuf);
-         UART1Send(outBuf, 8);
-
-         to_base128n  (buf, outBuf, 5);
-         UART1Send(outBuf, 40);
-         
-                                            
-	  uint16_t cnt;
-	  cnt = buf[0] << 8 | buf[1];
-	  UART2PutHex(cnt);
-	  UART2PutStr ("\r\n");
-	  
-	  seq_nr++;
-	}
-    }
+    int i;
+   
+     i=nrf_read_reg (R_RPD) & 0x01;
+     if (i != status)
+       {
+       i=status;
+       mLED_2_On();
+       }
+       else mLED_2_Off(); 
+       
+                 
+}
   while (1);
 
   return 0;

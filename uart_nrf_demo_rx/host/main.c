@@ -59,7 +59,7 @@ struct msgindex
   unsigned char used;
 };
 
-struct sframe frameBuffer[FRAMEBUFSIZE];                                                          // 800 
+struct sframe frameBuffer[FRAMEBUFSIZE];	// 800 
 
 
 static void
@@ -90,8 +90,11 @@ main (int argc, char **argv)
   unsigned char outBuf[BUFSIZE];
   unsigned short c_crc16 = 12345, r_crc16;
   int step;
-  unsigned int delete_msg_id[FRAMEBUFSIZE];							// 80
+  unsigned int delete_msg_id[FRAMEBUFSIZE];	// 80
   int delete_msg_id_idx = 0;
+  FILE *rawfile;
+
+
 
   unsigned int seq_nr;
   struct termios termOptions;
@@ -108,6 +111,14 @@ main (int argc, char **argv)
   if (tty < 0)
     {
       perror ("opening TTY");
+      exit (2);
+    }
+
+
+  rawfile = fopen ("raw.txt", "w");
+  if (rawfile == NULL)
+    {
+      perror ("raw.txt");
       exit (2);
     }
 
@@ -138,15 +149,25 @@ main (int argc, char **argv)
 	  read (tty, buf, 40);
 	  from_base128n (buf, outBuf, 5);
 
+
+
 	  r_crc16 = outBuf[31] << 8 | outBuf[30];
 	  c_crc16 = crc16 (outBuf, 30);
+
+
+	  for (i = 0; i < 32; i++)
+	    fprintf (rawfile, "%02x ", outBuf[i]);
+
+	  fprintf (rawfile, "%04x %s\n", c_crc16,
+		   r_crc16 == c_crc16 ? "ok" : "nok");
+
 	  if (r_crc16 == c_crc16)
 	    {
 	      int seq_nr_id;
 	      int ii;
-	      int seq_nr_diff_min = 0;						
-	      struct msgindex msg_index[FRAMEBUFSIZE];                          // 180
-	      struct frame msg_buff[FRAMEBUFSIZE][MAX_MSG_FRAME_NR];		// 7200 
+	      int seq_nr_diff_min = 0;
+	      struct msgindex msg_index[FRAMEBUFSIZE];	// 180
+	      struct frame msg_buff[FRAMEBUFSIZE][MAX_MSG_FRAME_NR];	// 7200 
 
 	      for (i = 0; i < FRAMEBUFSIZE; i++)
 		{

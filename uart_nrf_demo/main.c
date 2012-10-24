@@ -97,7 +97,7 @@ while(1);
       buf[32 - 1] = crc & 0xff;
       nrf_snd_pkt(32,buf);
  
-      delay_ms (10);
+      delay_ms (1000);
     }
   while (1);
   return 0;

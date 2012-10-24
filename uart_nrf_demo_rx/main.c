@@ -124,7 +124,7 @@ main (void)
          to_base128n  (buf, outBuf, 5);
          UART1Send(outBuf, 40);
          
-                                            
+                                           
 	  uint16_t cnt;
 	  cnt = buf[0] << 8 | buf[1];
 	  UART2PutHex(cnt);
