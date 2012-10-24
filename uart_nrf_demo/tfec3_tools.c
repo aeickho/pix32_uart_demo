@@ -240,8 +240,9 @@ int sendblock(void)
 //        tfp_printf("send frames: \n\r");
     
         t[0]=ReadCoreTimer();        
- CE_nRF_HIGH ();
+// CE_nRF_HIGH ();
         for (i=0; i<send_count; ++i) {
+                print_frame(tx_frame+i);
                 t[i+1]=ReadCoreTimer();
                 nrf_snd_pkt(32,tx_frame+i);  
                 
@@ -250,7 +251,7 @@ int sendblock(void)
          }
   delay_ms(10);
   
-CE_nRF_LOW ();
+//CE_nRF_LOW ();
 
         
         for (i=0; i<send_count; ++i) {

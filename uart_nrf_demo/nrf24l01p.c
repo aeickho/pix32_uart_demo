@@ -20,13 +20,12 @@ void uputs0_ (uint8_t * s);
 uint8_t _nrfresets = 0;
 
 
-void
-UART2PutDbgStr (const char *buf)
+void UART2PutDbgStr(const  char * buf)
 {
 #ifdef DEBUG_ON
-  UART2PutStr (buf);
-  UART2PutStr ("\r\n");
-#endif
+  UART2PutStr(buf);
+  UART2PutStr("\r\n");
+#endif  
 }
 
 
@@ -36,9 +35,9 @@ UART2PutDbgStr (const char *buf)
 inline void
 xmit_spi (uint8_t dat)
 {
-
+  
   UART2PutDbgStr (__func__);
-  SPI2_transmit_sync (&dat, 1);
+  SPI2_transmit_sync(&dat,1);
 //  sspSend (0, (uint8_t *) & dat, 1);
 }
 
@@ -47,7 +46,7 @@ rcv_spi (uint8_t * dat)
 {
   UART2PutDbgStr (__func__);
 //  sspReceive (0, dat, 1);
-  SPI2_read (dat, dat[0], 1);
+   SPI2_read (dat , dat[0], 1);
 }
 
 
@@ -66,7 +65,7 @@ nrf_cmd_status (uint8_t cmd)
   UART2PutDbgStr (__func__);
   CS_nRF_LOW ();
 //  sspSendReceive (0, &cmd, 1);
-  SPI2_transfer_sync (&cmd, &cmd, 1);
+SPI2_transfer_sync (&cmd, &cmd, 1);
 
   CS_nRF_HIGH ();
   return cmd;
@@ -77,10 +76,10 @@ nrf_cmd_rw_long (uint8_t * data, int len)
 {
   UART2PutDbgStr (__func__);
   CS_nRF_LOW ();
-
+  
   //sspSendReceive (0, data, len);
-  SPI2_transfer_sync (data, data, len);
-
+    SPI2_transfer_sync (data, data, len);
+    
   CS_nRF_HIGH ();
 };
 
@@ -102,7 +101,7 @@ nrf_read_reg (const uint8_t reg)
   uint8_t val;
   CS_nRF_LOW ();
   xmit_spi (C_R_REGISTER | reg);
-  val = 0xff;
+  val=0xff;
   rcv_spi (&val);
   CS_nRF_HIGH ();
   return val;
@@ -119,24 +118,24 @@ nrf_read_long (const uint8_t cmd, int len, uint8_t * data)
     data[i] = 0x00;
 
   //sspSendReceive0(0, data, len); //xxxxxxx
-  SPI2_read (data, data[0], len);
+SPI2_read(data,data[0],len);
   CS_nRF_HIGH ();
 };
 
 void
 nrf_read_pkt (int len, uint8_t * data)
 {
-  int i;
+int i;
   UART2PutDbgStr (__func__);
   CS_nRF_LOW ();
   xmit_spi (C_R_RX_PAYLOAD);
   for (i = 0; i < len; i++)
-    data[i] = 0x00;
-
-
+      data[i] = 0x00;
+      
+      
 //  sspReceive (0, data, len);
-  SPI2_read (data, data[0], len);
-
+SPI2_read(data,data[0],len);
+ 
   CS_nRF_HIGH ();
 };
 
@@ -148,11 +147,11 @@ nrf_read_pkt_crc (int len, uint8_t * data, uint8_t * crc)
   xmit_spi (C_R_RX_PAYLOAD);
 
 //  sspReceive (0, data, len);
-  SPI2_read (data, data[0], len);
-
+   SPI2_read (data, data[0], len);
+   
 //  sspReceive (0, crc, 2);
-  SPI2_read (data, data[0], len);
-
+    SPI2_read (data, data[0], len);
+    
   CS_nRF_HIGH ();
 };
 
@@ -162,8 +161,8 @@ nrf_write_long (const uint8_t cmd, int len, const uint8_t * data)
   UART2PutDbgStr (__func__);
   CS_nRF_LOW ();
   xmit_spi (cmd);
-  // sspSend (0, data, len);
-  SPI2_transmit_sync (data, len);
+ // sspSend (0, data, len);
+ SPI2_transmit_sync(data, len);
   CS_nRF_HIGH ();
 };
 
@@ -223,7 +222,9 @@ nrf_rcv_pkt_poll (int maxsize, uint8_t * pkt)
   for (i = 0; i < maxsize; i++)
     pkt[i] = 0x00;		// Sanity: clear packet buffer
 
+  mLED_2_On();
   nrf_read_pkt (len, pkt);
+  mLED_2_Off();
   return len;
 };
 
@@ -374,7 +375,7 @@ nrf_snd_pkt_crc_encr (int size, uint8_t * pkt, uint32_t const key[4])
 
   CS_nRF_LOW ();
   xmit_spi (C_W_TX_PAYLOAD);
-  SPI2_transmit_sync (pkt, size);
+  SPI2_transmit_sync( pkt, size);
 
   CS_nRF_HIGH ();
   CE_nRF_HIGH ();
@@ -393,21 +394,21 @@ nrf_snd_pkt_crc_encr (int size, uint8_t * pkt, uint32_t const key[4])
 char
 nrf_snd_pkt (int size, uint8_t * pkt)
 {
-  uint8_t ret, i;
+  uint8_t ret;
 
   while (1)
     {
       ret = nrf_cmd_status (C_NOP);
-      if ((ret & R_STATUS_TX_FULL) == 0)  //TX FIFO full flag.
-                                          // 1: TX FIFO full.
-                                          // 0: Available locations in TX FIFO.
-      
+      if ((ret & R_STATUS_TX_FULL) == 0)
 	{
 	  break;
 	}
-      UART2PutStr ("x");
+      CE_nRF_HIGH ();
+      delay_7us ();
+      delay_7us ();
+      CE_nRF_LOW ();
     }
-  UART2PutStr ("\r\n");
+
 
   if (size > MAX_PKT)
     size = MAX_PKT;
@@ -417,26 +418,19 @@ nrf_snd_pkt (int size, uint8_t * pkt)
 
   CS_nRF_LOW ();
   xmit_spi (C_W_TX_PAYLOAD);
-  SPI2_transmit_sync (pkt, size);
+  SPI2_transmit_sync( pkt, size);
   CS_nRF_HIGH ();
 
-/*  for (i = 0; i < 32; i++)
-    {
-      UART2PutHex (pkt[i]);
-      UART2PutStr (" ");
-    }
-*/
-//  CE_nRF_HIGH ();
-//  delay_7us ();
-//  delay_7us ();
-//  CE_nRF_LOW ();
+  CE_nRF_HIGH ();
+  delay_7us ();
+  delay_7us ();
+  CE_nRF_LOW ();
 
   nrf_write_reg (R_STATUS,
 		 R_CONFIG_MASK_RX_DR | R_CONFIG_MASK_TX_DS |
 		 R_CONFIG_MASK_MAX_RT);
 
   ret = nrf_cmd_status (C_NOP);
-
   return ret;
 };
 
@@ -580,13 +574,13 @@ nrf_init ()
   // Enable SPI correctly
 
   SPI2_init ();
-
+  
   LATCCLR = _LATC_LATC4_MASK;
   delay_ms (10);
   LATCSET = _LATC_LATC4_MASK;
-
-
-
+        
+        
+  
   // Enable CS & CE pins
 //    gpioSetDir(RB_SPI_NRF_CS, gpioDirection_Output);
 //    gpioSetPullup(&RB_SPI_NRF_CS_IO, gpioPullupMode_Inactive);
@@ -616,7 +610,6 @@ nrf_off ()
 {
   nrf_write_reg (R_CONFIG, R_CONFIG_MASK_RX_DR | R_CONFIG_MASK_TX_DS | R_CONFIG_MASK_MAX_RT);	// Most important: no R_CONFIG_PWR_UP
 };
-
 /*
 void
 nrf_startCW ()
