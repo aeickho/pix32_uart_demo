@@ -110,7 +110,7 @@ main (int argc, char **argv)
   tty = open (UART1, O_RDWR | O_NOCTTY);
   if (tty < 0)
     {
-      perror ("opening TTY");
+      perror ("opening TTY....");
       exit (2);
     }
 
@@ -151,17 +151,17 @@ main (int argc, char **argv)
 
 
 
-	  r_crc16 = outBuf[31] << 8 | outBuf[30];
+	  r_crc16 = outBuf[30] << 8 | outBuf[31];
 	  c_crc16 = crc16 (outBuf, 30);
 
 
 	  for (i = 0; i < 32; i++)
-	    fprintf (rawfile, "%02x ", outBuf[i]);
+	    printf ( "%02x ", outBuf[i]);
 
-	  fprintf (rawfile, "%04x %s\n", c_crc16,
+	  printf ( "%04x %s\n", c_crc16,
 		   r_crc16 == c_crc16 ? "ok" : "nok");
 
-	  if (r_crc16 == c_crc16)
+/*	  if (r_crc16 == c_crc16)
 	    {
 	      int seq_nr_id;
 	      int ii;
@@ -248,6 +248,7 @@ main (int argc, char **argv)
 		    }
 		}
 	    }
+	    */
 	  step = STEP_WAIT;
 	  break;
 	}

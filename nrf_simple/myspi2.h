@@ -11,7 +11,46 @@
 #define NRF_CE_LOW()	LATCCLR = _LATC_LATC3_MASK;
 #define NRF_CE_HIGH()     LATCSET = _LATC_LATC3_MASK;
 
-#define NRF_CS_LOW()	LATCCLR = _LATC_LATC2_MASK;
+#define NRF_CS_LOW()	{\
+                        LATCCLR = _LATC_LATC2_MASK; \
+                        __asm__ ("nop");\
+                        __asm__ ("nop");\
+                        __asm__ ("nop");\
+                        __asm__ ("nop");\
+                        __asm__ ("nop");\
+                        __asm__ ("nop");\
+                        __asm__ ("nop");\
+                        __asm__ ("nop");\
+                        __asm__ ("nop");\
+                        __asm__ ("nop");\
+                        __asm__ ("nop");\
+                        __asm__ ("nop");\
+                        __asm__ ("nop");\
+                        __asm__ ("nop");\
+                        __asm__ ("nop");\
+                        __asm__ ("nop");\
+                        __asm__ ("nop");\
+                        __asm__ ("nop");\
+                        __asm__ ("nop");\
+                        __asm__ ("nop");\
+                        __asm__ ("nop");\
+                        __asm__ ("nop");\
+                        __asm__ ("nop");\
+                        __asm__ ("nop");\
+                        __asm__ ("nop");\
+                        __asm__ ("nop");\
+                        __asm__ ("nop");\
+                        __asm__ ("nop");\
+                        __asm__ ("nop");\
+                        __asm__ ("nop");\
+                        __asm__ ("nop");\
+                        __asm__ ("nop");\
+                       }
+
+
+
+
+
 #define NRF_CS_HIGH()	LATCSET = _LATC_LATC2_MASK;
 
 #define NRF_POWER_OFF()	LATCCLR = _LATC_LATC4_MASK;

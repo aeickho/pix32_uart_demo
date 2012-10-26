@@ -111,11 +111,17 @@ main (void)
   do
     {
       int rcv = nrf_rcv_pkt_poll (32, buf);
+      if (rcv != 0)
+       {
+      UART2PutHex(rcv);
+       UART2PutStr ("    ;");
+       }
       if (rcv == 32)
 	{
 	  uint32_t tmpspace[10];
 
          *tmpspace = (int) seq_nr; 
+
 	  
          UART1SendChar(0x01);
          to_base128((uint8_t *) tmpspace, outBuf);

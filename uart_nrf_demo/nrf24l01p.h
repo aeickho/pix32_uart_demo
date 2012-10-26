@@ -53,6 +53,18 @@
 
 // Register Flags
 
+// FIFO_STATUS reguister defintions
+#define R_FIFO_STATUS_RESERVED2 0x80
+#define R_FIFO_STATUS_TX_REUSE  0x40
+#define R_FIFO_STATUS_TX_FULL   0x20
+#define R_FIFO_STATUS_TX_EMPTY  0x10
+#define R_FIFO_STATUS_RESERVED1 0x08
+#define R_FIFO_STATUS_RESERVED0 0x04
+#define R_FIFO_STATUS_FULL      0x02
+#define R_FIFO_STATUS_RX_EMPTY  0x01
+
+
+
 //CONFIG register definitions
 #define R_CONFIG_RESERVED        0x80
 #define R_CONFIG_MASK_RX_DR      0x40

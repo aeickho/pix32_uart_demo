@@ -13,6 +13,8 @@ void portsetup (void);
 #define GetPeripheralClock()            (SystemClock()/(1 << OSCCONbits.PBDIV))
 #define GetInstructionClock()           (SystemClock())
 
+#define mLED_2_On()         LATASET = _LATA_LATA10_MASK;
+#define mLED_2_Off()        LATACLR = _LATA_LATA10_MASK;
 
 
 #endif

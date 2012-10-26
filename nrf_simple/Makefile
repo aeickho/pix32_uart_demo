@@ -24,6 +24,7 @@ OBJECTS =	main.o \
 		uart2.o \
 		myspi2.o \
                 nrf.o \
+		crc.o \
 		general_exception_handler.o
 		
 

@@ -8,10 +8,8 @@
 #include <string.h>
 
 
-void
-delay_7us (void);
+void delay_7us (void);
 
-void
-delay_ms (unsigned int length);
+void delay_ms (unsigned int length);
 
 #endif

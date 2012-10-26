@@ -4,7 +4,7 @@
 
 volatile struct UARTFifo UART2Fifo;
 
-#define BUFSIZE 100
+#define BUFSIZE 300
 
 static uint8_t pIn[BUFSIZE];
 static uint8_t pOut[BUFSIZE];

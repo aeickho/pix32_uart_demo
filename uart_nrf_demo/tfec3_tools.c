@@ -7,16 +7,18 @@
 #include "aeickho-tiny-fecc/tfec3.h"
 #include "basic.h"
 #include "tools/printf.h"
-#include "nrf24l01p.h"   
+#include "nrf24l01p.h"
 #include "myspi.h"
 
 #define NDEBUG
 
 #include <assert.h>
 
-int random() {
-        srand(ReadCoreTimer());
-return (rand());
+int
+random ()
+{
+  srand (ReadCoreTimer ());
+  return (rand ());
 }
 
 
@@ -52,11 +54,12 @@ return (rand());
 #define FRAME_BUFF_SIZE     (MAX_DATA_FRAGMENTS+MAX_RECOV_FRAGMENTS)
 
 
-struct frame {
-        tfec3_u32 mid;
-        tfec3_u32 fragmentdata[WORDS_PER_FRAGMENT];
-        unsigned short metad;
-        unsigned short crc16;
+struct frame
+{
+  tfec3_u32 mid;
+  tfec3_u32 fragmentdata[WORDS_PER_FRAGMENT];
+  unsigned short metad;
+  unsigned short crc16;
 };
 
 #define NUM_DATA_FRAGS(pf)  ((pf)->metad >> 12)
@@ -64,37 +67,39 @@ struct frame {
 
 uint32_t t[10];
 
-static unsigned compute_frame_crc(const struct frame *pf)
+static unsigned
+compute_frame_crc (const struct frame *pf)
 {
-        return crc16(pf,
-                4+                    /* message id */
-                4*WORDS_PER_FRAGMENT+ /* fragment data */
-                2                     /* metad */
-                );
+  return crc16 (pf, 4 +		/* message id */
+		4 * WORDS_PER_FRAGMENT +	/* fragment data */
+		2		/* metad */
+    );
 }
 
-static void print_frame(const struct frame *pf)
+static void
+print_frame (const struct frame *pf)
 {
-        int j;
-        const char *p;
-        tfp_printf("MID=%08X, [",pf->mid);
-        p = (const char*) pf->fragmentdata;
-        for (j=0; j<BYTES_PER_FRAGMENT; ++j) {
-                if (32<=p[j] && p[j]<127)
-                        tfp_printf("%c",p[j]);
-                else
-                        tfp_printf(".");
-        }
-        tfp_printf("], METAD=%04X, CRC16=%04X\n\r",pf->metad,pf->crc16);
+  int j;
+  const char *p;
+  tfp_printf ("MID=%08X, [", pf->mid);
+  p = (const char *) pf->fragmentdata;
+  for (j = 0; j < BYTES_PER_FRAGMENT; ++j)
+    {
+      if (32 <= p[j] && p[j] < 127)
+	tfp_printf ("%c", p[j]);
+      else
+	tfp_printf (".");
+    }
+  tfp_printf ("], METAD=%04X, CRC16=%04X\n\r", pf->metad, pf->crc16);
 }
 
 
 
 /* frame buffer for reception and transmission */
-static struct frame  tx_frame[FRAME_BUFF_SIZE];
+static struct frame tx_frame[FRAME_BUFF_SIZE];
 static unsigned char tx_valid[FRAME_BUFF_SIZE];
-static short send_count = 0; /* number of frames to send */
-static short send_next  = 0; /* next frame to send */
+static short send_count = 0;	/* number of frames to send */
+static short send_next = 0;	/* next frame to send */
 
 
 
@@ -116,47 +121,51 @@ static short send_next  = 0; /* next frame to send */
  * @return
  *   the actual percentage of redundancy that has been generated
  */
-int prepare_send_message(int n, const char msg[], int redundancy_percentage)
+int
+prepare_send_message (int n, const char msg[], int redundancy_percentage)
 {
-        tfec3_u32 mid;
-        unsigned s, k, i, c;
-        tfec3_u32 *fragdatas[FRAME_BUFF_SIZE];
-        memset(tx_valid,0,sizeof tx_valid);
-        assert(0<n && n<=MAX_MESSAGE_SIZE);
-        mid = rand(); //0x1729BEEF; /* we should pick a message id at random!!! */
-        s = (n+BYTES_PER_FRAGMENT-1)/BYTES_PER_FRAGMENT; /* # of user fragments */
-        k = MIN(3,(s*redundancy_percentage+99)/100);     /* # of redundancy fragments */
-        i = 0;
-        while (n>0) {
-                tx_frame[i].mid = mid;
-                tx_frame[i].metad = (s<<12) + i;
-                fragdatas[i] = tx_frame[i].fragmentdata;
-                c = MIN(BYTES_PER_FRAGMENT,n); /* chunk of data to copy */
-                if (c<BYTES_PER_FRAGMENT)
-                        memset(fragdatas[i],0,BYTES_PER_FRAGMENT);
-                memcpy(fragdatas[i],msg,c);
-                tx_frame[i].crc16 = compute_frame_crc(tx_frame+i);
-                tx_valid[i] = 1;
-                msg += c;
-                n   -= c;
-                ++i;
-        }
+  tfec3_u32 mid;
+  unsigned s, k, i, c;
+  tfec3_u32 *fragdatas[FRAME_BUFF_SIZE];
+  memset (tx_valid, 0, sizeof tx_valid);
+  assert (0 < n && n <= MAX_MESSAGE_SIZE);
+  mid = rand ();		//0x1729BEEF; /* we should pick a message id at random!!! */
+  s = (n + BYTES_PER_FRAGMENT - 1) / BYTES_PER_FRAGMENT;	/* # of user fragments */
+  k = MIN (3, (s * redundancy_percentage + 99) / 100);	/* # of redundancy fragments */
+  i = 0;
+  while (n > 0)
+    {
+      tx_frame[i].mid = mid;
+      tx_frame[i].metad = (s << 12) + i;
+      fragdatas[i] = tx_frame[i].fragmentdata;
+      c = MIN (BYTES_PER_FRAGMENT, n);	/* chunk of data to copy */
+      if (c < BYTES_PER_FRAGMENT)
+	memset (fragdatas[i], 0, BYTES_PER_FRAGMENT);
+      memcpy (fragdatas[i], msg, c);
+      tx_frame[i].crc16 = compute_frame_crc (tx_frame + i);
+      tx_valid[i] = 1;
+      msg += c;
+      n -= c;
+      ++i;
+    }
 
-assert(i==s);
-        while (i<s+k) {
-                tx_frame[i].mid = mid;
-                tx_frame[i].metad = (s<<12) + i;
-                fragdatas[i] = tx_frame[i].fragmentdata;
-                ++i;
-        }
-        tfec3_encode(WORDS_PER_FRAGMENT,s,k,fragdatas);
-        for (i=s; i<s+k; ++i) {
-                tx_frame[i].crc16 = compute_frame_crc(tx_frame+i);
-                tx_valid[i] = 1;
-        }
-        send_count = s+k; /* number of frames to send */
-        send_next  = 0;   /* from the start please... */
-        return (k*100+(s >> 1))/s;
+  assert (i == s);
+  while (i < s + k)
+    {
+      tx_frame[i].mid = mid;
+      tx_frame[i].metad = (s << 12) + i;
+      fragdatas[i] = tx_frame[i].fragmentdata;
+      ++i;
+    }
+  tfec3_encode (WORDS_PER_FRAGMENT, s, k, fragdatas);
+  for (i = s; i < s + k; ++i)
+    {
+      tx_frame[i].crc16 = compute_frame_crc (tx_frame + i);
+      tx_valid[i] = 1;
+    }
+  send_count = s + k;		/* number of frames to send */
+  send_next = 0;		/* from the start please... */
+  return (k * 100 + (s >> 1)) / s;
 }
 
 /**
@@ -172,21 +181,25 @@ assert(i==s);
  *   the number of data fragments on success (without redundancy),
  *   0 otherwise.
  */
-int recover_received_message(void)
+int
+recover_received_message (void)
 {
-        int i, s, k, n;
-        tfec3_u32 *fragdatas[FRAME_BUFF_SIZE];
-        s = -1;
-        n = 0;
-        for (i=0; i<FRAME_BUFF_SIZE; ++i) {
-                fragdatas[i] = tx_frame[i].fragmentdata;
-                if (tx_valid[i]) {
-                        if (s<0) s = tx_frame[i].metad >> 12;
-                        n = 1+i;
-                }
-        }
-        k = n - s;
-        return tfec3_decode(WORDS_PER_FRAGMENT,s,k,tx_valid,fragdatas) ? s : 0;
+  int i, s, k, n;
+  tfec3_u32 *fragdatas[FRAME_BUFF_SIZE];
+  s = -1;
+  n = 0;
+  for (i = 0; i < FRAME_BUFF_SIZE; ++i)
+    {
+      fragdatas[i] = tx_frame[i].fragmentdata;
+      if (tx_valid[i])
+	{
+	  if (s < 0)
+	    s = tx_frame[i].metad >> 12;
+	  n = 1 + i;
+	}
+    }
+  k = n - s;
+  return tfec3_decode (WORDS_PER_FRAGMENT, s, k, tx_valid, fragdatas) ? s : 0;
 }
 
 
@@ -199,80 +212,133 @@ int recover_received_message(void)
  *   pointer to target buffer with at least howmany*BYTES_PER_FRAGMENT
  *   free space.
  */
-void collect_fragments(int howmany, char target[])
+void
+collect_fragments (int howmany, char target[])
 {
-        int i;
-        for (i=0; i<howmany; ++i) {
-                memcpy(target,tx_frame[i].fragmentdata,BYTES_PER_FRAGMENT);
-                target += BYTES_PER_FRAGMENT;
-        }
+  int i;
+  for (i = 0; i < howmany; ++i)
+    {
+      memcpy (target, tx_frame[i].fragmentdata, BYTES_PER_FRAGMENT);
+      target += BYTES_PER_FRAGMENT;
+    }
 }
 
-static void destroy_frame(int whichone)
+static void
+destroy_frame (int whichone)
 {
-        assert(0<=whichone && whichone<FRAME_BUFF_SIZE);
-        memset(tx_frame+whichone,0,sizeof(*tx_frame));
-        tx_valid[whichone] = 0;
+  assert (0 <= whichone && whichone < FRAME_BUFF_SIZE);
+  memset (tx_frame + whichone, 0, sizeof (*tx_frame));
+  tx_valid[whichone] = 0;
 }
 
-int sendblock(void)
+int
+sendblock (void)
 {
 
-        int n, r, i;
-        const char* msg =
-                "Hello World! This is a m"  /* fragment 0 */
-                "essage that will be chop"  /* fragment 1 */
-                "ped up into multiple pie"  /* fragment 2 */
-                "ces. The pieces called f"  /* fragment 3 */
-                "ragments are framed and "  /* fragment 4 */
-                "checksummed. Let's see h"  /* fragment 5 */
-                "ow that goes...";          /* fragment 6 */
-        tfp_printf("Preparing a message for sending...\n\r");
-        n = strlen(msg)+1; /* message size including null terminator */
-        r = 20; /* shoot for 20% redundancy */
-        r = prepare_send_message(n,msg,r);
-        tfp_printf("number of frames for message = %d\n\r",send_count);
-        tfp_printf("           actual redundancy = %d%%\n\r",r);
-        for (i=0; i<send_count; ++i) {
-                print_frame(tx_frame+i);
-        } 
-      
+  int n, r, i, ret;
+  const char *msg = "Hello World! This is a m"	/* fragment 0 */
+    "essage that will be chop"	/* fragment 1 */
+    "ped up into multiple pie"	/* fragment 2 */
+    "ces. The pieces called f"	/* fragment 3 */
+    "ragments are framed and "	/* fragment 4 */
+    "checksummed. Let's see h"	/* fragment 5 */
+    "ow that goes...";		/* fragment 6 */
+  tfp_printf ("Preparing a message for sending...\n\r");
+  n = strlen (msg) + 1;		/* message size including null terminator */
+  r = 20;			/* shoot for 20% redundancy */
+  r = prepare_send_message (n, msg, r);
+  tfp_printf ("number of frames for message = %d\n\r", send_count);
+  tfp_printf ("           actual redundancy = %d%%\n\r", r);
+  for (i = 0; i < send_count; ++i)
+    {
+      print_frame (tx_frame + i);
+    }
+
 //        tfp_printf("send frames: \n\r");
-    
-        t[0]=ReadCoreTimer();        
-// CE_nRF_HIGH ();
-        for (i=0; i<send_count; ++i) {
-                print_frame(tx_frame+i);
-                t[i+1]=ReadCoreTimer();
-                nrf_snd_pkt(32,tx_frame+i);  
-                
-//                 delay_ms(10);
-                 
-         }
-  delay_ms(10);
-  
-//CE_nRF_LOW ();
 
-        
-        for (i=0; i<send_count; ++i) {
-                printf("%08d ns %08d ns\n\r", (t[i+1]-t[0])*50, (t[i+1]-t[i])*50);
-        }
+  t[0] = ReadCoreTimer ();
 
-        for (i=0; i<send_count; ++i) {
-                print_frame(tx_frame+i);
-        } 
+////////////////////////////////////
+
+// 
+  nrf_write_reg (R_CONFIG, R_CONFIG_PWR_UP | R_CONFIG_EN_CRC);
+
+  for (i = 0; i < send_count; ++i)
+    {
+      t[i + 1] = ReadCoreTimer ();
+
+      while (1)
+	{
+	  ret = nrf_read_reg (R_FIFO_STATUS);
+	  if ((ret & 0x10) == 0x10)
+	    {
+	      break;
+	    }
+	  CE_nRF_HIGH ();
+	  delay_7us ();
+	  delay_7us ();
+	  CE_nRF_LOW ();
+	  delay_7us ();
+	  delay_7us ();
+	}
+
+      if (i == 3 || i == 6)
+	{
+   delay_ms(4);
+	}
 
 
-        return 0;
+      CS_nRF_LOW ();
+      xmit_spi (C_W_TX_PAYLOAD);
+      SPI2_transmit_sync (tx_frame + i, 32);
+      CS_nRF_HIGH ();
+
+      nrf_write_reg (R_STATUS,
+		     R_CONFIG_MASK_RX_DR | R_CONFIG_MASK_TX_DS |
+		     R_CONFIG_MASK_MAX_RT);
+    }
+
+  while (1)
+    {				//FIFO_STATUS  TX_EMPTY 1 if emty
+      ret = nrf_read_reg (R_FIFO_STATUS);
+      if ((ret & 0x10) == 0x10)
+	{
+	  break;
+	}
+      CE_nRF_HIGH ();
+      delay_7us ();
+      delay_7us ();
+      CE_nRF_LOW ();
+      delay_7us ();
+      delay_7us ();
+    }
+
+
+
+
+///***************************
+  for (i = 0; i < send_count; ++i)
+    {
+      printf ("%08d ns %08d ns\n\r", (t[i + 1] - t[0]) * 50,
+	      (t[i + 1] - t[i]) * 50);
+    }
+
+  for (i = 0; i < send_count; ++i)
+    {
+      print_frame (tx_frame + i);
+    }
+
+
+  return 0;
 }
 
 
-void test(void)
-        {
-        while(1)
-                {
-                sendblock();
-                delay_ms(1000);
-                }
-         }        
-        
+void
+test (void)
+{
+  while (1)
+    {
+      sendblock ();
+      delay_ms (1000);
+    }
+}
