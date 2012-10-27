@@ -16,7 +16,7 @@ include Makefile.rules
 MAIN    = main
 
 
-DIRS = 
+DIRS = 		aeickho-tiny-fecc tools
 
 OBJECTS =	main.o \
 		portsetup.o \
@@ -24,6 +24,7 @@ OBJECTS =	main.o \
 		uart2.o \
 		myspi2.o \
                 nrf.o \
+		tfec3_tools.o \
 		crc.o \
 		general_exception_handler.o
 		
@@ -37,8 +38,9 @@ $(MAIN).hex: $(MAIN).elf
 	$(BIN2HEX) -a $<
 
 $(MAIN).elf: $(OBJECTS) $(APPLIB) procdefs.ld Makefile
+	for i in $(DIRS); do make -C $$i; done
 #	$(CC) $(LDFLAGS) $(OBJECTS) $(APPLIB) $(LIBS) aeickho-tiny-fecc/sg_crc.o -o $(MAIN).elf
-	$(CC) $(LDFLAGS) $(OBJECTS) $(APPLIB) $(LIBS)  -o $(MAIN).elf
+	$(CC) $(LDFLAGS) $(OBJECTS) $(APPLIB) $(LIBS)  tools/printf.o aeickho-tiny-fecc/tfec3.o -o $(MAIN).elf
 #	$(CC) $(LDFLAGS) $(OBJECTS) $(APPLIB) $(LIBS)  -o $(MAIN).elf
 
  
@@ -56,6 +58,7 @@ clean:
 	- rm -f $(OBJECTS) $(APPLIB_OBJECTS) $(APPLIB)
 	- rm -f *.o *.elf *.hex
 	- rm -f *.d
+	for i in $(DIRS); do make -C $$i clean; done
 
 ctags:
 	$(CC) -g -Os  -mprocessor=$(PROC) -M -c $(MAIN).c  | sed -e 's/[\\ ]/\n/g' | sed -e '/^$$/d' -e '/\.o:[ \t]*$$/d'  | ctags -L - --c++-kinds=+p --fields=+iaS --extra=+q

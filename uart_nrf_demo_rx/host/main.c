@@ -142,18 +142,17 @@ main (int argc, char **argv)
 	    step = STEP_READ;
 	  break;
 	case STEP_READ:
-
 	  read (tty, buf, 8);
 	  from_base128n (buf, outBuf, 1);
 	  seq_nr = *(unsigned int *) outBuf;
 	  read (tty, buf, 40);
 	  from_base128n (buf, outBuf, 5);
 
-
-
-	  r_crc16 = outBuf[30] << 8 | outBuf[31];
+	  r_crc16 = outBuf[31] << 8 | outBuf[30];
 	  c_crc16 = crc16 (outBuf, 30);
-
+	  
+	  printf ( "%d :", seq_nr);
+	  
 
 	  for (i = 0; i < 32; i++)
 	    printf ( "%02x ", outBuf[i]);
@@ -161,7 +160,7 @@ main (int argc, char **argv)
 	  printf ( "%04x %s\n", c_crc16,
 		   r_crc16 == c_crc16 ? "ok" : "nok");
 
-/*	  if (r_crc16 == c_crc16)
+	  if (r_crc16 == c_crc16)
 	    {
 	      int seq_nr_id;
 	      int ii;
@@ -223,8 +222,6 @@ main (int argc, char **argv)
 		    }
 		}
 
-
-
 	      for (i = 0; i < FRAMEBUFSIZE; i++)
 		{
 		  int f = 0;
@@ -248,7 +245,7 @@ main (int argc, char **argv)
 		    }
 		}
 	    }
-	    */
+	    
 	  step = STEP_WAIT;
 	  break;
 	}

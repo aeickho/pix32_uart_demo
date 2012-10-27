@@ -43,16 +43,16 @@ main (void)
   uint8_t buf[32];
   uint8_t outBuf[128];
   uint32_t ret;
-  uint32_t seq_nr=0;
+  uint32_t seq_nr = 0;
   uint8_t diskbuf[512];
- 
-   
+
+
   unsigned int i;
-  
+
   /* Configure PB frequency and wait states */
   SYSTEMConfigPerformance (SystemClock ());
 
-  portsetup();
+  portsetup ();
   UART1Init (SystemClock ());
   UART2Init (SystemClock ());
 
@@ -70,33 +70,37 @@ main (void)
 
 
   UART2PutStr ("spi_sd_init,");
-  SPI1_init();
+  SPI1_init ();
   UART2PutStr ("done\n\r");
 
   unsigned int stat = disk_initialize ();
-      
+
   UART2PutStr ("disk_init: ");
   UART2PutHex (stat);
   UART2PutStr ("\r\n");
 
-                    
+
 
   disk_ioctl (0, GET_SECTOR_COUNT, &ret);
   UART2PutStr ("GET_SECTOR_COUNT: ");
   UART2PutHex (ret);
-  UART2PutStr("\r\n");
+  UART2PutStr ("\r\n");
 
-  
-  disk_read(0, diskbuf, 0, 1);
 
-  
-  i = diskbuf [ 0x1c9 ] << 24 |  diskbuf [ 0x1c8 ] << 16 |  diskbuf [ 0x1c7 ] << 8  |  diskbuf [ 0x1c6 ]; 
+  disk_read (0, diskbuf, 0, 1);
+
+
+  i =
+    diskbuf[0x1c9] << 24 | diskbuf[0x1c8] << 16 | diskbuf[0x1c7] << 8 |
+    diskbuf[0x1c6];
   UART2PutHex (i);
-  UART2PutStr("\n\r");
+  UART2PutStr ("\n\r");
 
-  i = diskbuf [ 0x1cD ] << 24 |  diskbuf [ 0x1cC ] << 16 |  diskbuf [ 0x1cB ] << 8  |  diskbuf [ 0x1cA ]; 
+  i =
+    diskbuf[0x1cD] << 24 | diskbuf[0x1cC] << 16 | diskbuf[0x1cB] << 8 |
+    diskbuf[0x1cA];
   UART2PutHex (i);
-  UART2PutStr("\n\r");
+  UART2PutStr ("\n\r");
 
   UART2PutStr ("nrf_config_set(),");
   config.nrmacs = 1;
@@ -111,32 +115,46 @@ main (void)
   do
     {
       int rcv = nrf_rcv_pkt_poll (32, buf);
-      if (rcv != 0)
-       {
-      UART2PutHex(rcv);
-       UART2PutStr ("    ;");
-       }
+
       if (rcv == 32)
 	{
+	  char cbuf[100];
 	  uint32_t tmpspace[10];
 
-         *tmpspace = (int) seq_nr; 
+	  *tmpspace = (int) seq_nr;
 
-	  
-         UART1SendChar(0x01);
-         to_base128((uint8_t *) tmpspace, outBuf);
-         UART1Send(outBuf, 8);
+	  UART1SendChar (0x01);
+	  to_base128 ((uint8_t *) tmpspace, outBuf);
+	  UART1Send (outBuf, 8);
 
-         to_base128n  (buf, outBuf, 5);
-         UART1Send(outBuf, 40);
-         
-                                           
+	  to_base128n (buf, outBuf, 5);
+	  UART1Send (outBuf, 40);
+
+          ultoa (cbuf, (int) seq_nr, 10);
+	  UART2PutStr  (cbuf );
+	  UART2PutStr (" : ");
+
 	  uint16_t cnt;
 	  cnt = buf[0] << 8 | buf[1];
-	  UART2PutHex(cnt);
-	  UART2PutStr ("\r\n");
+	  UART2PutHex (cnt);
+	  UART2PutStr (".... ");
+
+
+
 	  
+         for (i = 0; i < 32; i++)
+          {
+          ultoa (cbuf,(unsigned char)  buf[i], 16);
+          UART2PutStr  (cbuf);
+	  UART2PutStr (" ");
+	  }
+	  
+	  UART2PutStr ("\r\n");
+
+
+
 	  seq_nr++;
+
 	}
     }
   while (1);

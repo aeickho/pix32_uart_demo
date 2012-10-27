@@ -13,7 +13,7 @@
 #include "portsetup.h"
 #include "basic.h"
 #include "delay.h"
-
+#include "tools/printf.h"
 #include "nrf_x.h"
 
 #define WORDS_PER_FRAGMENT   6
@@ -32,37 +32,11 @@ struct frame
 #define size 32
 
 
-void
-test (void)
-{
-  struct frame dummy_frame;
-
-  uint8_t sendBuf[32];
-  dummy_frame.mid = 0;
-
-  while (1)
-    {
-      memcpy (sendBuf, &dummy_frame, 32);
-
-      uint16_t crc = crc16 (sendBuf, size - 2);
-      sendBuf[size - 2] = (crc >> 8) & 0xff;
-      sendBuf[size - 1] = crc & 0xff;
-
-      nrf_send_frame (sendBuf);
-
-      dummy_frame.mid++;
-      if (dummy_frame.mid % 8 == 0)
-	{
-	  delay_ms (2);
-	}
-      if (dummy_frame.mid % 11 == 0)
-	{
-	  delay_ms (100);
-	}
 
 
-    }
-}
+
+
+
 
 int
 main (void)
@@ -87,7 +61,7 @@ main (void)
     (".............................................................................hallo\r\n");
   UART2PutStr ("UART2 Welt\r\n");
 
-//  init_printf ();
+  init_printf ();
   // try to reset nrf chip
 
   UART2PutStr ("nrf_init(),");

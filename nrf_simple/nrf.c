@@ -162,8 +162,8 @@ nrf_send_frame (uint8_t * frame)
   while (1)
     {
       ret = nrf_read_reg (R_FIFO_STATUS);
-//      if ((ret & R_FIFO_STATUS_TX_EMPTY) == R_FIFO_STATUS_TX_EMPTY)
-      if ((ret & R_FIFO_STATUS_TX_FULL) == 0)
+      if ((ret & R_FIFO_STATUS_TX_EMPTY) == R_FIFO_STATUS_TX_EMPTY)
+//      if ((ret & R_FIFO_STATUS_TX_FULL) == 0)
 	break;
     }
   NRF_CE_LOW ();
