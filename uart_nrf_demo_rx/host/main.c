@@ -11,6 +11,8 @@
 #include <sys/fcntl.h>
 #include <limits.h>
 
+#include "aeickho-tiny-fecc/tfec3.h"
+
 #define BUFSIZE 1024
 
 #define UART1 "/dev/serial/by-id/usb-Silicon_Labs_CP2102-Alex_0101-if00-port0"
@@ -276,23 +278,20 @@ main (int argc, char **argv)
 		    {
 		      if (frameBufferNG[i].frame.mid == new_frame_ng.mid)
 			{
-			  tx_valid[FRAGMENT_INDEX(&frameBufferNG[i].frame)] = 1;
-//			  tx_valid[frameBufferNG[i].frame.metad & 0x1f] = 1;
-
-			  fragdatas[FRAGMENT_INDEX(&frameBufferNG[i].frame)] =
-
-			    frameBufferNG[i].frame.fragmentdata;
-			  if ((FRAGMENT_INDEX(&frameBufferNG[i].frame)) >
+			  tx_valid[FRAGMENT_INDEX (&frameBufferNG[i].frame)] =
+			    1;
+			  fragdatas[FRAGMENT_INDEX (&frameBufferNG[i].frame)]
+			    = frameBufferNG[i].frame.fragmentdata;
+			  if ((FRAGMENT_INDEX (&frameBufferNG[i].frame)) >
 			      tx_valid_max)
 			    tx_valid_max =
-			      FRAGMENT_INDEX(&frameBufferNG[i].frame);
+			      FRAGMENT_INDEX (&frameBufferNG[i].frame);
 			  nr_data_frames =
-			    (NUM_DATA_FRAGS(&frameBufferNG[i].frame));
+			    (NUM_DATA_FRAGS (&frameBufferNG[i].frame));
 			}
 		    }
 
 
-		  printf("\n tx_valid_max %d ",tx_valid_max); 
 
 
 		  int ii = 0;
@@ -313,23 +312,52 @@ main (int argc, char **argv)
 
 		  printf ("========== \n");
 
+
+
 		  int s, k;
 		  s = nr_data_frames;
 
-		  k = tx_valid_max-nr_data_frames+1;	// ???????????????????
-		   printf("\n tx_valid_max %d %d \n",tx_valid_max, k);
-		   
-//		  ii =
-//		    tfec3_decode (WORDS_PER_FRAGMENT, s, k, tx_valid,
-//				  fragdatas) ? s : 0;
+		  k = tx_valid_max - nr_data_frames + 1;	// ???????????????????
+		  printf ("\n nr_data_frames %d tx_valid_max %d k %d \n",
+			  nr_data_frames, tx_valid_max, k);
+
+		  if (nr_data_frames - 1 == tx_valid_max)
+		    {
+		      printf ("alles ok ohne tfec3\n");
+		    }
+		  else
+		    {
+		      ii =
+			tfec3_decode (WORDS_PER_FRAGMENT, s, k, tx_valid,
+				      fragdatas) ? s : 0;
+
+		    }
 
 
+		  for (i = 0; i < nr_data_frames; i++)
+		    {
+		      int ii;
+		      char ** p;
+		      p= (char*) fragdatas;
+		      for (ii = 0; ii < 24; ii++)
+			{
+			  if (32 <= p[i][ii]
+			      && p[i][ii] < 127)
+                	    printf ("%c", p[i][ii]);
+			  else
+			    printf (".");
+			}
 
+		      printf ("\n");
+		    }
+
+		  printf ("========== \n");
 		  for (i = 0; i < FRAMEBUFSIZE; i++)
 		    {
 		      for (int ii = 0; ii < FRAMEBUFSIZE; ii++)
 			{
-			  if (frameBufferNG[ii].frame.mid == new_frame_ng.mid
+			  if (frameBufferNG[ii].frame.mid ==
+			      new_frame_ng.mid
 			      && i == (frameBufferNG[ii].frame.metad & 0x1f))
 			    {
 			      printf ("%d %d %x %d %d\n", i, ii,
@@ -350,7 +378,6 @@ main (int argc, char **argv)
 	      int seq_nr_diff_min = 0;
 	      struct msgindex msg_index[FRAMEBUFSIZE];	// 180
 	      struct frame msg_buff[FRAMEBUFSIZE][MAX_MSG_FRAME_NR];	// 7200 
-
 	      for (i = 0; i < FRAMEBUFSIZE; i++)
 		{
 		  if (seq_nr - frameBuffer[i].seqnr > seq_nr_diff_min)
@@ -362,8 +389,6 @@ main (int argc, char **argv)
 
 	      memcpy (&frameBuffer[seq_nr_id].frame, outBuf, 32);
 	      frameBuffer[seq_nr_id].seqnr = seq_nr;
-
-
 	      for (i = 0; i < FRAMEBUFSIZE; i++)
 		{
 		  msg_index[i].msg = 0;
@@ -378,10 +403,8 @@ main (int argc, char **argv)
 		  int ii;
 		  int msg_id;
 		  int fnum;
-
 		  fnum = frameBuffer[i].frame.metad & 0x1f;
 		  msg_id = frameBuffer[i].frame.mid;
-
 		  for (ii = 0; ii < FRAMEBUFSIZE; ii++)
 		    {
 		      if ((msg_index[ii].msg == msg_id) && msg_id != 0)
@@ -411,7 +434,6 @@ main (int argc, char **argv)
 		  for (ii = 0; ii < FRAMEBUFSIZE; ii++)
 		    if (delete_msg_id[ii] == msg_index[i].msg)
 		      f = 1;
-
 		  if (msg_index[i].n > 6 && msg_index[i].msg && f == 0)
 		    {
 		      printf ("xxxxxxx\n");
