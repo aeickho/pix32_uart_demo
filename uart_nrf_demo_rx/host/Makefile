@@ -1,7 +1,6 @@
 RM = rm -f
 CC = gcc
-CFLAGS = -Wall -MMD 
-CFLAGS =
+CFLAGS = -Wall -MMD -std=c99 
 
 RX_HOST_BIN  = rx_host
 RX_HOST_OBJS = base128.o crc.o main.o
@@ -13,7 +12,7 @@ clean:
 	$(RM) $(RX_HOST_BIN) $(RX_HOST_OBJS) *.d
         
 $(RX_HOST_BIN): $(RX_HOST_OBJS)
-	$(CC) -o $@ $^ $(LFLAGS)
+	$(CC) -o $@ $^ $(LFLAGS) $(CFLAGS)
                 
 include $(wildcard *.d)
                 
