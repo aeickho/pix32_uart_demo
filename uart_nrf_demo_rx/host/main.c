@@ -189,7 +189,9 @@ main (int argc, char **argv)
 
 		  memset (tx_valid, 0, sizeof (tx_valid));
 		  memset (fragdatas, 0, nr_data_frames + 3);
-		  // create pointerlist
+		  // create pointerlist  
+		  // hier doch zwei in einander geschachtelte schleifen um das ergebnis dann schön zu haben 
+		  // tfec3 in speicher der call function
 		  for (int i = 0; i < FRAMEBUFSIZE; i++)
 		    {
 		      if (frameBuffer[i].frame.mid == new_frame->mid)
