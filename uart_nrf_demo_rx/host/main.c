@@ -122,9 +122,9 @@ main (int argc, char **argv)
 
 	  if (r_crc16 == c_crc16)
 	    {
-             // ret = number of char
-	     // ret = process_frame(inData,outData)
-	     
+	      // ret = number of char
+	      // ret = process_frame(inData,outData)
+
 	      int flag_ng = 0;
 	      struct frame *new_frame;
 
@@ -238,6 +238,9 @@ main (int argc, char **argv)
 			}
 		      printf ("]\n");
 		    }
+		  printf ("-> %d\n",
+			  WORDS_PER_FRAGMENT * BYTES_PER_FRAGMENT *
+			  nr_data_frames);
 		}
 	    }
 	  step = STEP_WAIT;
