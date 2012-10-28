@@ -3,7 +3,7 @@ CC = gcc
 CFLAGS = -Wall -MMD -std=c99 
 
 RX_HOST_BIN  = rx_host
-RX_HOST_OBJS = base128.o crc.o main.o aeickho-tiny-fecc/tfec3.c
+RX_HOST_OBJS = base128.o crc.o main.o aeickho-tiny-fecc/tfec3.o
 
 
 all: $(RX_HOST_BIN)

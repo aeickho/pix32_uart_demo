@@ -23,14 +23,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define NDEBUG
-
 #include <assert.h>
 #include "tfec3.h"
 
-
 /*
- *  Generator polynomial: x^16 + x^1 + 1 (0x13)
+ *  Generator polynomial: x^5 + x^1 + 1 (0x13)
  *  x^1 (2) generates all invertible elements.
  */
 
@@ -101,12 +98,19 @@ static void block_axpy(int words, unsigned char a, const tfec3_u32 x[], tfec3_u3
 		y[i] ^= scale(a,x[i]);
 }
 
+#if 0
 static void block_xp2y(int words, const tfec3_u32 x[], tfec3_u32 y[])
 {
 	int i;
 	for (i=0; i<words; ++i)
 		y[i] = twice(y[i]) ^ x[i];
 }
+#else
+#define block_xp2y(w,x,y) do {      \
+		block_scale_by_2((w),(y));  \
+		block_xpy((w),(x),(y));     \
+	} while(0)
+#endif
 
 static int find_index(int of, const int inlist[])
 {
@@ -173,9 +177,9 @@ int tfec3_decode(int words, int blocks, int redundancy,
 	const unsigned char valid[], tfec3_u32 *io[])
 {
 	int b, c;
-	int misslist[3] = {0};
-	int missctr = 0;
-	int order = 0;
+	int misslist[3] = {0}; /* list of missing data blocks */
+	int missctr = 0;       /* number of missing data blocks */
+	int order = 0;         /* order of equation system that needs to be solved */
 	tfec3_u32 *partial_pqr[3] = {0};
 	unsigned char matrix[3][3] = {{0}};
 	unsigned char *mat[3] = {0};
