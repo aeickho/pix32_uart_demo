@@ -86,6 +86,11 @@ int mid_processed_wp;
 
 
 
+#define NUM_DATA_FRAGS(pf)  ((pf)->metad >> 12)
+#define FRAGMENT_INDEX(pf)  ((pf)->metad &  63)
+
+
+
 static void
 print_frame (const struct frame *pf)
 {
@@ -201,7 +206,7 @@ main (int argc, char **argv)
 
 	      memcpy (&new_frame_ng, outBuf, 32);
 
-	      printf ("%x \n", new_frame_ng.mid);
+	      printf ("new _ frame _mid :%x \n", new_frame_ng.mid);
 	      // check for: if mid processed
 	      for (i = 0; i < FRAMEBUFSIZE; i++)
 		{
@@ -252,43 +257,71 @@ main (int argc, char **argv)
 	      memcpy (&frameBufferNG[seq_nr_id].frame, outBuf, 32);
 	      frameBufferNG[seq_nr_id].seqnr = seq_nr;
 
+
+
 	      if (flag_ng == -3)
 		{
 		  unsigned char tx_valid[FRAME_BUFF_SIZE];
 		  tfec3_u32 *fragdatas[FRAME_BUFF_SIZE];
+		  int tx_valid_max = 0;
 		  char nr_data_frames;
 		  struct frame spare_frame[3];
 		  memset (tx_valid, 0, sizeof (tx_valid));
+
+
+		  for (i = 0; i < nr_data_frames + 3; i++)
+		    fragdatas[i] = NULL;
 
 		  for (i = 0; i < FRAMEBUFSIZE; i++)
 		    {
 		      if (frameBufferNG[i].frame.mid == new_frame_ng.mid)
 			{
-			  tx_valid[i] = 1;
-			  fragdatas[i] = frameBufferNG[i].frame.fragmentdata;
+			  tx_valid[FRAGMENT_INDEX(&frameBufferNG[i].frame)] = 1;
+//			  tx_valid[frameBufferNG[i].frame.metad & 0x1f] = 1;
+
+			  fragdatas[FRAGMENT_INDEX(&frameBufferNG[i].frame)] =
+
+			    frameBufferNG[i].frame.fragmentdata;
+			  if ((FRAGMENT_INDEX(&frameBufferNG[i].frame)) >
+			      tx_valid_max)
+			    tx_valid_max =
+			      FRAGMENT_INDEX(&frameBufferNG[i].frame);
 			  nr_data_frames =
-			    (frameBufferNG[i].frame.metad & 0xf000) >> 12;
+			    (NUM_DATA_FRAGS(&frameBufferNG[i].frame));
 			}
 		    }
 
 
+		  printf("\n tx_valid_max %d ",tx_valid_max); 
 
-
-		  printf ("----------> %d\n", nr_data_frames);
 
 		  int ii = 0;
-		  for (i = 0; i < nr_data_frames + 3;i++)
+		  for (i = 0; i < nr_data_frames + 3; i++)
 		    {
 		      if (tx_valid[i] == 0)
 			{
-			  fragdatas[i] = spare_fragmentdata[ii++];
+			  fragdatas[i] = spare_frame[ii++].fragmentdata;
 			}
 		    }
-		  for (i = 0; i < nr_data_frames + 3;i++)
+
+		  printf ("========== \n");
+
+		  for (i = 0; i < nr_data_frames + 3; i++)
 		    {
-		      printf ("%p \n", fragdatas[i]);
+		      printf ("%d %p \n", i, fragdatas[i]);
 		    }
 
+		  printf ("========== \n");
+
+		  int s, k;
+		  s = nr_data_frames;
+
+		  k = tx_valid_max-nr_data_frames+1;	// ???????????????????
+		   printf("\n tx_valid_max %d %d \n",tx_valid_max, k);
+		   
+//		  ii =
+//		    tfec3_decode (WORDS_PER_FRAGMENT, s, k, tx_valid,
+//				  fragdatas) ? s : 0;
 
 
 
