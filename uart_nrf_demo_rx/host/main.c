@@ -165,7 +165,7 @@ main (int argc, char **argv)
 		  mid_processed_wp %= MID_PROCESSED_SIZE;
 		}
 	      // suche ältesten eintrag im FrameBuffer 
-	      int seq_nr_id;
+	      int seq_nr_id = 0;
 	      for (int seq_nr_diff_min = 0, i = 0; i < FRAMEBUFSIZE; i++)
 		{
 		  if (seq_nr - frameBuffer[i].seqnr > seq_nr_diff_min)
@@ -174,7 +174,6 @@ main (int argc, char **argv)
 		      seq_nr_id = i;
 		    }
 		}
-
 	      memcpy (&frameBuffer[seq_nr_id].frame, new_frame, 32);
 	      frameBuffer[seq_nr_id].seqnr = seq_nr;
 
@@ -240,9 +239,9 @@ main (int argc, char **argv)
 			}
 		      printf ("]\n");
 		    }
-		  printf ("-> %d\n",
-			  WORDS_PER_FRAGMENT * BYTES_PER_FRAGMENT *
-			  nr_data_frames);
+		  printf ("-> %d %d\n",
+			  BYTES_PER_FRAGMENT *
+			  nr_data_frames,nr_data_frames);
 		}
 	    }
 	  step = STEP_WAIT;
