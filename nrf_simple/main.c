@@ -19,7 +19,7 @@
 #define WORDS_PER_FRAGMENT   6
 #define BYTES_PER_FRAGMENT  (WORDS_PER_FRAGMENT*4)
 
-
+/*
 struct frame
 {
   uint32_t mid;
@@ -27,7 +27,7 @@ struct frame
   unsigned short metad;
   unsigned short crc16;
 };
-
+*/
 
 #define size 32
 
@@ -84,8 +84,6 @@ main (void)
   nrf_config_set (&config);
 
   UART2PutStr ("done\n\r");
-
-
 
 
   test ();

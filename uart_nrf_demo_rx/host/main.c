@@ -123,9 +123,16 @@ main (int argc, char **argv)
 
 	  r_crc16 = inData[31] << 8 | inData[30];
 	  c_crc16 = crc16 (inData, 30);
+	  
+	  for (int i = 0; i < 32; i++)
+     	    printf ("%02x ", inData[i]);
 
+	  
+	  if (r_crc16 != c_crc16)
+	    printf("falsche crc\n");
 	  if (r_crc16 == c_crc16)
 	    {
+printf("\n");
 	      // ret = number of char
 	      // ret = process_frame(inData,outData)
 
@@ -213,10 +220,13 @@ main (int argc, char **argv)
 			      FRAGMENT_INDEX (&frameBuffer[i].frame);
 			}
 		    }
-
+		  int ok_data_frames = 0;
 		  // generate spare space for redundance   
 		  for (int ii = 0, i = 0; i < nr_data_frames + 3; i++)
 		    {
+		      if (i < nr_data_frames && tx_valid[i])
+			ok_data_frames++;
+
 		      if (tx_valid[i] == 0)
 			{
 			  fragdatas[i] = spare_frame[ii++].fragmentdata;
@@ -243,9 +253,9 @@ main (int argc, char **argv)
 			}
 		      printf ("]\n");
 		    }
-		  printf ("-> %d %d\n",
+		  printf ("-> %d %d -- %d\n",
 			  BYTES_PER_FRAGMENT *
-			  nr_data_frames,nr_data_frames);
+			  nr_data_frames, nr_data_frames, ok_data_frames);
 		}
 	    }
 	  step = STEP_WAIT;

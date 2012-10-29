@@ -145,7 +145,7 @@ nrf_config_set (nrfconfig config)
 
 
 void
-nrf_send_frame (uint8_t * frame)
+nrf_send_frame (uint8_t * frame, int mode)
 {
   int ret;
 
@@ -162,9 +162,16 @@ nrf_send_frame (uint8_t * frame)
   while (1)
     {
       ret = nrf_read_reg (R_FIFO_STATUS);
-      if ((ret & R_FIFO_STATUS_TX_EMPTY) == R_FIFO_STATUS_TX_EMPTY)
-//      if ((ret & R_FIFO_STATUS_TX_FULL) == 0)
-	break;
+      if (mode)
+	{
+	  if ((ret & R_FIFO_STATUS_TX_EMPTY) == R_FIFO_STATUS_TX_EMPTY)
+	    break;
+	}
+      else
+	{
+	  if ((ret & R_FIFO_STATUS_TX_FULL) == 0)
+	    break;
+	}
     }
   NRF_CE_LOW ();
 
@@ -176,3 +183,19 @@ nrf_send_frame (uint8_t * frame)
 */
 
 }
+/*
+void
+nrf_send_frames (uint8_t * frame, int frames)
+{
+  int i;
+  for (i = 0; i < frames - 1; i++)
+    {
+      nrf_send_frame (frame[i], 0);
+      if (i % 4 == 0)
+	{
+	  delay_ms (5);
+	}
+    }
+  nrf_send_frame (frame[frames], 1);
+}
+*/
