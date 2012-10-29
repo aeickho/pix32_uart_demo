@@ -23,6 +23,10 @@
 #define STEP_RX_NEWFRAME	3
 #define STEP_END		-1
 
+#define FLAG_NEW_MESSAGE	0
+#define FLAG_MID_PROCESSED	1
+#define FLAG_MID_COMPLEATE	2
+
 #define FRAMEBUFSIZE		15
 
 #define WORDS_PER_FRAGMENT   6
@@ -125,7 +129,7 @@ main (int argc, char **argv)
 	      // ret = number of char
 	      // ret = process_frame(inData,outData)
 
-	      int flag_ng = 0;
+	      int flag_ng = FLAG_NEW_MESSAGE;
 	      struct frame *new_frame;
 
 	      new_frame = (struct frame *) inData;
@@ -136,7 +140,7 @@ main (int argc, char **argv)
 		    {
 		      if (mid_processed[i].cnt == -1)
 			{
-			  flag_ng = -1;
+			  flag_ng = FLAG_MID_PROCESSED;
 			  break;
 			}
 		      mid_processed[i].cnt++;
@@ -144,20 +148,20 @@ main (int argc, char **argv)
 
 		      if (mid_processed[i].cnt > NUM_DATA_FRAGS (new_frame))
 			{
-			  flag_ng = -3;
+			  flag_ng = FLAG_MID_COMPLEATE;
 			  mid_processed[i].cnt = -1;
 			}
 		    }
 		}
 
 	      // Nachricht mit dieser MID  schon verarbeitet    
-	      if (flag_ng == -1)
+	      if (flag_ng == FLAG_MID_PROCESSED)
 		{
 		  step = STEP_WAIT;
 		  break;
 		}
 	      // neue Message ID (in mid_processed_wp eintagen)         
-	      if (flag_ng == 0)
+	      if (flag_ng == FLAG_NEW_MESSAGE)
 		{
 		  mid_processed[mid_processed_wp].mid = new_frame->mid;
 		  mid_processed[mid_processed_wp].cnt = 1;
@@ -177,7 +181,7 @@ main (int argc, char **argv)
 	      memcpy (&frameBuffer[seq_nr_id].frame, new_frame, 32);
 	      frameBuffer[seq_nr_id].seqnr = seq_nr;
 
-	      if (flag_ng == -3)
+	      if (flag_ng == FLAG_MID_COMPLEATE)
 		{
 		  unsigned char tx_valid[FRAME_BUFF_SIZE];
 		  tfec3_u32 *fragdatas[FRAME_BUFF_SIZE];
