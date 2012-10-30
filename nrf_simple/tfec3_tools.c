@@ -232,20 +232,54 @@ destroy_frame (int whichone)
   tx_valid[whichone] = 0;
 }
 
+void
+nrf_send_frames (struct frame *frame, int frames)
+{
+  int i;
+  t[0] = ReadCoreTimer ();
+  for (i = 0; i < frames - 1; i++)
+    {
+      t[i + 1] = ReadCoreTimer ();
+      nrf_send_frame ((uint8_t *) (frame + i), 0);
+      if (i % 4 == 3)
+	{
+	  delay_ms (5);
+	}
+    }
+  nrf_send_frame ((uint8_t *) (frame + frames - 1), 1);
+  t[i + 2] = ReadCoreTimer ();
+
+  for (i = 0; i < frames; ++i)
+    {
+      printf ("%08d ns %08d ns\n\r", (t[i + 1] - t[0]) * 50,
+	      (t[i + 1] - t[i]) * 50);
+    }
+
+
+}
+
+
 int
 sendblock (void)
 {
 
   int n, r, i, ret;
   char msg[300];
-  static int cnt=0;
+  static int cnt = 0;
 
-  tfp_sprintf(msg, "Nachricht %d na da will ich mal sehen",cnt++);
+  tfp_sprintf (msg,
+	       "Nachricht %d na da will ich mal sehen                   Hallo Du da!!!  nur ein kleiner Test ...............HASE \
+	       Test........Bla-______---_--_-_-_-_-_-___-_\
+	       hallo du da next warum ist das alles so einfach das finde ich lustig",
+	       cnt++);
+
+
+
 
   tfp_printf ("Preparing a message for sending...\n\r");
   n = strlen (msg) + 1;		/* message size including null terminator */
-  r =  40;			/* shoot for 20% redundancy */
-  r = 100;
+  r = 40;			/* shoot for 20% redundancy */
+  r = 80;
   r = prepare_send_message (n, msg, r);
   tfp_printf ("number of frames for message = %d\n\r", send_count);
   tfp_printf ("           actual redundancy = %d%%\n\r", r);
@@ -267,35 +301,33 @@ sendblock (void)
 //(tx_frame+1) ->fragmentdata [2]=33;
 
 // static struct frame tx_frame[FRAME_BUFF_SIZE];
-  
+
 // void nrf_send_frames (uint8_t  ** frame, int frames)
 
-printf("-> %x \n\r", tx_frame );
-printf("-> %x \n\r", tx_frame + 1);
-printf("-> %c %c %c \n\r", tx_frame[0],tx_frame[1],tx_frame[2]);
-printf("xxxxxxxxxxxxx\n\r");
-delay_ms(100);
+  printf ("-> %x \n\r", tx_frame);
+  printf ("-> %x \n\r", tx_frame + 1);
+  printf ("-> %c %c %c \n\r", tx_frame[0], tx_frame[1], tx_frame[2]);
+  printf ("xxxxxxxxxxxxx\n\r");
+  delay_ms (100);
 
-//nrf_send_frames( (uint8_t  *) &tx_frame, send_count);
+  nrf_send_frames (tx_frame, send_count);
 
+// nrf_send_frame (uint8_t * frame, int mode)
+
+/*
   for (i = 0; i < send_count; ++i)
     {
       t[i + 1] = ReadCoreTimer ();
-      nrf_send_frame ((uint8_t *)tx_frame + i, 0);
+      nrf_send_frame ((uint8_t *) (tx_frame + i), 0);
       if (i % 4 == 0)
 	{
 	  delay_ms (5);
 	}
 
     }
-
+*/
 
 ///***************************
-  for (i = 0; i < send_count; ++i)
-    {
-      printf ("%08d ns %08d ns\n\r", (t[i + 1] - t[0]) * 50,
-	      (t[i + 1] - t[i]) * 50);
-    }
 
   for (i = 0; i < send_count; ++i)
     {

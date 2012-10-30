@@ -8,7 +8,6 @@ void nrf_init (void);
 void nrf_config_set (nrfconfig config);
 
 void nrf_send_frame (uint8_t * frame, int mode);
-//void nrf_send_frames (uint8_t * frame, int frames);
 
 
 
