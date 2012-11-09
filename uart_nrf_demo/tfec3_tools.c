@@ -339,6 +339,6 @@ test (void)
   while (1)
     {
       sendblock ();
-      delay_ms (1000);
+      delay_ms (10);
     }
 }

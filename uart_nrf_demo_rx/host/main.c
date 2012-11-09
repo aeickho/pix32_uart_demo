@@ -15,7 +15,7 @@
 
 #define BUFSIZE 1024
 
-#define UART1 "/dev/serial/by-id/usb-Silicon_Labs_CP2102-Alex_0101-if00-port0"
+#define UART1 "/dev/serial/by-id/usb-Silicon_Labs_CP2102-Alex_0105-if00-port0"
 
 #define	STEP_INIT 		0
 #define STEP_WAIT		1
@@ -132,7 +132,7 @@ main (int argc, char **argv)
 	    printf("falsche crc\n");
 	  if (r_crc16 == c_crc16)
 	    {
-printf("\n");
+	      printf("\n");
 	      // ret = number of char
 	      // ret = process_frame(inData,outData)
 
@@ -153,7 +153,7 @@ printf("\n");
 		      mid_processed[i].cnt++;
 		      flag_ng = -2;
 
-		      if (mid_processed[i].cnt > NUM_DATA_FRAGS (new_frame))
+		      if (mid_processed[i].cnt == NUM_DATA_FRAGS (new_frame))
 			{
 			  flag_ng = FLAG_MID_COMPLEATE;
 			  mid_processed[i].cnt = -1;
@@ -167,6 +167,8 @@ printf("\n");
 		  step = STEP_WAIT;
 		  break;
 		}
+
+
 	      // neue Message ID (in mid_processed_wp eintagen)         
 	      if (flag_ng == FLAG_NEW_MESSAGE)
 		{

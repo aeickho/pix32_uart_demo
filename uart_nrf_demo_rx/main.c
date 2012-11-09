@@ -134,17 +134,10 @@ main (void)
 	  UART2PutStr  (cbuf );
 	  UART2PutStr (" : ");
 
-	  uint16_t cnt;
-	  cnt = buf[0] << 8 | buf[1];
-	  UART2PutHex (cnt);
-	  UART2PutStr (".... ");
-
-
-
 	  
          for (i = 0; i < 32; i++)
           {
-          ultoa (cbuf,(unsigned char)  buf[i], 16);
+          ultoa (cbuf,   buf[i], 16);
           UART2PutStr  (cbuf);
 	  UART2PutStr (" ");
 	  }

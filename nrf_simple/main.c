@@ -85,7 +85,6 @@ main (void)
 
   UART2PutStr ("done\n\r");
 
-
   test ();
   while (1);
 }
