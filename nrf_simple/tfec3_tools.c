@@ -244,9 +244,9 @@ printf("\r\nframes %d\n\r", frames);
       t[i + 1] = ReadCoreTimer ();
 printf("...");
       nrf_send_frame ((uint8_t *) (frame + i), 0);
- if (i % 4 == 3)
+ if (i % 5 == 4)
 	{
-//	  delay_ms (1);
+	  delay_ms (5);
 	}
     }
 printf(".,.");

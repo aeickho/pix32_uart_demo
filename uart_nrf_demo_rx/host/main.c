@@ -11,7 +11,9 @@
 #include <sys/fcntl.h>
 #include <limits.h>
 
+
 #include "aeickho-tiny-fecc/tfec3.h"
+#include "rxmsg.h"
 
 #define BUFSIZE 1024
 
@@ -75,6 +77,9 @@ main (int argc, char **argv)
   unsigned char inData[BUFSIZE];
   unsigned short c_crc16, r_crc16;
 
+  unsigned char outData[BYTES_PER_FRAGMENT * MAX_DATA_FRAGMENTS];
+
+
   int step;
   FILE *rawfile;
 
@@ -123,146 +128,48 @@ main (int argc, char **argv)
 
 	  r_crc16 = inData[31] << 8 | inData[30];
 	  c_crc16 = crc16 (inData, 30);
-	  
-	  for (int i = 0; i < 32; i++)
-     	    printf ("%02x ", inData[i]);
 
-	  
+	  for (int i = 0; i < 32; i++)
+	    printf ("%02x ", inData[i]);
+
+
 	  if (r_crc16 != c_crc16)
-	    printf("falsche crc\n");
+	    printf ("falsche crc\n");
 	  if (r_crc16 == c_crc16)
 	    {
-	      printf("\n");
-	      // ret = number of char
-	      // ret = process_frame(inData,outData)
 
-	      int flag_ng = FLAG_NEW_MESSAGE;
-	      struct frame *new_frame;
-
-	      new_frame = (struct frame *) inData;
-
-	      for (int i = 0; i < MID_PROCESSED_SIZE; i++)
+	      int i, ii;
+	      int anz;
+	      int nr_data_frames;
+	      anz = rxmsg_process_frame (inData, outData);
+	      if (anz != 0)
 		{
-		  if (mid_processed[i].mid == new_frame->mid)
+		  nr_data_frames = anz / BYTES_PER_FRAGMENT;
+		  printf ("\n");
+
+		  for (i = 0; i < anz; i++)
 		    {
-		      if (mid_processed[i].cnt == -1)
-			{
-			  flag_ng = FLAG_MID_PROCESSED;
-			  break;
-			}
-		      mid_processed[i].cnt++;
-		      flag_ng = -2;
-
-		      if (mid_processed[i].cnt == NUM_DATA_FRAGS (new_frame))
-			{
-			  flag_ng = FLAG_MID_COMPLEATE;
-			  mid_processed[i].cnt = -1;
-			}
-		    }
-		}
-
-	      // Nachricht mit dieser MID  schon verarbeitet    
-	      if (flag_ng == FLAG_MID_PROCESSED)
-		{
-		  step = STEP_WAIT;
-		  break;
-		}
-
-
-	      // neue Message ID (in mid_processed_wp eintagen)         
-	      if (flag_ng == FLAG_NEW_MESSAGE)
-		{
-		  mid_processed[mid_processed_wp].mid = new_frame->mid;
-		  mid_processed[mid_processed_wp].cnt = 1;
-		  mid_processed_wp++;
-		  mid_processed_wp %= MID_PROCESSED_SIZE;
-		}
-	      // suche ältesten eintrag im FrameBuffer 
-	      int seq_nr_id = 0;
-	      for (int seq_nr_diff_min = 0, i = 0; i < FRAMEBUFSIZE; i++)
-		{
-		  if (seq_nr - frameBuffer[i].seqnr > seq_nr_diff_min)
-		    {
-		      seq_nr_diff_min = seq_nr - frameBuffer[i].seqnr;
-		      seq_nr_id = i;
-		    }
-		}
-	      memcpy (&frameBuffer[seq_nr_id].frame, new_frame, 32);
-	      frameBuffer[seq_nr_id].seqnr = seq_nr;
-
-	      if (flag_ng == FLAG_MID_COMPLEATE)
-		{
-		  unsigned char tx_valid[FRAME_BUFF_SIZE];
-		  tfec3_u32 *fragdatas[FRAME_BUFF_SIZE];
-		  struct frame spare_frame[3];
-
-		  int tx_valid_max = 0;
-		  char nr_data_frames;
-
-		  memset (tx_valid, 0, sizeof (tx_valid));
-		  memset (fragdatas, 0, nr_data_frames + 3);
-		  // create pointerlist  
-		  // hier doch zwei in einander geschachtelte schleifen um das ergebnis dann schön zu haben 
-		  // tfec3 in speicher der call function
-		  for (int i = 0; i < FRAMEBUFSIZE; i++)
-		    {
-		      if (frameBuffer[i].frame.mid == new_frame->mid)
-			{
-			  tx_valid[FRAGMENT_INDEX
-				   (&frameBuffer[i].frame)] = 1;
-			  fragdatas[FRAGMENT_INDEX
-				    (&frameBuffer
-				     [i].frame)]
-			    = frameBuffer[i].frame.fragmentdata;
-			  nr_data_frames =
-			    (NUM_DATA_FRAGS (&frameBuffer[i].frame));
-			  if ((FRAGMENT_INDEX
-			       (&frameBuffer[i].frame)) > tx_valid_max)
-			    tx_valid_max =
-			      FRAGMENT_INDEX (&frameBuffer[i].frame);
-			}
-		    }
-		  int ok_data_frames = 0;
-		  // generate spare space for redundance   
-		  for (int ii = 0, i = 0; i < nr_data_frames + 3; i++)
-		    {
-		      if (i < nr_data_frames && tx_valid[i])
-			ok_data_frames++;
-
-		      if (tx_valid[i] == 0)
-			{
-			  fragdatas[i] = spare_frame[ii++].fragmentdata;
-			}
-		    }
-
-		  tfec3_decode (WORDS_PER_FRAGMENT,
-				nr_data_frames,
-				tx_valid_max -
-				nr_data_frames + 1, tx_valid, fragdatas);
-
-		  for (int i = 0; i < nr_data_frames; i++)
-		    {
-		      int ii;
-		      char **p;
-		      p = (char **) fragdatas;
-		      printf ("[");
+		      printf ("[\n");
 		      for (ii = 0; ii < 24; ii++)
 			{
-			  if (32 <= p[i][ii] && p[i][ii] < 127)
-			    printf ("%c", p[i][ii]);
+			  unsigned char c;
+			  c = outData[i + ii];
+			  if (32 <= c && c < 127)
+			    printf ("%c", c);
 			  else
 			    printf (".");
 			}
 		      printf ("]\n");
 		    }
-		  printf ("-> %d %d -- %d\n",
-			  BYTES_PER_FRAGMENT *
-			  nr_data_frames, nr_data_frames, ok_data_frames);
+		  printf ("-> %d %d\n",
+			  BYTES_PER_FRAGMENT * nr_data_frames,
+			  nr_data_frames);
 		}
 	    }
-	  step = STEP_WAIT;
-	  break;
 	}
+      step = STEP_WAIT;
+      break;
     }
-  return (0);
+
+return (0);
 }

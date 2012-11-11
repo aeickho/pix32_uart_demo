@@ -61,6 +61,6 @@
 void SPI2_init (void);
 
 uint8_t SPI2_xmit (const uint8_t data);
-void SPI2_transmit (const uint8_t * data, const uint32_t len);
+void SPI2_transmit (uint8_t * data, const uint32_t len);
 
 #endif

@@ -55,10 +55,10 @@ SPI2_xmit (const uint8_t data)
 }
 
 void
-SPI2_transmit (const uint8_t * data, const uint32_t len)
+SPI2_transmit (uint8_t * data, const uint32_t len)
 {
   int i;
 
   for (i = 0; i < len; i++)
-    SPI2_xmit (data[i]);
+    data[i]=SPI2_xmit (data[i]);
 }

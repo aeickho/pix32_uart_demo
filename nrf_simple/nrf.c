@@ -20,7 +20,8 @@ nrf_read_reg (const uint8_t reg)
 {
   uint8_t val;
   NRF_CS_LOW ();
-/*  __asm__ ("nop");
+/*
+  __asm__ ("nop");
   __asm__ ("nop");
   __asm__ ("nop");
   __asm__ ("nop");
@@ -189,7 +190,7 @@ nrf_send_frame (uint8_t * frame, int send_mode)
     return;
 
   UART2PutStr ("sf\n\r");
-  
+
   nrf_write_reg (R_CONFIG, R_CONFIG_PWR_UP | R_CONFIG_EN_CRC);
 
   NRF_CS_LOW ();
@@ -246,7 +247,13 @@ nrf_receive_poll (uint8_t * frame)
   status = nrf_cmd_status (C_NOP);
 
   if ((status & R_STATUS_RX_P_NO) == R_STATUS_RX_FIFO_EMPTY)
-    return 0;
+    {
+      if ((status & R_STATUS_RX_DR) == R_STATUS_RX_DR)
+	{
+	  nrf_write_reg (R_STATUS, R_STATUS_RX_DR);
+	};
+      return 0;
+    }
 
   nrf_read_long (C_R_RX_PL_WID, 1, &len);
   nrf_write_reg (R_STATUS, R_STATUS_RX_DR);
@@ -257,6 +264,12 @@ nrf_receive_poll (uint8_t * frame)
   if (len < 1)
     return -1;
 
+/*
+  UART2PutHex (status);
+  UART2PutStr ("  ");
+ UART2PutHex (len);
+   UART2PutStr ("\r\n");
+*/
   mLED_2_On ();
   nrf_read_pkt (32, frame);
   mLED_2_Off ();
