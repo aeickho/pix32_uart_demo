@@ -1,0 +1,9 @@
+tags
+.hg
+.hgignore 
+*.d
+*.o
+*~
+*.elf
+*.hex
+DEADJOE

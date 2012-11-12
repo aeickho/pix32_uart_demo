@@ -1,0 +1,1 @@
+../nrf_simple/portsetup.h
