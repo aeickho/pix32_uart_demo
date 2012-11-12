@@ -11,6 +11,6 @@
 
 
 
-int rxmsg_process_frame (uint8_t * inData, uint8_t * outData);
-
+void rxmsg_process_frame (uint8_t * inData);
+int rxmsg_get_frame( uint8_t * outData);
 #endif

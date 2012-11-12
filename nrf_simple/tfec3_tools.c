@@ -235,28 +235,27 @@ destroy_frame (int whichone)
 void
 nrf_send_frames (struct frame *frame, int frames)
 {
-printf("\r\nframes %d\n\r", frames);
+  tfp_printf ("\r\nframes %d\n\r", frames);
 
   int i;
   t[0] = ReadCoreTimer ();
   for (i = 0; i < frames - 1; i++)
     {
       t[i + 1] = ReadCoreTimer ();
-printf("...");
       nrf_send_frame ((uint8_t *) (frame + i), 0);
- if (i % 5 == 4)
- 	{
+      if (i % 4 == 3)
+	{
 	  delay_ms (5);
 	}
     }
-printf(".,.");
+  tfp_printf (".,.");
 
   nrf_send_frame ((uint8_t *) (frame + frames - 1), 1);
   t[i + 2] = ReadCoreTimer ();
 
   for (i = 0; i < frames; ++i)
     {
-      printf ("%08d ns %08d ns\n\r", (t[i + 1] - t[0]) * 50,
+      tfp_printf ("%08d ns %08d ns\n\r", (t[i + 1] - t[0]) * 50,
 	      (t[i + 1] - t[i]) * 50);
     }
 
@@ -273,26 +272,28 @@ sendblock (void)
   static int cnt = 0;
 
   tfp_sprintf (msg,
-	       "Nachricht %d na da will ich mal sehen.................................................................................................",cnt++);
-	       
+	       "Nachricht %d na da will ich mal sehen.........xxxxxxxxxxxxxxxxxxxxxxsadasdasdasdasdasdasdasdadasdasdas.........................................................................................................................................................................................................aaa",
+	       cnt++);
 
 
-  tfp_printf ("Preparing a message for sending...\n\r");
+
+  tfp_printf ("Preparing a message for sending... len %d\n\r", strlen (msg));
   n = strlen (msg) + 1;		/* message size including null terminator */
   r = 40;			/* shoot for 20% redundancy */
   r = 150;
-t[0] = ReadCoreTimer ();
- 
+  t[0] = ReadCoreTimer ();
+
   r = prepare_send_message (n, msg, r);
-t[1] = ReadCoreTimer ();
+  t[1] = ReadCoreTimer ();
 
-//destroy_frame (0);
-//destroy_frame (1);
+/*  destroy_frame (0);
+  destroy_frame (1);
+  destroy_frame (2);
 
+*/
+  tfp_printf ("time for prepare_send_message %d ns", (t[1] - t[0]) * 50);
 
-printf("time for prepare_send_message %d ns",(t[1]-t[0])*50);  
-  
-   tfp_printf ("number of frames for message = %d\n\r", send_count);
+  tfp_printf ("number of frames for message = %d\n\r", send_count);
   tfp_printf ("           actual redundancy = %d%%\n\r", r);
 
   for (i = 0; i < send_count; ++i)
@@ -316,10 +317,10 @@ printf("time for prepare_send_message %d ns",(t[1]-t[0])*50);
 
 // void nrf_send_frames (uint8_t  ** frame, int frames)
 
-  printf ("-> %x \n\r", tx_frame);
-  printf ("-> %x \n\r", tx_frame + 1);
-  printf ("-> %c %c %c \n\r", tx_frame[0], tx_frame[1], tx_frame[2]);
-  printf ("xxxxxxxxxxxxx\n\r");
+  tfp_printf ("-> %x \n\r", tx_frame);
+  tfp_printf ("-> %x \n\r", tx_frame + 1);
+  tfp_printf ("-> %c %c %c \n\r", tx_frame[0], tx_frame[1], tx_frame[2]);
+  tfp_printf ("xxxxxxxxxxxxx\n\r");
   delay_ms (1);
 
   nrf_send_frames (tx_frame, send_count);
@@ -357,6 +358,6 @@ test (void)
   while (1)
     {
       sendblock ();
-  //    delay_ms (1);
+      delay_ms (1000);
     }
 }

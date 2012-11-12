@@ -50,22 +50,26 @@ tfec3_u32 *fragdatas[FRAME_BUFF_SIZE];
 #define MID_COMPLEATE   2
 #define MID_ADDED	3
 
+#define MID_PROCESSEDVAL	-1
+#define MID_COMPLEATEVAL	-2
+#define MID_PROCESSED_SIZE	5
+
+
+struct mid_processeds mid_processed[MID_PROCESSED_SIZE];
+int mid_processed_wp;
 
 
 int
 analyse_frame (void)
 {
-#define MID_PROCESSED_SIZE	5
-#define MID_PROCESSEDVAL	-1
-
-  static struct mid_processeds mid_processed[MID_PROCESSED_SIZE];
-  static int mid_processed_wp;
 
   int result = NEW_MESSAGE;
+  int i;
+
+    
 
   // mid_processed[i].cnt == -1 -> mid processed
 
-  int i;
   for (i = 0; i < MID_PROCESSED_SIZE; i++)
     {
       if (mid_processed[i].mid == new_frame.mid)
@@ -81,7 +85,7 @@ analyse_frame (void)
 	  if (mid_processed[i].cnt == NUM_DATA_FRAGS (&new_frame))
 	    {
 	      result = MID_COMPLEATE;
-	      mid_processed[i].cnt = MID_PROCESSEDVAL;
+	      mid_processed[i].cnt = MID_COMPLEATEVAL;	    
 	    }
 	}
     }
@@ -93,7 +97,7 @@ analyse_frame (void)
       mid_processed_wp++;
       mid_processed_wp %= MID_PROCESSED_SIZE;
     }
-
+  
   return (result);
 }
 
@@ -121,7 +125,7 @@ add_to_framechache (void)
 
 
 int
-process_framechache (void)
+process_framechache (uint32_t mid)
 {
   unsigned char tx_valid[FRAME_BUFF_SIZE];
   struct frame spare_frame[3];
@@ -135,10 +139,9 @@ process_framechache (void)
   memset (tx_valid, 0, sizeof (tx_valid));
   memset (fragdatas, 0, nr_data_frames + 3);
 
-
   for (i = 0; i < FRAMECACHESIZE; i++)
     {
-      if (framecache[i].frame.mid == new_frame.mid)
+      if (framecache[i].frame.mid == mid)
 	{
 	  tx_valid[FRAGMENT_INDEX (&framecache[i].frame)] = 1;
 	  fragdatas[FRAGMENT_INDEX
@@ -166,28 +169,78 @@ process_framechache (void)
 }
 
 
-int
-rxmsg_process_frame (uint8_t * inData, uint8_t * outData)
+void
+rxmsg_process_frame (uint8_t * inData)
 {
-  int i;
   int ret;
-  int nr_data_frames;
+
   memcpy (&new_frame, inData, 32);
 
   ret = analyse_frame ();
   if (ret == MID_PROCESSED)
-    return (0);
+    return;
 
   add_to_framechache ();
 
   if (ret != MID_COMPLEATE)
+    return;
+
+}
+
+
+int
+get_mid_prcessedindex (mid)
+{
+  int i;
+
+  for (i = 0; i < MID_PROCESSED_SIZE; i++)
+    {
+      if (mid_processed[i].mid == mid)
+	{
+	  return (i);
+	}
+    }
+  return (-1);
+}
+
+int
+get_mid_compleate (uint32_t * mid)
+{
+  int i;
+  
+  for (i = 0; i < MID_PROCESSED_SIZE; i++)
+    {
+      if (mid_processed[i].cnt == MID_COMPLEATEVAL)
+	{
+	  *mid = mid_processed[i].mid;
+	  return (0);
+	}
+    }
+  return (-1);
+}
+
+rxmsg_get_frame (uint8_t * outData)
+{
+  uint32_t mid;
+  int i;
+  int nr_data_frames;
+  int ret;
+
+
+  ret = get_mid_compleate (&mid);
+
+  if (ret == 0)
+    {
+      nr_data_frames = process_framechache (mid);
+
+      mid_processed[get_mid_prcessedindex (mid)].cnt = MID_PROCESSEDVAL;
+
+      for (i = 0; i < nr_data_frames; i++)
+	memcpy (outData + (i * BYTES_PER_FRAGMENT), fragdatas[i],
+		BYTES_PER_FRAGMENT);
+
+      return (nr_data_frames * BYTES_PER_FRAGMENT);
+    }
+  else
     return (0);
-
-  nr_data_frames = process_framechache ();
-
-  for (i = 0; i < nr_data_frames; i++)
-    memcpy (outData + (i * BYTES_PER_FRAGMENT), fragdatas[i],
-	    BYTES_PER_FRAGMENT);
-
-  return (nr_data_frames * BYTES_PER_FRAGMENT);
 }
