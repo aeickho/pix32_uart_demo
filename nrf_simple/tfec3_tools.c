@@ -245,7 +245,7 @@ printf("\r\nframes %d\n\r", frames);
 printf("...");
       nrf_send_frame ((uint8_t *) (frame + i), 0);
  if (i % 5 == 4)
-	{
+ 	{
 	  delay_ms (5);
 	}
     }
@@ -286,6 +286,10 @@ t[0] = ReadCoreTimer ();
   r = prepare_send_message (n, msg, r);
 t[1] = ReadCoreTimer ();
 
+//destroy_frame (0);
+//destroy_frame (1);
+
+
 printf("time for prepare_send_message %d ns",(t[1]-t[0])*50);  
   
    tfp_printf ("number of frames for message = %d\n\r", send_count);
@@ -316,7 +320,7 @@ printf("time for prepare_send_message %d ns",(t[1]-t[0])*50);
   printf ("-> %x \n\r", tx_frame + 1);
   printf ("-> %c %c %c \n\r", tx_frame[0], tx_frame[1], tx_frame[2]);
   printf ("xxxxxxxxxxxxx\n\r");
-  delay_ms (100);
+  delay_ms (1);
 
   nrf_send_frames (tx_frame, send_count);
 
@@ -353,6 +357,6 @@ test (void)
   while (1)
     {
       sendblock ();
-      delay_ms (11);
+  //    delay_ms (1);
     }
 }
