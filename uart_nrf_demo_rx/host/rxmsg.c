@@ -1,11 +1,6 @@
 #include "rxmsg.h"
 
 
-#define NEW_MESSAGE     0
-#define MID_PROCESSED   1
-#define MID_COMPLEATE   2
-#define MID_ADDED	3
-
 
 //Prework for tfec3d
 #define WORDS_PER_FRAGMENT   6
@@ -52,6 +47,13 @@ struct sframe framecache[FRAMECACHESIZE];
 tfec3_u32 *fragdatas[FRAME_BUFF_SIZE];
 
 
+#define NEW_MESSAGE     0
+#define MID_PROCESSED   1
+#define MID_COMPLEATE   2
+#define MID_ADDED	3
+
+
+
 int
 analyse_frame (void)
 {
@@ -94,9 +96,7 @@ analyse_frame (void)
       mid_processed_wp %= MID_PROCESSED_SIZE;
     }
 
-
   return (result);
-
 }
 
 void
@@ -129,7 +129,7 @@ process_framechache (void)
   struct frame spare_frame[3];
 
   int tx_valid_max = 0;
-  char nr_data_frames;
+  char nr_data_frames = FRAME_BUFF_SIZE;
   int ok_data_frames = 0;
 
   int i, ii;

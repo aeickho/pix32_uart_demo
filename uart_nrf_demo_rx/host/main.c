@@ -79,11 +79,10 @@ main (int argc, char **argv)
 
   unsigned char outData[BYTES_PER_FRAGMENT * MAX_DATA_FRAGMENTS];
 
-
+  int seq_nr;
   int step;
   FILE *rawfile;
 
-  unsigned int seq_nr;
   struct termios termOptions;
 
   tty = open (UART1, O_RDWR | O_NOCTTY);
@@ -107,9 +106,10 @@ main (int argc, char **argv)
   tcsetattr (tty, TCSANOW, &termOptions);
 
   step = STEP_INIT;
+printf("runnung\n");
   while (step > STEP_END)
     {
-      switch (step)
+   switch (step)
 	{
 	case STEP_INIT:
 	  step = STEP_WAIT;
@@ -117,10 +117,13 @@ main (int argc, char **argv)
 	case STEP_WAIT:
 	  read (tty, buf, 1);
 	  if (buf[0] == 0x01)
+	    {
 	    step = STEP_READ;
+	    }
 	  break;
 	case STEP_READ:
-	  read (tty, buf, 8);
+    
+  	  read (tty, buf, 8);
 	  from_base128n (buf, inData, 1);
 	  seq_nr = *(unsigned int *) inData;
 	  read (tty, buf, 40);
@@ -129,27 +132,29 @@ main (int argc, char **argv)
 	  r_crc16 = inData[31] << 8 | inData[30];
 	  c_crc16 = crc16 (inData, 30);
 
-	  for (int i = 0; i < 32; i++)
-	    printf ("%02x ", inData[i]);
+//	  printf("\n");
+//	  for (int i = 0; i < 32; i++)
+//	    printf ("%02x ", inData[i]);
+//         printf("\n");
 
 
 	  if (r_crc16 != c_crc16)
 	    printf ("falsche crc\n");
 	  if (r_crc16 == c_crc16)
 	    {
-
 	      int i, ii;
 	      int anz;
 	      int nr_data_frames;
 	      anz = rxmsg_process_frame (inData, outData);
+
 	      if (anz != 0)
 		{
 		  nr_data_frames = anz / BYTES_PER_FRAGMENT;
 		  printf ("\n");
 
-		  for (i = 0; i < anz; i++)
+		  for (i = 0; i < anz; i=i+24 )
 		    {
-		      printf ("[\n");
+		      printf ("[");
 		      for (ii = 0; ii < 24; ii++)
 			{
 			  unsigned char c;
@@ -166,9 +171,9 @@ main (int argc, char **argv)
 			  nr_data_frames);
 		}
 	    }
-	}
       step = STEP_WAIT;
-      break;
+
+	}
     }
 
 return (0);
