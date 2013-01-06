@@ -188,14 +188,41 @@ rxmsg_process_frame (uint8_t * inData)
 }
 
 
+
+
+//mid_processed
+//fragdatas[]
+
+
+uint32_t get_mid_mid_processed(int i)
+{
+uint32_t mid;
+
+mid=mid_processed[i].mid;
+
+return (mid);
+}
+
+int  get_mid_cnt_processed(int i)
+{
+int cnt;
+
+cnt=mid_processed[i].cnt;
+
+return (cnt);
+}
+
+
 int
-get_mid_prcessedindex (mid)
+get_mid_prcessedindex (uint32_t mid)
 {
   int i;
-
-  for (i = 0; i < MID_PROCESSED_SIZE; i++)
+  
+  uint32_t mid_temp;
+  
+   for (i = 0; i < MID_PROCESSED_SIZE; i++)
     {
-      if (mid_processed[i].mid == mid)
+      if (get_mid_mid_processed(i) == mid)
 	{
 	  return (i);
 	}
@@ -210,9 +237,9 @@ get_mid_compleate (uint32_t * mid)
   
   for (i = 0; i < MID_PROCESSED_SIZE; i++)
     {
-      if (mid_processed[i].cnt == MID_COMPLEATEVAL)
+      if (get_mid_cnt_processed(i) == MID_COMPLEATEVAL)
 	{
-	  *mid = mid_processed[i].mid;
+	  *mid = get_mid_mid_processed(i);
 	  return (0);
 	}
     }
@@ -232,7 +259,6 @@ rxmsg_get_frame (uint8_t * outData)
   if (ret == 0)
     {
       nr_data_frames = process_framechache (mid);
-
       mid_processed[get_mid_prcessedindex (mid)].cnt = MID_PROCESSEDVAL;
 
       for (i = 0; i < nr_data_frames; i++)
