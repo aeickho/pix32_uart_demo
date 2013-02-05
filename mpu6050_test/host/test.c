@@ -30,6 +30,20 @@ main (void)
   int fd, c, res;
   struct termios oldtio, newtio;
   char buf[255];
+  int init_cnt = 0;
+  int init = 0;
+  int gx_avg = 0;
+  int gx_avg_test = 0;
+  int gx_avg_test_cnt = 0;
+  double vx = 0, vy = 0, vz = 0;
+  double x = 0, y = 0, z = 0;
+
+  double agrav_x = 0, agrav_y = 0, agrav_z = 0;
+  double acorr_x = 0, acorr_y = 0, acorr_z = 0;
+
+  unsigned int t0a = 0, t1a = 0;
+  double gamma_x;		// winkel
+
   /* 
      Open modem device for reading and writing and not as controlling tty
      because we don't want to get killed if linenoise sends CTRL-C.
@@ -110,44 +124,153 @@ main (void)
   while (STOP == FALSE)
     {
       int i;			/* loop until we have a terminating condition */
-      int x, y, z;
+      int ax, ay, az;
+
+
+      int gx, gy, gz;
+      unsigned int t0, t1;
+
       double xa, ya;
-      /* read blocks program execution until a line terminating character is 
-         input, even if more than 255 chars are input. If the number
-         of characters read is smaller than the number of chars available,
-         subsequent reads will return the remaining chars. res will be set
-         to the actual number of characters actually read */
+
+
       res = read (fd, buf, 255);
       buf[res] = 0;		/* set end of string, so we can printf */
 //      printf (":%s:%d\n", buf, res);
 
-      i = sscanf (buf, "val %u %u %u", &x, &y, &z);
+
+      i =
+	sscanf (buf, "val %u %u %u %u %u %u %u %u", &t0, &t1, &ax, &ay, &az,
+		&gx, &gy, &gz);
+
+
+
+
+
 
 //      printf ("x: %5d\ty: %5d\tz: %5d\t", x, y, z);
 
 
-      if (i == 3)
+      if (i == 8)		// gültige Zeile 
 	{
-	  double accx, accy, accz, totalforce, tilt_x, tilt_y;
-	  int Neutralwert = 0;
+
+   printf ("t0: %u t1: %u   ax: %5d  ay: %5d az: %5d gx: %5d  gy: %5d gz: %5d \n",  t0, t1, ax, ay, az, gx, gy, gz);
+                 
+/*                  	
+	      accx = (float) ((ay - Neutralwert));
+	      accy = (float) ((ax - Neutralwert));
+	      accz = (float) ((az - Neutralwert));
 
 
-	  accx = (float) ((y - Neutralwert));
-	  accy = (float) ((x - Neutralwert));
-	  accz = (float) ((z - Neutralwert));
+	  if (init == 0)
+	    {
+	      init_cnt++;
+	      gx_avg += gx;
 
-	  totalforce = (float) (sqrt ((accx * accx)
-				      + (accy * accy) + (accz * accz)));
+	      agrav_x+=   accx;   
+              agrav_y+=   accy;   
+              agrav_z+=   accz;   
+
+              if (init_cnt == 1000)
+		{
+		  gx_avg /= init_cnt;
+		  init = 1;
+		  
+		  agrav_x /=init_cnt;
+		  agrav_y /=init_cnt;
+		  agrav_z /=init_cnt;
+		  
+		  
+		  
+	
+		}
+
+	    }
+	  else
+
+	    {
+
+	      t0 *= 50.;
+	      t1 *= 50.;
+
+	      double accx, accy, accz, totalforce, tilt_x, tilt_y;
+	      int Neutralwert = 0;
 
 
-	  accx /= totalforce;
-	  accy /= totalforce;
-	  accz /= totalforce;
+	      gx = gx - gx_avg;
 
-	  tilt_x = atan2 (accx, accz) * (180 / pi ());
-	  tilt_y = atan2 (accy, accz) * (180 / pi ());
+	      gx_avg_test += gx;
+	      gx_avg_test_cnt++;
 
-	  printf ("%5f %5f\n", tilt_x, tilt_y);
+	      if (gx_avg_test_cnt == 100)
+		{
+//                printf("%f \n", (double) gx_avg_test/ (double) gx_avg_test_cnt);
+		  gx_avg_test = 0;
+		  gx_avg_test_cnt = 0;
+		}
+
+//            printf            ("t0: %20u gx: %5d ", t0, gx);
+
+
+	      gamma_x =
+		gamma_x + (double) gx / 40000. /* * (double) (t0 - t0a) */ ;
+
+//            printf ("delta_t: %d ns, gamma X: %5.2f \n", t0 - t0a, gamma_x);
+
+
+
+
+	
+
+	      totalforce = (float) (sqrt ((accx * accx)
+					  + (accy * accy) + (accz * accz)));
+
+
+
+              acorr_x = 					  
+
+	      vx = vx + accx;
+	      vy = vy + accy;
+	      vz = vz + accz;
+
+	      x = x + vx;
+	      y = y + vy;
+	      z = z + vz;
+
+
+
+//	      printf
+//		("vx: %5.2f vy: %5.2f vz: %5.2f x: %5.2f y: %5.2f z: %5.2f accx: %5.2f accy: %5.2f accz: %5.2f\n",
+//		 vx, vy, vz, x, y, z, accx, accy, accz);
+
+
+	      accx /= totalforce;
+	      accy /= totalforce;
+	      accz /= totalforce;
+
+	      tilt_x = atan2 (accx, accz) * (180 / pi ());
+	      tilt_y = atan2 (accy, accz) * (180 / pi ());
+
+
+
+
+//            printf ("Tilt X: %5.2f Tilt Y: %5.2f\n", tilt_x, tilt_y);
+	      t0a = t0;
+	      t1a = t1;
+
+	    }
+/*
+
+         
+
+  	  for (i = -90; i < tilt_x/2 ;i++)
+	  printf ("x");
+	  printf ("");
+ 
+   for (i = 0; i < 200 ;i++)
+  
+ printf (" ");
+           printf ("\r");
+ */
 	}
 //      if (buf[0] == 'z')
 //      STOP = TRUE;

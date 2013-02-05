@@ -27,9 +27,10 @@ void Setup_MPU6050()
 	LDByteWriteI2C(MPU6050_ADDRESS, MPU6050_RA_SMPLRT_DIV, 0x01);
 	//Disable FSync, 48Hz DLPF
 	LDByteWriteI2C(MPU6050_ADDRESS, MPU6050_RA_CONFIG, 0x03);
-	//Disable gyro self tests, scale of 500 degrees/s
-	LDByteWriteI2C(MPU6050_ADDRESS, MPU6050_RA_GYRO_CONFIG, 0b00001000);
+	//Disable gyro self tests, scale of 250 degrees/s
+	LDByteWriteI2C(MPU6050_ADDRESS, MPU6050_RA_GYRO_CONFIG, 0b00000000);
 	//Disable accel self tests, scale of +-4g, no DHPF
+//	LDByteWriteI2C(MPU6050_ADDRESS, MPU6050_RA_ACCEL_CONFIG, 0b00001000);
 	LDByteWriteI2C(MPU6050_ADDRESS, MPU6050_RA_ACCEL_CONFIG, 0b00001000);
 	//Freefall threshold of <|0mg|
 	LDByteWriteI2C(MPU6050_ADDRESS, MPU6050_RA_FF_THR, 0x00);
@@ -304,6 +305,19 @@ void Get_Accel_Values()
 	ACCEL_YOUT = ((ACCEL_YOUT_H<<8)|ACCEL_YOUT_L);
 	ACCEL_ZOUT = ((ACCEL_ZOUT_H<<8)|ACCEL_ZOUT_L);
 }	
+
+ signed short GetTemp()
+{
+unsigned char th,tl;
+
+ LDByteReadI2C(MPU6050_ADDRESS,MPU6050_RA_TEMP_OUT_H,&th,1);
+ LDByteReadI2C(MPU6050_ADDRESS,MPU6050_RA_TEMP_OUT_L,&tl,1);
+ return ((th<<8)|tl); 
+ 
+}
+
+    //MPMPU6050_RA_TEMP_OUT_H U6050_RA_TEMP_OUT_H 		//Read-only
+    //MPU6050_RA_TEMP_OUT_L 		//Read-only
 
 
 //Converts the already acquired accelerometer data into 3D euler angles

@@ -10,12 +10,31 @@ typedef Eigen::Vector3d vector3d;
 using std::sin;
 using std::cos;
 
+template<class T>
+class simple_lowpass
+{
+public:
+	explicit simple_lowpass(T initv, double initw=0)
+		: v(initv), w(initw)
+	{}
+	T operator()(T x)
+	{
+		v = 0.95*v+x;
+		w = 0.95*w+1;
+		return v*(1/w);
+	}
+private:
+	T v;
+	double w;
+};
+
 /// stores absolute orientation, speed and location
 struct state
 {
 	matrix3d orientation;
 	vector3d speed;
 	vector3d location;
+	simple_lowpass<vector3d> rot_acc_lpf;
 
 	state();
 };
@@ -24,6 +43,7 @@ state::state()
 : orientation(matrix3d::Identity())
 , speed(0,0,0)
 , location(0,0,0)
+, rot_acc_lpf(vector3d(0,0,0))
 {}
 
 /// computes matrix L so that L*x = cross(lhs,x)
@@ -72,7 +92,9 @@ void update(state & s, double timestep, vector3d const& rotspeed, vector3d const
 	double thalf = 0.5*timestep;
 	matrix3d const rhalf = rotation_vec_to_matrix(rotspeed*thalf);
 	matrix3d const ohalf = s.orientation * rhalf;
-	vector3d const shinc = thalf * ohalf * acc;
+	vector3d const racc  = ohalf * acc;
+	vector3d const racchp = racc - s.rot_acc_lpf(racc);
+	vector3d const shinc = thalf * racchp;
 	vector3d const shalf = s.speed + shinc;
 	s.location.noalias() += shalf * timestep;
 	s.speed.noalias() = shalf + shinc;
@@ -209,19 +231,21 @@ void live()
 			ro.gx +=  90; cms_gx.feed(ro.gx); ro.gx -= cms_gx.average();
 			ro.gy += -30; cms_gy.feed(ro.gy); ro.gy -= cms_gy.average();
 			ro.gz += 200; cms_gz.feed(ro.gz); ro.gz -= cms_gz.average();
-			vector3d const axyz = vector3d(0,0,0)*acc_multiplier;
+			vector3d const axyz = vector3d(ro.ax,ro.ay,ro.az)*acc_multiplier;
 			vector3d const gxyz = vector3d(ro.gx,ro.gy,ro.gz)*gyr_multiplier;
 			update(s,timestep,gxyz,axyz);
 			if (ctr==0) {
 				fix_orientation_rounding_errors(s.orientation);
 				matrix3d const& o = s.orientation;
+				/// estimate of deviation between identity matrix and rotation matrix in degrees
 				double abs_degrees = sqrt(sqr(o(0,1))+sqr(o(0,2))+sqr(o(1,2)))*180/pi;
-				cout << ro.t0 << ", " << ro.t1 << ", " << ", "
-				     << ro.ax << ", " << ro.ay << ", " << ro.az << ", "
-				     << ro.gx << ", " << ro.gy << ", " << ro.gz << "\n"
-				     << s.orientation << "\n"
-				     << time << " -- " << abs_degrees << "\n"
-				     << "ori-avgs: " << cms_gx.average() << ", " << cms_gy.average() << ", " << cms_gz.average() << endl;
+				cout << "\ntime=" << time << ", dev=" << abs_degrees << "\n";
+				cout << "    raw acceleration=\n" <<   vector3d(ro.ax,ro.ay,ro.az) << "\n";
+				cout << "rotated acceleration=\n" << o*vector3d(ro.ax,ro.ay,ro.az) << "\n";
+				cout << o << "\n";
+				cout << "speed =\n" << s.speed << "\n";
+				cout << "locat =\n" << s.location << "\n";
+				cout.flush();
 			}
 			ctr = (ctr+1) & 0xF;
 		}

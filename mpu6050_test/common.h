@@ -7,9 +7,9 @@
 	extern float GYRO_XRATE;
 	extern float GYRO_YRATE;
 	extern float GYRO_ZRATE;
-	extern int GYRO_XRATERAW;
-	extern int GYRO_YRATERAW;
-	extern int GYRO_ZRATERAW;
+	extern signed short GYRO_XRATERAW;
+	extern signed short GYRO_YRATERAW;
+	extern signed short GYRO_ZRATERAW;
 	
 	extern unsigned char GYRO_XOUT_L;
 	extern unsigned char GYRO_XOUT_H;

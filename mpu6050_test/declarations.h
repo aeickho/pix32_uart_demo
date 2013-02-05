@@ -4,9 +4,9 @@ signed short  ACCEL_ZOUT = 0;
 float GYRO_XRATE = 0;
 float GYRO_YRATE = 0;
 float GYRO_ZRATE = 0;
-int GYRO_XRATERAW = 0;
-int GYRO_YRATERAW = 0;
-int GYRO_ZRATERAW = 0;
+signed short  GYRO_XRATERAW = 0;
+signed short GYRO_YRATERAW = 0;
+signed short  GYRO_ZRATERAW = 0;
 
 unsigned char GYRO_XOUT_L = ' ';
 unsigned char GYRO_XOUT_H = ' ';
