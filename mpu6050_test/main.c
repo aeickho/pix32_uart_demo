@@ -24,18 +24,14 @@ int
 main (void)
 {
   unsigned char Data = 0x00;
-//  uint8_t inData;
-//  int i = 0;
-//  uint32_t actualClock;
 
  uint32_t ctime[10];
  
   portsetup ();
 
 
-  /* Configure PB frequency and wait states */
   SYSTEMConfigPerformance (SystemClock ());
-//  UART1Init (SystemClock ());
+
   UART2Init (SystemClock ());
 
   INTConfigureSystem (INT_SYSTEM_CONFIG_MULT_VECTOR);
@@ -81,26 +77,15 @@ main (void)
 
   while (1)
     {
-//      int t,i;
       uint8_t data[20];
       int8_t *sdat=(int8_t *)data;
       
       ctime[0]=ReadCoreTimer ();
-//      Get_Accel_Values ();
- //     Get_Gyro_Raw_Rates();
-//      t=GetTemp();
-      
- //     tfp_printf ("val %u %u %d %d %d %d %d %d %d\n\r", ctime[0], ctime[1], ACCEL_XOUT, ACCEL_YOUT, ACCEL_ZOUT,GYRO_XRATERAW,GYRO_YRATERAW, GYRO_ZRATERAW, t);
-// LDByteReadI2C(unsigned char ControlByte, unsigned char Address, unsigned char *Data, unsigned char Length);
+
    LDByteReadI2C(MPU6050_ADDRESS, MPU6050_RA_ACCEL_XOUT_H, data, 14);
       ctime[1]=ReadCoreTimer ();
  
-   //(GYRO_XOUT_H<<8)|GYRO_XOUT_L
    tfp_printf ("val %u %u %d %d %d %d %d %d %d\n\r", ctime[0], ctime[1], (sdat[0]<<8)|data[1], (sdat[2]<<8)|data[3],(sdat[4]<<8)|data[5],
                                      (sdat[8]<<8)|data[9],(sdat[10]<<8)|data[11],(sdat[12]<<8)|data[13],(sdat[6]<<8)|data[7]);
-// 
-    
-      
-//      delay_ms (100);
     }
 }
