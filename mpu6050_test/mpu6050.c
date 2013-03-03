@@ -20,18 +20,45 @@
 #define a 0.01
 
 
+// 4.4 Register 27 – Gyroscope Configuration
+// GYRO_CONFIG
+// Type: Read/Write
+// Register (Hex) Register (Decimal) Bit7   Bit6  Bit5  Bit4        Bit3 Bit2 Bit1 Bit0
+// 1B             27                 XG_ST  YG_ST ZG_ST FS_SEL[1    :0]  -    -    -
 
-void Setup_MPU6050()
+// FS_SEL
+// Full Scale Range
+// 0  ± 250 °/s
+// 1  ± 500 °/s
+// 2  ± 1000 °/s
+// 3  ± 2000 °/s
+
+
+// 4.5 Register 28 – Accelerometer Configuration
+// ACCEL_CONFIG
+// Type: Read/Write
+// Register (Hex)  Register (Decimal) Bit7  Bit6  Bit5  Bit4       Bit3 Bit2 Bit1 Bit0
+// 1C              28                 XA_ST YA_ST ZA_ST AFS_SEL[1  :0]  -    -    -
+
+// AFS_SEL
+// Full Scale Range
+// 0 ± 2g
+// 1 ± 4g
+// 2 ± 8g
+// 3 ± 16g
+
+void Setup_MPU6050(void)
 {
 	//Sets sample rate to 1000/1+1 = 500Hz
 	LDByteWriteI2C(MPU6050_ADDRESS, MPU6050_RA_SMPLRT_DIV, 0x01);
 	//Disable FSync, 48Hz DLPF
 	LDByteWriteI2C(MPU6050_ADDRESS, MPU6050_RA_CONFIG, 0x03);
-	//Disable gyro self tests, scale of 250 degrees/s
-	LDByteWriteI2C(MPU6050_ADDRESS, MPU6050_RA_GYRO_CONFIG, 0b00000000);
-	//Disable accel self tests, scale of +-4g, no DHPF
-//	LDByteWriteI2C(MPU6050_ADDRESS, MPU6050_RA_ACCEL_CONFIG, 0b00001000);
-	LDByteWriteI2C(MPU6050_ADDRESS, MPU6050_RA_ACCEL_CONFIG, 0b00001000);
+	//Disable gyro self tests, scale of XXX degrees/s
+	LDByteWriteI2C(MPU6050_ADDRESS, MPU6050_RA_GYRO_CONFIG, 0b00010000);
+	//Disable accel self tests, scale of XXXX, no DHPF
+	LDByteWriteI2C(MPU6050_ADDRESS, MPU6050_RA_ACCEL_CONFIG, 0b0010000);
+
+
 	//Freefall threshold of <|0mg|
 	LDByteWriteI2C(MPU6050_ADDRESS, MPU6050_RA_FF_THR, 0x00);
 	//Freefall duration limit of 0

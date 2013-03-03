@@ -24,8 +24,8 @@ int
 main (void)
 {
   unsigned char Data = 0x00;
-  uint8_t inData;
-  int i = 0;
+//  uint8_t inData;
+//  int i = 0;
 //  uint32_t actualClock;
 
  uint32_t ctime[10];
@@ -81,7 +81,7 @@ main (void)
 
   while (1)
     {
-      int t,i;
+//      int t,i;
       uint8_t data[20];
       int8_t *sdat=(int8_t *)data;
       

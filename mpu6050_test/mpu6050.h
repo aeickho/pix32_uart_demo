@@ -135,3 +135,5 @@ THE SOFTWARE.
 #define MPU6050_RA_FIFO_R_W 0x74
 #define MPU6050_RA_WHO_AM_I 0x75
 
+void Setup_MPU6050(void);
+
