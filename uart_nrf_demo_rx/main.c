@@ -211,11 +211,10 @@ main (void)
 		    }
 		}
 	      if (storeflag == 0)
-		UART2PutStr ("nicht genügend speicher  \r\n");
+		UART2PutStr ("nsp\r\n");
 	    }
 
 	  UART1SendChar (0x0c);
-	  UART1PutStr ("Data:\r\n");
 	  for (i = 0; i < MAX_RX_DATA; i++)
 	    {
 	      int ii;
@@ -228,7 +227,7 @@ main (void)
 	      ultoa (cbuf, (int) rx_data_buffer[i].serialnumber, 10);
 	      UART1PutStr (cbuf);
 	      UART1PutStr (" ");
-	      ultoa (cbuf, (int) rx_data_buffer[i].typer, 10);
+	      ultoa (cbuf, (int) rx_data_buffer[i].type, 10);
 	      UART1PutStr (cbuf);
 	      UART1PutStr (" ");
 	      ultoa (cbuf, (int) rx_data_buffer[i].sensorid, 10);
