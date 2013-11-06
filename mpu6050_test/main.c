@@ -17,7 +17,7 @@
 #include "mpu6050.h"
 #include "common.h"
 
- signed short GetTemp();
+signed short GetTemp ();
 
 
 int
@@ -25,9 +25,12 @@ main (void)
 {
   unsigned char Data = 0x00;
 
- uint32_t ctime[10];
- 
+  uint32_t ctime[10];
+
   portsetup ();
+
+      uint8_t data[20];
+      int8_t *sdat = (int8_t *) data;
 
 
   SYSTEMConfigPerformance (SystemClock ());
@@ -73,19 +76,49 @@ main (void)
       tfp_printf ("\nI2C Read Test Passed, MPU6050 Address: 0x%x", Data);
     }
 
+  tfp_printf ("read \r\n");
+  LDByteReadI2C (MPU6050_ADDRESS, MPU6050_RA_ACCEL_XOUT_H, data, 14);
+  tfp_printf ("val %u %u %d %d %d %d %d %d %d\n\r", ctime[0], ctime[1],
+	      (sdat[0] << 8) | data[1], (sdat[2] << 8) | data[3],
+	      (sdat[4] << 8) | data[5], (sdat[8] << 8) | data[9],
+	      (sdat[10] << 8) | data[11], (sdat[12] << 8) | data[13],
+	      (sdat[6] << 8) | data[7]);
+
+  LDByteReadI2C (MPU6050_ADDRESS,MPU6050_RA_FIFO_COUNTH, data, 2);
+  tfp_printf ("MPU6050_RA_FIFO_COUNT %u \r\n",(sdat[0] << 8) | data[1]);
 
 
+  // config fifo
+    
+  LDByteWriteI2C (MPU6050_ADDRESS, MPU6050_RA_FIFO_EN,
+		 MPU6050_MASK_FIFO_EN_TEMP | MPU6050_MASK_FIFO_EN_XG |
+		 MPU6050_MASK_FIFO_EN_YG | MPU6050_MASK_FIFO_EN_ZG |
+		 MPU6050_MASK_FIFO_EN_ACCEL);
+
+
+
+  // enable fifo mode
+  LDByteWriteI2C (MPU6050_ADDRESS,MPU6050_RA_USER_CTRL,MPU6050_MASK_USER_CTRL_FIFO_EN);
+  // 
+while ( 1 )
+  {
+  LDByteReadI2C (MPU6050_ADDRESS,MPU6050_RA_FIFO_COUNTH, data, 2);
+  tfp_printf ("MPU6050_RA_FIFO_COUNT %u \r\n",(sdat[0] << 8) | data[1]);
+  }
+  
+  
   while (1)
     {
-      uint8_t data[20];
-      int8_t *sdat=(int8_t *)data;
-      
-      ctime[0]=ReadCoreTimer ();
 
-   LDByteReadI2C(MPU6050_ADDRESS, MPU6050_RA_ACCEL_XOUT_H, data, 14);
-      ctime[1]=ReadCoreTimer ();
- 
-   tfp_printf ("val %u %u %d %d %d %d %d %d %d\n\r", ctime[0], ctime[1], (sdat[0]<<8)|data[1], (sdat[2]<<8)|data[3],(sdat[4]<<8)|data[5],
-                                     (sdat[8]<<8)|data[9],(sdat[10]<<8)|data[11],(sdat[12]<<8)|data[13],(sdat[6]<<8)|data[7]);
+      ctime[0] = ReadCoreTimer ();
+
+      LDByteReadI2C (MPU6050_ADDRESS, MPU6050_RA_ACCEL_XOUT_H, data, 14);
+      ctime[1] = ReadCoreTimer ();
+
+      tfp_printf ("val %u %u %d %d %d %d %d %d %d\n\r", ctime[0], ctime[1],
+		  (sdat[0] << 8) | data[1], (sdat[2] << 8) | data[3],
+		  (sdat[4] << 8) | data[5], (sdat[8] << 8) | data[9],
+		  (sdat[10] << 8) | data[11], (sdat[12] << 8) | data[13],
+		  (sdat[6] << 8) | data[7]);
     }
 }
