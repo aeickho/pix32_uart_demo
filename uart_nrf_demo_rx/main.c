@@ -36,6 +36,22 @@
 #define MAXPACKET   32
 
 
+struct rx_data
+{
+  uint32_t rx_timestamp;
+  uint8_t serialnumber;
+  uint8_t type;
+  uint8_t restart_cnt;
+  uint32_t packet_cnt;
+  uint8_t sensorid;
+  uint8_t ageing;
+  uint8_t strength;
+  uint8_t data[14];
+
+};
+
+#define MAX_RX_DATA 20
+
 int
 main (void)
 {
@@ -44,10 +60,11 @@ main (void)
   uint8_t outBuf[128];
   uint32_t ret;
   uint32_t seq_nr = 0;
-  uint8_t diskbuf[512];
+  struct rx_data rx_data_buffer[MAX_RX_DATA];
+//  uint8_t diskbuf[512];
 
 
-  unsigned int i;
+  uint32_t i;
 
   /* Configure PB frequency and wait states */
   SYSTEMConfigPerformance (SystemClock ());
@@ -68,7 +85,10 @@ main (void)
   nrf_init ();
   UART2PutStr ("done\n\r");
 
+  memset (rx_data_buffer, 0, sizeof (rx_data_buffer));
 
+
+/*
   UART2PutStr ("spi_sd_init,");
   SPI1_init ();
   UART2PutStr ("done\n\r");
@@ -102,6 +122,8 @@ main (void)
   UART2PutHex (i);
   UART2PutStr ("\n\r");
 
+*/
+
   UART2PutStr ("nrf_config_set(),");
   config.nrmacs = 1;
   config.maclen[0] = 32;
@@ -120,37 +142,135 @@ main (void)
 	{
 	  char cbuf[100];
 	  uint32_t tmpspace[10];
-
+	  uint32_t packet_cnt;
+	  uint8_t storeflag = 0;
 	  *tmpspace = (int) seq_nr;
 
-	  UART1SendChar (0x01);
+/*	  UART1SendChar (0x01);
 	  to_base128 ((uint8_t *) tmpspace, outBuf);
 	  UART1Send (outBuf, 8);
-
 	  to_base128n (buf, outBuf, 5);
 	  UART1Send (outBuf, 40);
-
-          ultoa (cbuf, (int) seq_nr, 10);
-	  UART2PutStr  (cbuf );
+*/
+	  ultoa (cbuf, (int) seq_nr, 10);
+	  UART2PutStr (cbuf);
 	  UART2PutStr (" : ");
 
-	  
-         for (i = 0; i < 32; i++)
-          {
-          ultoa (cbuf,   buf[i], 16);
-          UART2PutStr  (cbuf);
-	  UART2PutStr (" ");
-	  }
-	  
+	  for (i = 0; i < 32; i++)
+	    {
+	      ultoa (cbuf, buf[i], 16);
+	      UART2PutStr (cbuf);
+	      UART2PutStr (" ");
+	    }
 	  UART2PutStr ("\r\n");
-
-
-
 	  seq_nr++;
 
+	  packet_cnt = buf[3] << 24 | buf[4] << 16 | buf[5] << 8 | buf[6];
+	  UART2PutStr ("packet_cnt: ");
+	  ultoa (cbuf, (int) packet_cnt, 10);
+	  UART2PutStr (cbuf);
+	  UART2PutStr ("\r\n");
+
+	  for (i = 0; i < MAX_RX_DATA; i++)
+	    {
+	      if (rx_data_buffer[i].serialnumber == buf[0])
+		if (rx_data_buffer[i].type == buf[1])
+		  if (rx_data_buffer[i].sensorid == buf[7])
+		    if (rx_data_buffer[i].ageing >= buf[8])
+		      if (rx_data_buffer[i].packet_cnt < packet_cnt
+			  || rx_data_buffer[i].restart_cnt < buf[2]
+			  || rx_data_buffer[i].strength > buf[9])
+			{
+			  rx_data_buffer[i].ageing = buf[8];
+			  rx_data_buffer[i].packet_cnt = packet_cnt;
+			  rx_data_buffer[i].restart_cnt = buf[2];
+			  rx_data_buffer[i].strength = buf[9];
+			  memcpy (&rx_data_buffer[i].data, &buf[16], 16 - 2);
+			  storeflag = i;
+			}
+	    }
+	  if (storeflag == 0)
+	    {
+	      for (i = 0; i < MAX_RX_DATA; i++)
+		{
+		  if (rx_data_buffer[i].serialnumber == 0)
+		    {
+		      rx_data_buffer[i].serialnumber = buf[0];
+		      rx_data_buffer[i].type = buf[1];
+		      rx_data_buffer[i].sensorid = buf[7];
+		      rx_data_buffer[i].ageing = buf[8];
+		      rx_data_buffer[i].packet_cnt = packet_cnt;
+		      rx_data_buffer[i].restart_cnt = buf[2];
+		      rx_data_buffer[i].strength = buf[9];
+		      rx_data_buffer[i].ageing = buf[8];
+		      rx_data_buffer[i].packet_cnt = packet_cnt;
+		      rx_data_buffer[i].restart_cnt = buf[2];
+		      rx_data_buffer[i].strength = buf[9];
+		      memcpy (&rx_data_buffer[i].data, &buf[16], 16 - 2);
+		      storeflag = i;
+		    }
+		}
+	      if (storeflag == 0)
+		UART2PutStr ("nicht genügend speicher  \r\n");
+	    }
+
+	  UART1SendChar (0x0c);
+	  UART1PutStr ("Data:\r\n");
+	  for (i = 0; i < MAX_RX_DATA; i++)
+	    {
+	      int ii;
+	      if (storeflag == i)
+		UART1PutStr ("*");
+	      else
+		UART1PutStr (" ");
+
+
+	      ultoa (cbuf, (int) rx_data_buffer[i].serialnumber, 10);
+	      UART1PutStr (cbuf);
+	      UART1PutStr (" ");
+	      ultoa (cbuf, (int) rx_data_buffer[i].typer, 10);
+	      UART1PutStr (cbuf);
+	      UART1PutStr (" ");
+	      ultoa (cbuf, (int) rx_data_buffer[i].sensorid, 10);
+	      UART1PutStr (cbuf);
+	      UART1PutStr (" ");
+	      ultoa (cbuf, (int) rx_data_buffer[i].ageing, 10);
+	      UART1PutStr (cbuf);
+	      UART1PutStr (" ");
+	      ultoa (cbuf, (int) rx_data_buffer[i].packet_cnt, 10);
+	      UART1PutStr (cbuf);
+	      UART1PutStr (" ");
+	      ultoa (cbuf, (int) rx_data_buffer[i].restart_cnt, 10);
+	      UART1PutStr (cbuf);
+	      UART1PutStr (" ");
+	      ultoa (cbuf, (int) rx_data_buffer[i].strength, 10);
+	      UART1PutStr (cbuf);
+	      UART1PutStr (" ");
+	      ultoa (cbuf, (int) rx_data_buffer[i].ageing, 10);
+	      UART1PutStr (cbuf);
+	      UART1PutStr (" ");
+	      ultoa (cbuf, (int) rx_data_buffer[i].packet_cnt, 10);
+	      UART1PutStr (cbuf);
+	      UART1PutStr (" ");
+	      ultoa (cbuf, (int) rx_data_buffer[i].restart_cnt, 10);
+	      UART1PutStr (cbuf);
+	      UART1PutStr (" ");
+	      ultoa (cbuf, (int) rx_data_buffer[i].strength, 10);
+	      UART1PutStr (cbuf);
+	      UART1PutStr (" ");
+	      for (ii = 0; ii < 16 - 2; ii++)
+		{
+		  ultoa (cbuf, (int) rx_data_buffer[i].data[ii], 10);
+		  UART1PutStr (cbuf);
+		  UART1PutStr (":");
+		}
+	      UART1PutStr ("\r\n");
+	    }
 	}
+
+
+
     }
   while (1);
-
   return 0;
 }
