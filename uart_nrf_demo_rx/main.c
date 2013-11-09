@@ -143,7 +143,7 @@ main (void)
 	  char cbuf[100];
 	  uint32_t tmpspace[10];
 	  uint32_t packet_cnt;
-	  uint8_t storeflag = 0;
+	  int8_t storeflag = -1;
 	  *tmpspace = (int) seq_nr;
 
 /*	  UART1SendChar (0x01);
@@ -173,28 +173,60 @@ main (void)
 
 	  for (i = 0; i < MAX_RX_DATA; i++)
 	    {
+	      ultoa (cbuf, (int) i, 10);
+	      UART2PutStr ("i: ");
+
+	      UART2PutStr (cbuf);
+	      UART2PutStr ("\r\n");
 	      if (rx_data_buffer[i].serialnumber == buf[0])
-		if (rx_data_buffer[i].type == buf[1])
-		  if (rx_data_buffer[i].sensorid == buf[7])
-		    if (rx_data_buffer[i].ageing >= buf[8])
-		      if (rx_data_buffer[i].packet_cnt < packet_cnt
-			  || rx_data_buffer[i].restart_cnt < buf[2]
-			  || rx_data_buffer[i].strength > buf[9])
+		{
+		  UART2PutStr ("A\r\n");
+
+		  if (rx_data_buffer[i].type == buf[1])
+		    {
+		      UART2PutStr ("B\r\n");
+		      if (rx_data_buffer[i].sensorid == buf[7])
 			{
-			  rx_data_buffer[i].ageing = buf[8];
-			  rx_data_buffer[i].packet_cnt = packet_cnt;
-			  rx_data_buffer[i].restart_cnt = buf[2];
-			  rx_data_buffer[i].strength = buf[9];
-			  memcpy (&rx_data_buffer[i].data, &buf[16], 16 - 2);
-			  storeflag = i;
+			  UART2PutStr ("C\r\n");
+
+			  if (rx_data_buffer[i].ageing >= buf[8])
+			    {
+			      UART2PutStr ("D\r\n");
+			      if (rx_data_buffer[i].packet_cnt < packet_cnt
+				  || rx_data_buffer[i].restart_cnt < buf[2]
+				  || rx_data_buffer[i].strength > buf[9])
+				{
+				  UART2PutStr ("E\r\n");
+				  rx_data_buffer[i].ageing = buf[8];
+				  rx_data_buffer[i].packet_cnt = packet_cnt;
+				  rx_data_buffer[i].restart_cnt = buf[2];
+				  rx_data_buffer[i].strength = buf[9];
+				  memcpy (&rx_data_buffer[i].data, &buf[16],
+					  16 - 2);
+				  storeflag = i;
+				  break;
+				}
+			    }
 			}
+		    }
+		}
 	    }
-	  if (storeflag == 0)
+	  if (storeflag == -1 )
 	    {
+	      UART2PutStr ("F\r\n");
+
 	      for (i = 0; i < MAX_RX_DATA; i++)
 		{
+		  ultoa (cbuf, (int) i, 10);
+		  UART2PutStr ("i: ");
+
+		  UART2PutStr (cbuf);
+		  UART2PutStr ("\r\n");
+
 		  if (rx_data_buffer[i].serialnumber == 0)
 		    {
+		       UART2PutStr ("G\r\n");
+		       
 		      rx_data_buffer[i].serialnumber = buf[0];
 		      rx_data_buffer[i].type = buf[1];
 		      rx_data_buffer[i].sensorid = buf[7];
@@ -208,10 +240,11 @@ main (void)
 		      rx_data_buffer[i].strength = buf[9];
 		      memcpy (&rx_data_buffer[i].data, &buf[16], 16 - 2);
 		      storeflag = i;
+		      break;
 		    }
 		}
-	      if (storeflag == 0)
-		UART2PutStr ("nsp\r\n");
+	      if (storeflag == -1)
+		UART2PutStr ("Kein Speicher mehr frei\r\n");
 	    }
 
 	  UART1SendChar (0x0c);
@@ -265,6 +298,8 @@ main (void)
 		}
 	      UART1PutStr ("\r\n");
 	    }
+//          if (storeflag == 0) 
+	  //            break;
 	}
 
 
