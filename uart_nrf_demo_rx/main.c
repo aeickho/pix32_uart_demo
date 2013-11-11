@@ -256,37 +256,25 @@ main (void)
 	      else
 		UART1PutStr (" ");
 
-
+              UART1PutStr ("SN:  ");
 	      ultoa (cbuf, (int) rx_data_buffer[i].serialnumber, 10);
 	      UART1PutStr (cbuf);
-	      UART1PutStr (" ");
+	      UART1PutStr (" Type:  ");
 	      ultoa (cbuf, (int) rx_data_buffer[i].type, 10);
 	      UART1PutStr (cbuf);
-	      UART1PutStr (" ");
+	      UART1PutStr (" Sensor ID: ");
 	      ultoa (cbuf, (int) rx_data_buffer[i].sensorid, 10);
 	      UART1PutStr (cbuf);
-	      UART1PutStr (" ");
+	      UART1PutStr (" ageing: ");
 	      ultoa (cbuf, (int) rx_data_buffer[i].ageing, 10);
 	      UART1PutStr (cbuf);
-	      UART1PutStr (" ");
+	      UART1PutStr (" pkg cnt: ");
 	      ultoa (cbuf, (int) rx_data_buffer[i].packet_cnt, 10);
 	      UART1PutStr (cbuf);
-	      UART1PutStr (" ");
+	      UART1PutStr (" restart cnt:  ");
 	      ultoa (cbuf, (int) rx_data_buffer[i].restart_cnt, 10);
 	      UART1PutStr (cbuf);
-	      UART1PutStr (" ");
-	      ultoa (cbuf, (int) rx_data_buffer[i].strength, 10);
-	      UART1PutStr (cbuf);
-	      UART1PutStr (" ");
-	      ultoa (cbuf, (int) rx_data_buffer[i].ageing, 10);
-	      UART1PutStr (cbuf);
-	      UART1PutStr (" ");
-	      ultoa (cbuf, (int) rx_data_buffer[i].packet_cnt, 10);
-	      UART1PutStr (cbuf);
-	      UART1PutStr (" ");
-	      ultoa (cbuf, (int) rx_data_buffer[i].restart_cnt, 10);
-	      UART1PutStr (cbuf);
-	      UART1PutStr (" ");
+	      UART1PutStr (" strenght: ");
 	      ultoa (cbuf, (int) rx_data_buffer[i].strength, 10);
 	      UART1PutStr (cbuf);
 	      UART1PutStr (" ");
