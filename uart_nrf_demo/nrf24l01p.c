@@ -192,6 +192,7 @@ nrf_rcv_pkt_poll (int maxsize, uint8_t * pkt)
   uint8_t len;
   uint8_t status = 0;
   int i;
+  mLED_2_On ();
 
   status = nrf_cmd_status (C_NOP);
 
@@ -204,6 +205,8 @@ nrf_rcv_pkt_poll (int maxsize, uint8_t * pkt)
 #endif
 	  nrf_write_reg (R_STATUS, R_STATUS_RX_DR);
 	};
+  mLED_2_Off ();
+
       return 0;
     };
 
@@ -212,18 +215,19 @@ nrf_rcv_pkt_poll (int maxsize, uint8_t * pkt)
   nrf_write_reg (R_STATUS, R_STATUS_RX_DR);
   if (len > 32 || len == 0)
     {
+  mLED_2_Off ();
       return -2;		// no packet error
     };
 
   if (len > maxsize)
     {
+  mLED_2_Off ();
       return -1;		// packet too large
     };
 
   for (i = 0; i < maxsize; i++)
     pkt[i] = 0x00;		// Sanity: clear packet buffer
 
-  mLED_2_On ();
   nrf_read_pkt (len, pkt);
   mLED_2_Off ();
   return len;

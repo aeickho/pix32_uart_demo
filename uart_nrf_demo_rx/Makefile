@@ -42,6 +42,7 @@ MAIN    = main
 #LIBS = -l mchp_peripheral_$(PROC)
 
 OBJECTS =	main.o \
+		systick.o \
 		portsetup.o \
 		uart1.o \
 		uart2.o \

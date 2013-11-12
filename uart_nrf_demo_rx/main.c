@@ -27,6 +27,7 @@
 #include "portsetup.h"
 #include "base128.h"
 #include "diskio.h"
+#include "systick.h"
 
 #define SystemClock()                        (40000000ul)
 #define GetPeripheralClock()            (SystemClock()/(1 << OSCCONbits.PBDIV))
@@ -38,7 +39,7 @@
 
 struct rx_data
 {
-  uint32_t rx_timestamp;
+  uint64_t rx_timestamp;
   uint8_t serialnumber;
   uint8_t type;
   uint8_t restart_cnt;
@@ -73,17 +74,30 @@ main (void)
   UART1Init (SystemClock ());
   UART2Init (SystemClock ());
 
+//  systick_init ();
+
+
   INTConfigureSystem (INT_SYSTEM_CONFIG_MULT_VECTOR);
   INTEnableInterrupts ();
   UART1PutStr ("\n\rhallo\r\n");
   UART2PutStr ("\n\rhallo\r\n");
 
 
+  ultoa (buf, (uint32_t) get_systics (), 10);
+  UART2PutStr (buf);
+  UART2PutStr ("\n\r");
 
+  ultoa (buf, (uint32_t) get_systics (), 10);
+  UART2PutStr (buf);
+  UART2PutStr ("\n\r");
 
   UART2PutStr ("nrf_init(),");
   nrf_init ();
   UART2PutStr ("done\n\r");
+
+  ultoa (buf, (uint32_t) get_systics (), 10);
+  UART2PutStr (buf);
+  UART2PutStr ("\n\r");
 
   memset (rx_data_buffer, 0, sizeof (rx_data_buffer));
 
@@ -140,6 +154,11 @@ main (void)
 
       if (rcv == 32)
 	{
+      ultoa (buf, rcv, 10);
+      UART2PutStr (buf);
+      UART2PutStr ("\r\n");
+
+
 	  char cbuf[100];
 	  uint32_t tmpspace[10];
 	  uint32_t packet_cnt;
@@ -197,6 +216,8 @@ main (void)
 				  || rx_data_buffer[i].strength > buf[9])
 				{
 				  UART2PutStr ("E\r\n");
+			//	  rx_data_buffer[i].rx_timestamp =
+			//	    get_systics ();
 				  rx_data_buffer[i].ageing = buf[8];
 				  rx_data_buffer[i].packet_cnt = packet_cnt;
 				  rx_data_buffer[i].restart_cnt = buf[2];
@@ -211,7 +232,7 @@ main (void)
 		    }
 		}
 	    }
-	  if (storeflag == -1 )
+	  if (storeflag == -1)
 	    {
 	      UART2PutStr ("F\r\n");
 
@@ -225,8 +246,9 @@ main (void)
 
 		  if (rx_data_buffer[i].serialnumber == 0)
 		    {
-		       UART2PutStr ("G\r\n");
-		       
+		      UART2PutStr ("G\r\n");
+		  //    rx_data_buffer[i].rx_timestamp = get_systics ();
+
 		      rx_data_buffer[i].serialnumber = buf[0];
 		      rx_data_buffer[i].type = buf[1];
 		      rx_data_buffer[i].sensorid = buf[7];
@@ -256,7 +278,12 @@ main (void)
 	      else
 		UART1PutStr (" ");
 
-              UART1PutStr ("SN:  ");
+	    //  ultoa (cbuf, get_systics () - rx_data_buffer[i].rx_timestamp, 10);
+	      if (rx_data_buffer[i].rx_timestamp != 0)
+		UART1PutStr (cbuf);
+	      UART1PutStr (" ");
+
+	      UART1PutStr ("SN:  ");
 	      ultoa (cbuf, (int) rx_data_buffer[i].serialnumber, 10);
 	      UART1PutStr (cbuf);
 	      UART1PutStr (" Type:  ");
